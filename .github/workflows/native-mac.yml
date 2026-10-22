@@ -1,0 +1,29 @@
+name: Native macOS
+# Does the app install, build and run its Mac-sensitive tests on a real macOS machine? (The container install is tested in container.yml.)
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  mac:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Tools the app expects
+        run: |
+          brew install tmux
+          python3 -m pip install --user --break-system-packages pexpect pytest || python3 -m pip install --user pexpect pytest
+      - name: Setup check
+        run: ./scripts/setup --check
+      - name: Python tests that touch the system
+        run: python3 -m pytest tests/test_proc_info.py tests/test_hooks_portable.py tests/test_collab_helper.py tests/test_collab_claude.py -q
+      - name: Install and build
+        run: |
+          ./scripts/setup
+      - name: Unit tests for the process helpers
+        run: npx vitest run tests/unit/proc-info.test.ts tests/unit/agent-liveness.test.ts tests/unit/rollout-base.test.ts

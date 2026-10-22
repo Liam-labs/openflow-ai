@@ -26,14 +26,15 @@ HOOK_EVENTS_MAX_BYTES="${HOOK_EVENTS_MAX_BYTES:-5242880}"
 # portability issues by composing seconds + nanos manually.
 _telemetry_now_ms() {
     local ns
-    ns=$(date +%s%N 2>/dev/null) || { date +%s 2>/dev/null | awk '{print $1*1000}'; return; }
+    ns=$(date +%s%N 2>/dev/null)
+    case "$ns" in ''|*[!0-9]*) date +%s 2>/dev/null | awk '{print $1*1000}'; return ;; esac   # macOS prints a literal N for %N
     echo $(( ns / 1000000 ))
 }
 
 _telemetry_rotate_if_needed() {
     local size
     [ -f "$HOOK_EVENTS_PATH" ] || return 0
-    size=$(stat -c%s "$HOOK_EVENTS_PATH" 2>/dev/null || echo 0)
+    size=$(wc -c < "$HOOK_EVENTS_PATH" 2>/dev/null | tr -d ' ')   # stat -c is GNU-only
     if [ "${size:-0}" -gt "$HOOK_EVENTS_MAX_BYTES" ]; then
         mv -f "$HOOK_EVENTS_PATH" "${HOOK_EVENTS_PATH}.1" 2>/dev/null || true
     fi

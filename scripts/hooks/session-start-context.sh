@@ -46,9 +46,13 @@ section() {
 }
 
 
+# shellcheck source=_portable.sh
+. "${DEVFLOW_HOME:-$HOME/DevFlow}/scripts/hooks/_portable.sh" 2>/dev/null || true
+type portable_timeout >/dev/null 2>&1 || portable_timeout() { shift; "$@"; }
+
 # Which machine this session runs on (desktop or laptop). Printed first and kept
 # short; it is do-not-save, so an agent that later moves holds no stale location.
-LOCATION_NOTE=$(timeout 5 python3 "${DEVFLOW_HOME:-$HOME/DevFlow}/data/scaffolding/runtime_location.py" session-note 2>/dev/null || true)
+LOCATION_NOTE=$(portable_timeout 5 python3 "${DEVFLOW_HOME:-$HOME/DevFlow}/data/scaffolding/runtime_location.py" session-note 2>/dev/null || true)
 if [ -n "${LOCATION_NOTE//[[:space:]]/}" ]; then
     emit_header
     printf '\n---\n\n%s\n' "$LOCATION_NOTE"

@@ -11,6 +11,9 @@ set -euo pipefail
 # Hook firing telemetry — capture start time, emit on exit
 # shellcheck source=_telemetry.sh
 . "${DEVFLOW_HOME:-$HOME/DevFlow}/scripts/hooks/_telemetry.sh" 2>/dev/null || true
+# shellcheck source=_portable.sh
+. "${DEVFLOW_HOME:-$HOME/DevFlow}/scripts/hooks/_portable.sh" 2>/dev/null || true
+type portable_timeout >/dev/null 2>&1 || portable_timeout() { shift; "$@"; }
 _T_START=$(_telemetry_now_ms 2>/dev/null || echo 0)
 
 AGENT_DIR="${1:-.}"
@@ -24,7 +27,7 @@ echo "=== CONTEXT COMPACTED — RESUME ==="
 echo ""
 
 # Which machine this session runs on: do-not-save, and lost with the compacted context.
-LOCATION_NOTE=$(timeout 5 python3 "${DEVFLOW_HOME:-$HOME/DevFlow}/data/scaffolding/runtime_location.py" session-note 2>/dev/null || true)
+LOCATION_NOTE=$(portable_timeout 5 python3 "${DEVFLOW_HOME:-$HOME/DevFlow}/data/scaffolding/runtime_location.py" session-note 2>/dev/null || true)
 if [ -n "${LOCATION_NOTE//[[:space:]]/}" ]; then
     printf '%s\n\n---\n\n' "$LOCATION_NOTE"
 fi

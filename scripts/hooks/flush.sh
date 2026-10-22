@@ -33,6 +33,9 @@ set -euo pipefail
 # Hook firing telemetry — capture start time, emit on exit
 # shellcheck source=_telemetry.sh
 . "${DEVFLOW_HOME:-$HOME/DevFlow}/scripts/hooks/_telemetry.sh" 2>/dev/null || true
+# shellcheck source=_portable.sh
+. "${DEVFLOW_HOME:-$HOME/DevFlow}/scripts/hooks/_portable.sh" 2>/dev/null || true
+type portable_try_lock >/dev/null 2>&1 || portable_try_lock() { flock -n "$1"; }
 _T_START=$(_telemetry_now_ms 2>/dev/null || echo 0)
 trap 'record_fire "${AGENT:-?}" "flush" "${DEVFLOW_HOOK_EVENT:-Stop}" "$?" "$(( $(_telemetry_now_ms 2>/dev/null || echo 0) - _T_START ))" 2>/dev/null || true' EXIT
 
@@ -158,7 +161,7 @@ flush_one() {
 # running, emit a skip log and exit cleanly — the buffer survives and the next
 # trigger will pick it up.
 exec 9>"$LOCK_FILE"
-if ! flock -n 9; then
+if ! portable_try_lock 9; then
     log_line "skip: another flush holds the lock"
     exit 0
 fi
