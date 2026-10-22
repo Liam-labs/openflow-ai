@@ -1,4 +1,5 @@
 import os
+import shutil
 import stat
 import subprocess
 import tempfile
@@ -46,6 +47,7 @@ class Portable(unittest.TestCase):
         out = run(self.src + 'portable_timeout 5 sh -c "echo ran \\$1; exit 3" x y', self.mac)
         self.assertEqual((out.stdout.strip(), out.returncode), ('ran y', 3))
 
+    @unittest.skipUnless(shutil.which('timeout', path='/usr/bin:/bin'), 'GNU timeout is not installed')
     def test_with_gnu_timeout_a_slow_command_is_stopped(self):
         started = time.time()
         out = run(self.src + 'portable_timeout 1 sleep 5', '/usr/bin:/bin')
@@ -70,6 +72,7 @@ class Portable(unittest.TestCase):
         holder.wait()
         self.assertEqual(run(self.lock_script(lock), self.mac).returncode, 0)          # released when the holder ended
 
+    @unittest.skipUnless(shutil.which('flock', path='/usr/bin:/bin'), 'flock is not installed')
     def test_with_flock_the_same_contract_holds(self):
         lock = os.path.join(self.tmp.name, 'gnu.lock')
         holder = subprocess.Popen(['/bin/bash', '-c', self.lock_script(lock) + ' && echo held && sleep 3'], stdout=subprocess.PIPE, text=True,

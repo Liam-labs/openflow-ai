@@ -14,6 +14,7 @@ Covers:
 import json
 import os
 import queue
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -2458,7 +2459,7 @@ class TestSystemPromptArgs(unittest.TestCase):
                 self.assertEqual(f.read(), big)
             # The real spawn call must not fail with E2BIG for these args.
             import subprocess
-            subprocess.run(['/bin/true'] + args, check=True)
+            subprocess.run([shutil.which('true') or '/usr/bin/true'] + args, check=True)   # /bin/true does not exist on macOS
         finally:
             collab_claude._cleanup_prompt_files()
         self.assertFalse(os.path.exists(args[1]))
@@ -2618,7 +2619,7 @@ class TestLongMessagePointer(unittest.TestCase):
         self.assertNotIn('\n', typed)
         self.assertTrue(typed.startswith('[Channel message from Jack in test-channel-123]: @TestAgent report'))
         self.assertTrue(typed.endswith('(@you)'))
-        path = os.path.join(self._tmp.name, '.session-scratch', 'inbox', 'msg-abc-123.md')
+        path = os.path.join(os.path.realpath(self._tmp.name), '.session-scratch', 'inbox', 'msg-abc-123.md')   # macOS temp folders are links (/var -> /private/var)
         self.assertIn(f'read the full 23-line message: {path}]', typed)
         with open(path, encoding='utf-8') as f:
             body = f.read()

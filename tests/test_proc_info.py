@@ -1,5 +1,6 @@
 import importlib.util
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -19,6 +20,7 @@ Pages speculative:                         1000.
 GONE = 2 ** 22 + 12345
 
 
+@unittest.skipUnless(sys.platform.startswith('linux'), 'reads the real /proc')
 class Linux(unittest.TestCase):
     """The real /proc: what the wrappers always read."""
 
@@ -64,6 +66,40 @@ class Linux(unittest.TestCase):
         info = p.mem_info_kb(linux=True)
         self.assertGreater(info['MemTotal'], 0)
         self.assertIn('MemAvailable', info)
+
+
+class RealTools(unittest.TestCase):
+    """The ps / pgrep / lsof path against the REAL programs of this machine (a Mac's own, on a Mac; procps on Linux)."""
+
+    def test_this_process_and_a_child(self):
+        child = subprocess.Popen(['sleep', '31'])
+        try:
+            for _ in range(100):                       # the program name appears once exec has finished
+                if 'sleep 31' in p.cmdline(child.pid, linux=False):
+                    break
+                time.sleep(0.02)
+            self.assertIn('sleep 31', p.cmdline(child.pid, linux=False))
+            self.assertEqual(p.ppid(child.pid, linux=False), os.getpid())
+            self.assertIn(child.pid, p.children(os.getpid(), linux=False))
+            self.assertEqual(p.children(child.pid, linux=False), [])
+            self.assertIsInstance(p.cpu_ticks(child.pid, linux=False), int)
+            self.assertTrue(p.pid_alive(child.pid, linux=False))
+        finally:
+            child.kill()
+            child.wait()
+        self.assertFalse(p.pid_alive(GONE, linux=False))
+        self.assertEqual(p.cmdline(GONE, linux=False), '')
+        self.assertIsNone(p.ppid(GONE, linux=False))
+
+    @unittest.skipUnless(shutil.which('lsof'), 'lsof is not installed')
+    def test_open_files_through_lsof(self):
+        import tempfile
+        with tempfile.NamedTemporaryFile() as handle:
+            self.assertIn(os.path.realpath(handle.name), [os.path.realpath(x) for x in p.open_files(os.getpid(), linux=False)])
+
+    @unittest.skipUnless(sys.platform == 'darwin', 'vm_stat exists on macOS only')
+    def test_memory_through_vm_stat(self):
+        self.assertGreater(p.mem_info_kb(linux=False)['MemAvailable'], 0)
 
 
 class Mac(unittest.TestCase):
