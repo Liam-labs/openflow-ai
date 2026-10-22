@@ -33,6 +33,10 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  // chokidar loads fsevents (a native macOS addon) by itself when it is present. Bundling it breaks the macOS build
+  // ("non-ecmascript placeable asset"), so both stay as plain require()s at run time. Harmless on Linux.
+  serverExternalPackages: ['chokidar', 'fsevents'],
+
   // Enable gzip compression — reduces API response sizes ~80% over webgate tunnel
   compress: true,
 
