@@ -8,6 +8,19 @@
 export async function startSubsystems() {
     const cleanups = global.__devflowCleanups!;
 
+    // First run: the starting model list (see lib/seed-data.ts). Never replaces an existing file.
+    try {
+      const { seedFileIfMissing } = await import('./lib/seed-data');
+      const { getDataDir } = await import('./lib/data-paths');
+      const { appPath } = await import('./lib/app-paths');
+      const pathMod = await import('path');
+      if (await seedFileIfMissing(appPath('data', 'models.json'), pathMod.join(getDataDir(), 'models.json'))) {
+        console.log('[DevFlow] First run: created .AppData/models.json from data/models.json');
+      }
+    } catch (err) {
+      console.log('[DevFlow] Model list seeding skipped:', err instanceof Error ? err.message : String(err));
+    }
+
     // Stale lock/tmp file cleanup — remove leftover .lock/.tmp files from crashed runs
     try {
       const { getDataDir } = await import('./lib/data-paths');

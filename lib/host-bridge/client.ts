@@ -82,6 +82,7 @@ async function bridgeFetch<T>(
 const PM2_CACHE_TTL_MS = 4000; // slightly under the 5s SSE interval
 let pm2StatusCache: { result: { processes: PM2Process[]; portsInUse: Record<number, string> }; ts: number } | null = null;
 let pm2RevalidateInFlight = false;
+let pm2LastLoggedError = '';
 
 async function revalidatePm2Cache(): Promise<void> {
   if (pm2RevalidateInFlight) return;
@@ -100,7 +101,16 @@ async function revalidatePm2Cache(): Promise<void> {
     const portsInUse = getPortsInUse(processes);
     pm2StatusCache = { result: { processes, portsInUse }, ts: Date.now() };
   } catch (err) {
-    console.error('[pm2Status] Background revalidation failed:', err);
+    // A fresh install has no PM2 (or its daemon is not running): that is "no services", not an error. Answer with an empty list so the
+    // Services and Overview panels render, and do not try again before the cache time is up. An older good answer keeps being served.
+    // 22 Oct 2026: /api/pm2 answered 500 here, the panels showed nothing and the browser polled the failing route in a tight loop.
+    if (pm2StatusCache) pm2StatusCache.ts = Date.now();
+    else pm2StatusCache = { result: { processes: [], portsInUse: {} }, ts: Date.now() };
+    const message = err instanceof Error ? err.message : String(err);
+    if (message !== pm2LastLoggedError) {                       // once per distinct problem, not every poll
+      pm2LastLoggedError = message;
+      console.error('[pm2Status] Background revalidation failed:', err);
+    }
   } finally {
     pm2RevalidateInFlight = false;
   }

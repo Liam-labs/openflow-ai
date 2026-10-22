@@ -138,6 +138,16 @@ def set_env_value(text: str, name: str, value: str) -> str:
     return text.rstrip("\n") + "\n" + line + "\n"
 
 
+def comment_out_env_value(text: str, name: str) -> str:
+    """Turn the line NAME=... into a comment (the value stays visible), so the setting is off but easy to bring back."""
+    return re.sub(r"^(\s*)(%s=.*)$" % re.escape(name), r"\1# \2", text, count=1, flags=re.M)
+
+
+# Early copies of .env.example switched the host-bridge helper on with this address although nothing starts it. With it set, the app sends
+# every PM2 and process request to a helper that does not exist, so Services, Processes and Overview showed nothing.
+OLD_BRIDGE_DEFAULT = "http://localhost:3001"
+
+
 def make_token() -> str:
     number = int.from_bytes(secrets.token_bytes(32), "big")
     body = ""
@@ -234,6 +244,10 @@ def configure(repo: Path, port: int | None = None, reset_tokens: bool = False) -
             text = set_env_value(text, name, value)
             changes.append("set %s" % name)
     values = parse_env(text)
+    if values.get("HOST_BRIDGE_URL") == OLD_BRIDGE_DEFAULT and not values.get("HOST_BRIDGE_TOKEN"):
+        text = comment_out_env_value(text, "HOST_BRIDGE_URL")
+        changes.append("turned off HOST_BRIDGE_URL (no host-bridge is running, so it only broke the Services and Overview pages)")
+        values = parse_env(text)
     app_data = Path(values.get("DEVFLOW_APP_DATA_DIR") or ".AppData")
     store = (app_data if app_data.is_absolute() else repo / app_data) / "api-tokens.json"
     token = values.get("DEVFLOW_API_TOKEN", "")

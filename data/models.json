@@ -1,0 +1,616 @@
+{
+  "models": [
+    {
+      "id": "gemini-4-argon-high",
+      "apiId": "gemini-4-argon-high",
+      "provider": "google",
+      "classification": "pro",
+      "label": "Gemini 4 Argon (High)",
+      "description": "Gemini 4 Argon (released 13 Oct 2026) with high thinking: Google's most capable model, for complex coding, agentic, math and science work.",
+      "tier": "powerful",
+      "agentTypes": [
+        "antigravity"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "contextWindow": 1048576,
+        "maxOutputTokens": 65536,
+        "reasoning": true,
+        "toolUse": true,
+        "vision": true
+      }
+    },
+    {
+      "id": "gemini-4-argon-medium",
+      "apiId": "gemini-4-argon-medium",
+      "provider": "google",
+      "classification": "pro",
+      "label": "Gemini 4 Argon (Medium)",
+      "description": "Gemini 4 Argon (released 13 Oct 2026) with its default medium thinking profile: Google's most capable model for coding and agentic work.",
+      "tier": "balanced",
+      "agentTypes": [
+        "antigravity"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "contextWindow": 1048576,
+        "maxOutputTokens": 65536,
+        "reasoning": true,
+        "toolUse": true,
+        "vision": true
+      }
+    },
+    {
+      "id": "gemini-4-argon-low",
+      "apiId": "gemini-4-argon-low",
+      "provider": "google",
+      "classification": "pro",
+      "label": "Gemini 4 Argon (Low)",
+      "description": "Gemini 4 Argon (released 13 Oct 2026) with low thinking for faster agentic work.",
+      "tier": "fast",
+      "agentTypes": [
+        "antigravity"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "contextWindow": 1048576,
+        "maxOutputTokens": 65536,
+        "reasoning": true,
+        "toolUse": true,
+        "vision": true
+      }
+    },
+    {
+      "id": "gemini-3.8-flash-high",
+      "apiId": "gemini-3.8-flash-high",
+      "aliases": [
+        "gemini-3.6-flash-high"
+      ],
+      "provider": "google",
+      "classification": "flash",
+      "label": "Gemini 3.8 Flash (High)",
+      "description": "Gemini 3.8 Flash with high thinking for complex coding and agentic execution (replaces Gemini 3.6 Flash High).",
+      "tier": "powerful",
+      "agentTypes": [
+        "antigravity"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "contextWindow": 1048576,
+        "maxOutputTokens": 65536,
+        "reasoning": true,
+        "toolUse": true,
+        "vision": true
+      }
+    },
+    {
+      "id": "gemini-3.8-flash-medium",
+      "apiId": "gemini-3.8-flash-medium",
+      "aliases": [
+        "gemini-3.5-flash",
+        "gemini-3.5-flash-legacy",
+        "gemini-3.6-flash-medium"
+      ],
+      "provider": "google",
+      "classification": "flash",
+      "label": "Gemini 3.8 Flash (Medium)",
+      "description": "Gemini 3.8 Flash with its default medium thinking profile (replaces Gemini 3.6 Flash Medium and 3.5 Flash).",
+      "tier": "balanced",
+      "agentTypes": [
+        "antigravity"
+      ],
+      "isDefault": true,
+      "capabilities": {
+        "contextWindow": 1048576,
+        "maxOutputTokens": 65536,
+        "reasoning": true,
+        "toolUse": true,
+        "vision": true
+      }
+    },
+    {
+      "id": "gemini-3.8-flash-low",
+      "apiId": "gemini-3.8-flash-low",
+      "aliases": [
+        "gemini-3.6-flash-low"
+      ],
+      "provider": "google",
+      "classification": "flash",
+      "label": "Gemini 3.8 Flash (Low)",
+      "description": "Gemini 3.8 Flash with low thinking for faster agentic work (replaces Gemini 3.6 Flash Low).",
+      "tier": "fast",
+      "agentTypes": [
+        "antigravity"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "contextWindow": 1048576,
+        "maxOutputTokens": 65536,
+        "reasoning": true,
+        "toolUse": true,
+        "vision": true
+      }
+    },
+    {
+      "id": "grok-4.7",
+      "provider": "xai",
+      "classification": "reasoning",
+      "label": "Grok 4.7",
+      "description": "xAI Grok 4.7 (Sep 21 2026): flagship, text + image input, reasoning effort low/medium/high/xhigh (default high), $2/$6 per 1M tokens (doubles above 200K prompt tokens).",
+      "tier": "powerful",
+      "agentTypes": [
+        "grok"
+      ],
+      "isDefault": true,
+      "capabilities": {
+        "reasoning": true,
+        "toolUse": true,
+        "vision": true,
+        "supportsStreaming": false,
+        "supportsTemperature": true
+      }
+    },
+    {
+      "id": "grok-build-0.1",
+      "provider": "xai",
+      "classification": "reasoning",
+      "label": "Grok Build 0.1",
+      "description": "xAI Grok Build 0.1 \u2014 agentic coding model (always-on reasoning + tool use + vision), 256K context; served on the OpenAI-compatible xAI chat API (api.x.ai/v1).",
+      "tier": "powerful",
+      "agentTypes": [
+        "grok"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "reasoning": true,
+        "toolUse": true,
+        "supportsStreaming": false,
+        "supportsTemperature": true,
+        "contextWindow": 262144
+      }
+    },
+    {
+      "id": "gemma4:e2b",
+      "provider": "ollama",
+      "classification": "edge",
+      "label": "Gemma 4 e2b",
+      "description": "Gemma 4 edge/mobile 2b \u2014 fast tier, explicit opt-in only",
+      "tier": "fast",
+      "agentTypes": [
+        "ollama",
+        "ollama-terminal"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "toolUse": true
+      }
+    },
+    {
+      "id": "gemma4:e4b",
+      "provider": "ollama",
+      "classification": "edge",
+      "label": "Gemma 4 e4b",
+      "description": "Gemma 4 edge/mobile 4b \u2014 fast tier, explicit opt-in only",
+      "tier": "fast",
+      "agentTypes": [
+        "ollama",
+        "ollama-terminal"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "toolUse": true
+      }
+    },
+    {
+      "id": "gemma4:26b",
+      "provider": "ollama",
+      "classification": "balanced",
+      "label": "Gemma 4 26b",
+      "description": "Gemma 4 MoE 26b \u2014 balanced local default, tool-capable",
+      "tier": "balanced",
+      "agentTypes": [
+        "ollama",
+        "ollama-terminal"
+      ],
+      "isDefault": true,
+      "capabilities": {
+        "toolUse": true
+      }
+    },
+    {
+      "id": "gemma4:31b",
+      "provider": "ollama",
+      "classification": "powerful",
+      "label": "Gemma 4 31b",
+      "description": "Gemma 4 dense 31b \u2014 powerful tier, tool-capable",
+      "tier": "powerful",
+      "agentTypes": [
+        "ollama",
+        "ollama-terminal"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "toolUse": true
+      }
+    },
+    {
+      "id": "deepseek-v4-pro",
+      "apiId": "deepseek-v4-pro",
+      "provider": "deepseek",
+      "classification": "reasoning",
+      "label": "DS-V4-Pro",
+      "description": "DeepSeek V4 Pro \u2014 1M context, 384K output and Anthropic compatibility. DeepSeek has extended API availability beyond 2026-09-14; vision is not supported.",
+      "tier": "powerful",
+      "agentTypes": [
+        "claude",
+        "claude-terminal"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "inputModes": [
+          "text"
+        ],
+        "outputModes": [
+          "text"
+        ],
+        "contextWindow": 1000000,
+        "maxOutputTokens": 384000,
+        "reasoning": true,
+        "toolUse": true,
+        "vision": false,
+        "supportsStreaming": true,
+        "supportsTemperature": true,
+        "thinkingModes": [
+          "none",
+          "high",
+          "max"
+        ]
+      }
+    },
+    {
+      "id": "deepseek-flash",
+      "apiId": "deepseek-flash[1m]",
+      "aliases": [
+        "deepseek-v4-flash",
+        "deepseek-v4-flash-vision-exp"
+      ],
+      "provider": "deepseek",
+      "classification": "fast",
+      "label": "DeepSeek V4.1 Flash",
+      "description": "DeepSeek V4.1 Flash \u2014 canonical DeepSeek model with 1M context, 384K output, thinking, tools and vision. Uses Claude Code through the Anthropic-compatible endpoint.",
+      "tier": "fast",
+      "agentTypes": [
+        "claude",
+        "claude-terminal"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "inputModes": [
+          "text",
+          "image"
+        ],
+        "outputModes": [
+          "text"
+        ],
+        "contextWindow": 1000000,
+        "maxOutputTokens": 384000,
+        "reasoning": true,
+        "toolUse": true,
+        "vision": true,
+        "supportsStreaming": true,
+        "supportsTemperature": true,
+        "thinkingModes": [
+          "none",
+          "high",
+          "max"
+        ]
+      }
+    },
+    {
+      "id": "opus",
+      "apiId": "claude-opus-5-5",
+      "provider": "anthropic",
+      "classification": "opus",
+      "label": "Opus 5.5 \u26a1 1M",
+      "description": "Latest Claude Opus \u2014 1M context for long-running agentic coding and knowledge work.",
+      "tier": "powerful",
+      "agentTypes": [
+        "claude",
+        "claude-terminal"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "reasoning": true,
+        "toolUse": true,
+        "vision": true,
+        "supportsStreaming": true,
+        "supportsTemperature": true
+      }
+    },
+    {
+      "id": "opus-5-5",
+      "apiId": "claude-opus-5-5",
+      "provider": "anthropic",
+      "classification": "opus",
+      "label": "Opus 5.5 \u26a1 1M",
+      "description": "Claude Opus 5.5 \u2014 1M context, 128K output, adaptive thinking, and medium default effort.",
+      "tier": "powerful",
+      "agentTypes": [
+        "claude",
+        "claude-terminal"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "reasoning": true,
+        "toolUse": true,
+        "vision": true,
+        "supportsStreaming": true,
+        "supportsTemperature": true
+      }
+    },
+    {
+      "id": "sonnet",
+      "apiId": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "classification": "sonnet",
+      "label": "Sonnet 5.5 \u26a1 1M",
+      "description": "Claude Sonnet 5.5 \u2014 1M context, near-Opus coding and agentic quality at Sonnet speed. $2/$10 per MTok.",
+      "tier": "balanced",
+      "agentTypes": [
+        "claude",
+        "claude-terminal"
+      ],
+      "isDefault": true,
+      "capabilities": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "reasoning": true,
+        "toolUse": true,
+        "vision": true,
+        "supportsStreaming": true,
+        "supportsTemperature": true
+      }
+    },
+    {
+      "id": "sonnet-5-5",
+      "apiId": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "classification": "sonnet",
+      "label": "Sonnet 5.5 \u26a1 1M",
+      "description": "Claude Sonnet 5.5 \u2014 1M context, near-Opus coding and agentic quality at Sonnet speed. $2/$10 per MTok.",
+      "tier": "balanced",
+      "agentTypes": [
+        "claude",
+        "claude-terminal"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "reasoning": true,
+        "toolUse": true,
+        "vision": true,
+        "supportsStreaming": true,
+        "supportsTemperature": true
+      }
+    },
+    {
+      "id": "haiku-5-5",
+      "apiId": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "classification": "haiku",
+      "label": "Haiku 5.5 \u26a1 1M",
+      "description": "Claude Haiku 5.5 \u2014 1M context, adaptive reasoning for fast coding, extraction and focused tasks.",
+      "tier": "fast",
+      "agentTypes": [
+        "claude",
+        "claude-terminal"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "reasoning": true,
+        "toolUse": true,
+        "vision": true,
+        "supportsStreaming": true,
+        "supportsTemperature": false
+      }
+    },
+    {
+      "id": "haiku",
+      "apiId": "claude-haiku-4-5-20251001",
+      "provider": "anthropic",
+      "classification": "haiku",
+      "label": "Haiku 4.5",
+      "description": "Claude Haiku 4.5 \u2014 200K context, fastest model for search, exploration, simple tasks",
+      "tier": "fast",
+      "agentTypes": [
+        "claude",
+        "claude-terminal"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "contextWindow": 200000,
+        "maxOutputTokens": 64000,
+        "reasoning": false,
+        "toolUse": true,
+        "vision": true,
+        "supportsStreaming": true,
+        "supportsTemperature": true
+      }
+    },
+    {
+      "id": "fable-5-1",
+      "apiId": "claude-fable-5-1",
+      "provider": "anthropic",
+      "classification": "fable",
+      "label": "Fable 5.1 \u26a1 1M",
+      "description": "Claude Fable 5.1 \u2014 1M context for frontier reasoning and agentic work.",
+      "tier": "powerful",
+      "agentTypes": [
+        "claude",
+        "claude-terminal"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "reasoning": true,
+        "toolUse": true,
+        "vision": true,
+        "supportsStreaming": true,
+        "supportsTemperature": true
+      }
+    },
+    {
+      "id": "mythos-5-1",
+      "apiId": "claude-mythos-5-1",
+      "provider": "anthropic",
+      "classification": "mythos",
+      "label": "Mythos 5.1 \u26a1 1M",
+      "description": "Claude Mythos 5.1 \u2014 approved-organization model with 1M context.",
+      "tier": "powerful",
+      "agentTypes": [
+        "claude",
+        "claude-terminal"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "reasoning": true,
+        "toolUse": true,
+        "vision": true,
+        "supportsStreaming": true,
+        "supportsTemperature": true
+      }
+    },
+    {
+      "id": "gpt-6-astra",
+      "apiId": "gpt-6-astra",
+      "provider": "openai",
+      "classification": "reasoning",
+      "label": "GPT-6 Astra",
+      "description": "OpenAI GPT-6 Astra via Codex CLI (ChatGPT subscription). Frontier intelligence for the most demanding coding, reasoning, and computer-use work. CLI reasoning: low/medium/high/xhigh/max/ultra; 272K context.",
+      "tier": "powerful",
+      "agentTypes": [
+        "codex"
+      ],
+      "isDefault": true,
+      "capabilities": {
+        "contextWindow": 272000,
+        "maxOutputTokens": 128000,
+        "reasoning": true,
+        "toolUse": true,
+        "vision": true,
+        "supportsStreaming": true,
+        "supportsTemperature": false
+      },
+      "agentType": "codex",
+      "harness": "codex",
+      "integration": {
+        "status": "full",
+        "interfaceType": "codex",
+        "detectedAt": "2026-09-04T22:24:52.829Z",
+        "capabilities": {
+          "hooks": "full",
+          "scaffolding": "full",
+          "harness": "full",
+          "feed": "full",
+          "skills": "full",
+          "mcp": "full",
+          "memory": "full",
+          "telemetry": "full"
+        }
+      }
+    },
+    {
+      "id": "gpt-6.1-sol",
+      "apiId": "gpt-6.1-sol",
+      "provider": "openai",
+      "classification": "reasoning",
+      "label": "GPT-6.1 Sol",
+      "description": "OpenAI GPT-6.1 Sol via Codex CLI (ChatGPT subscription). Workhorse model for coding and everyday work; near-Astra agentic coding at a fifth of the price (released 29 Sep 2026, replaces GPT-6 Sol). CLI reasoning: low/medium/high/xhigh/max/ultra; 272K context.",
+      "tier": "balanced",
+      "agentTypes": [
+        "codex"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "contextWindow": 272000,
+        "maxOutputTokens": 128000,
+        "reasoning": true,
+        "toolUse": true,
+        "vision": true,
+        "supportsStreaming": true,
+        "supportsTemperature": false
+      },
+      "agentType": "codex",
+      "harness": "codex",
+      "integration": {
+        "status": "full",
+        "interfaceType": "codex",
+        "detectedAt": "2026-09-04T22:24:52.829Z",
+        "capabilities": {
+          "hooks": "full",
+          "scaffolding": "full",
+          "harness": "full",
+          "feed": "full",
+          "skills": "full",
+          "mcp": "full",
+          "memory": "full",
+          "telemetry": "full"
+        }
+      },
+      "aliases": [
+        "gpt-6-sol"
+      ]
+    },
+    {
+      "id": "gpt-6-luna",
+      "apiId": "gpt-6-luna",
+      "provider": "openai",
+      "classification": "reasoning",
+      "label": "GPT-6 Luna",
+      "description": "OpenAI GPT-6 Luna via Codex CLI (ChatGPT subscription). Fast, affordable model for easier tasks. CLI reasoning: low/medium/high/xhigh/max; 272K context.",
+      "tier": "fast",
+      "agentTypes": [
+        "codex"
+      ],
+      "isDefault": false,
+      "capabilities": {
+        "contextWindow": 272000,
+        "maxOutputTokens": 128000,
+        "reasoning": true,
+        "toolUse": true,
+        "vision": true,
+        "supportsStreaming": true,
+        "supportsTemperature": false
+      },
+      "agentType": "codex",
+      "harness": "codex",
+      "integration": {
+        "status": "full",
+        "interfaceType": "codex",
+        "detectedAt": "2026-09-04T22:24:52.829Z",
+        "capabilities": {
+          "hooks": "full",
+          "scaffolding": "full",
+          "harness": "full",
+          "feed": "full",
+          "skills": "full",
+          "mcp": "full",
+          "memory": "full",
+          "telemetry": "full"
+        }
+      }
+    }
+  ],
+  "updatedAt": "2026-10-19T08:37:58.593377+00:00",
+  "version": "1.5.0"
+}

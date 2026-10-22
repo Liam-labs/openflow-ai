@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Cpu, RefreshCw, Check, Minus, X, AlertCircle } from 'lucide-react';
 import type { SystemsNavState } from './systems-types';
 import type { CapabilityLevel, ModelEntry } from '@/lib/model-registry';
+import { providerNames } from '@/lib/model-provider-names';
 
 // Sprint M Phase 2 — Beckett, 2026-05-27.
 // Consumes GET /api/models?includeIntegration=true. Read-only list view; the
@@ -20,7 +21,7 @@ interface UIModelEntry extends ModelEntry {
 
 interface ApiResponse {
   models: UIModelEntry[];
-  providers?: string[];
+  providers?: string[] | Record<string, unknown>;
   total?: number;
 }
 
@@ -89,7 +90,7 @@ export function ModelsSection({ onNavigate }: ModelsSectionProps) {
       }
       const j = (await r.json()) as ApiResponse;
       setModels(j.models ?? []);
-      setProviders(j.providers ?? Array.from(new Set((j.models ?? []).map(m => m.provider).filter((p): p is string => Boolean(p)))));
+      setProviders(providerNames(j));
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Network error');

@@ -224,7 +224,7 @@ function ProcessCard({
 
 export function ProcessCardGrid({ processes, onAction }: ProcessCardGridProps) {
   if (processes.length === 0) {
-    return <div className="pcg-empty">No services running</div>;
+    return <div className="pcg-empty">No services running. Programs you start with PM2 (for example <code>pm2 start ecosystem.config.js</code>) appear here.</div>;
   }
 
   return (
