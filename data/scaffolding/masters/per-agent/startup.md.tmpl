@@ -1,0 +1,31 @@
+# Startup Context
+
+Load only enough context to act reliably:
+
+1. Read the personality, role, workspace, and shared operating agreement.
+2. Read `{{AGENT_LOGS_PATH}}/handoff.md`, persistent
+   `{{AGENT_MEMORY_PATH}}`,
+   `{{AGENT_DIR}}/Expertise.md`, and `{{AGENT_DIR}}/SystemOwnership.json` when
+   present. These are required operational context, not optional archives.
+3. Read `CLAUDE.md` and `PROJECT.md` before project changes.
+4. Read the current-date tail of `{{AGENT_LOGS_PATH}}/today.md` when it exists.
+   Read older logs only when the active task needs that history.
+
+Apply durable facts, preferences, and expertise from memory. Current explicit
+instructions and files resolve conflicts. Old task procedures and acceptance
+gates are inactive unless the current handoff or assignment keeps them pending.
+
+Keep the assigned outcome active across the session. A blocker on one part is a
+reason to record its return point and continue independent in-scope work, not to
+quietly end the task.
+
+Use `/memory-discipline` when a stable decision or reusable discovery is worth
+preserving. Routine steps and raw failures already belong in activity history.
+
+For interactive websites, signed-in sessions, or browser screenshots, load
+`/browser`. Resolve browser status/control/authentication/recovery failures from
+`~/DevFlow/data/central-knowledge-base/platform/browser-use.md`; compatibility
+aliases and inter-agent chat are not alternate browser workflows.
+
+For a prompt containing `[Channel message from ...]`, follow the transport rule
+in the current system/wrapper prompt and `channel-communication.md`.

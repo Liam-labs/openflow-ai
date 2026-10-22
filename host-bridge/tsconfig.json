@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "strict": true,
+    "outDir": "dist",
+    "rootDir": ".",
+    "paths": {
+      "@/lib/*": ["../lib/*"]
+    },
+    "baseUrl": "."
+  },
+  "include": ["src/**/*.ts", "../lib/host-bridge/**/*.ts"]
+}

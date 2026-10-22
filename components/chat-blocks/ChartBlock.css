@@ -1,0 +1,53 @@
+.cb-chart {
+  margin: 8px 0;
+  padding: 14px 12px 8px;
+  background: rgba(10, 20, 40, 0.5);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cb-chart__title {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.78em;
+  font-weight: 600;
+  color: #a1a1aa;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+.cb-chart__inner {
+  width: 100%;
+}
+
+.cb-chart--error {
+  padding: 10px 14px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.8em;
+  color: rgba(248, 113, 113, 0.8);
+  font-style: italic;
+}
+
+/* Recharts dark-theme overrides */
+.cb-chart .recharts-cartesian-axis-tick-value {
+  fill: #71717a;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 10px;
+}
+.cb-chart .recharts-cartesian-grid line {
+  stroke: rgba(255, 255, 255, 0.06);
+}
+.cb-chart .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: rgba(10, 20, 40, 0.95) !important;
+  border: 1px solid rgba(59, 130, 246, 0.25) !important;
+  border-radius: 6px !important;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+  font-size: 11px !important;
+  color: #e4e4e7 !important;
+}
+.cb-chart .recharts-legend-item-text {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+  font-size: 11px !important;
+  color: #a1a1aa !important;
+}

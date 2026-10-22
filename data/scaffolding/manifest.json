@@ -1,0 +1,369 @@
+{
+  "version": "1.0.0",
+  "files": [
+    {
+      "id": "user-profile",
+      "category": "global",
+      "master": "global/user-profile.md.tmpl",
+      "targets": [
+        "{agent_dir}/.claude/rules/user-profile.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "User profile — deployed to every agent"
+    },
+    {
+      "id": "claude-project-entrypoint",
+      "category": "per-agent",
+      "master": "per-model/claude/CLAUDE.md.tmpl",
+      "targets": [
+        "{agent_dir}/CLAUDE.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "Thin dedicated-workspace loader note; shared project roots remain project-owned"
+    },
+    {
+      "id": "rag-memory-rules",
+      "category": "global",
+      "master": "global/rag-memory.md",
+      "targets": [
+        "{agent_dir}/.claude/rules/rag-memory.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "Harness-neutral RAG and knowledge routing — deployed to every agent presence"
+    },
+    {
+      "id": "alignment-claude",
+      "category": "per-model",
+      "master": "per-model/claude/alignment-claude.md",
+      "targets": [
+        "{agent_dir}/.claude/rules/alignment-claude.md"
+      ],
+      "condition": "agentType:claude",
+      "overwrite": true,
+      "description": "Claude harness loader and lifecycle boundaries"
+    },
+    {
+      "id": "alignment-gemini",
+      "category": "per-model",
+      "master": "per-model/gemini/alignment-gemini.md",
+      "targets": [
+        "{agent_dir}/alignment-gemini.md"
+      ],
+      "condition": "agentType:gemini",
+      "overwrite": true,
+      "description": "Gemini harness output, attachment, and import boundaries"
+    },
+    {
+      "id": "alignment-grok",
+      "category": "per-model",
+      "master": "per-model/grok/alignment-grok.md",
+      "targets": [
+        "{agent_dir}/alignment-grok.md"
+      ],
+      "condition": "agentType:grok",
+      "overwrite": true,
+      "description": "Grok harness delivery and effective-loader boundaries"
+    },
+    {
+      "id": "gemini-md",
+      "category": "per-model",
+      "master": "per-model/gemini/GEMINI.md.tmpl",
+      "targets": [
+        "{agent_dir}/GEMINI.md"
+      ],
+      "condition": "agentType:gemini",
+      "overwrite": true,
+      "description": "Gemini CLI context file — all agents with Gemini access"
+    },
+    {
+      "id": "grok-md",
+      "category": "per-model",
+      "master": "per-model/grok/GROK.md.tmpl",
+      "targets": [
+        "{agent_dir}/GROK.md"
+      ],
+      "condition": "agentType:grok",
+      "overwrite": true,
+      "description": "Grok context file — all agents with Grok access"
+    },
+    {
+      "id": "alignment-codex",
+      "category": "per-model",
+      "master": "per-model/codex/alignment-codex.md",
+      "targets": [
+        "{agent_dir}/alignment-codex.md"
+      ],
+      "condition": "agentType:codex",
+      "overwrite": true,
+      "description": "Codex harness sandbox, proportional-engineering, delivery, and session boundaries"
+    },
+    {
+      "id": "agents-md",
+      "category": "per-model",
+      "master": "per-model/codex/AGENTS.md.tmpl",
+      "targets": [
+        "{agent_dir}/AGENTS.md"
+      ],
+      "condition": "agentType:codex",
+      "overwrite": true,
+      "description": "Codex CLI context file — all agents with Codex access (loads .claude/rules + alignment-codex)"
+    },
+    {
+      "id": "codex-config-toml",
+      "category": "per-model",
+      "master": "per-model/codex/config.toml.tmpl",
+      "targets": [
+        "~/.codex/agentchat.config.toml"
+      ],
+      "condition": "agentType:codex",
+      "overwrite": false,
+      "description": "Seed the Codex v2 named AgentChat profile. Existing user-tuned profile files are preserved; sync also removes the obsolete AgentChat selector/table from the base config."
+    },
+    {
+      "id": "workspace-md",
+      "category": "per-agent",
+      "master": "per-agent/Workspace.md.tmpl",
+      "targets": [
+        "{agent_dir}/.claude/rules/Workspace.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "Agent workspace paths — rendered with agent-specific directories"
+    },
+    {
+      "id": "startup-md",
+      "category": "per-agent",
+      "master": "per-agent/startup.md.tmpl",
+      "targets": [
+        "{agent_dir}/.claude/rules/startup.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "Session startup checklist — agent-specific log paths"
+    },
+    {
+      "id": "agent-memory-md",
+      "category": "per-agent",
+      "master": "per-agent/MEMORY.md",
+      "targets": [
+        "{agent_memory_path}"
+      ],
+      "condition": "always",
+      "overwrite": false,
+      "description": "Seed persistent memory when absent; preserve canonical or existing workspace-local memory."
+    },
+    {
+      "id": "agent-system-ownership",
+      "category": "per-agent",
+      "master": "per-agent/SystemOwnership.json",
+      "targets": [
+        "{agent_dir}/SystemOwnership.json"
+      ],
+      "condition": "always",
+      "overwrite": false,
+      "description": "Seed an empty ownership declaration; assignments remain agent/user-owned."
+    },
+    {
+      "id": "expertise-md",
+      "category": "per-agent",
+      "master": "per-agent/Expertise.md",
+      "targets": [
+        "{agent_dir}/Expertise.md"
+      ],
+      "condition": "always",
+      "overwrite": false,
+      "description": "Expertise log — deployed once, never overwritten (agent-owned). Lives at agent root (post-SYSTEM_PROMPT_DYNAMIC_BOUNDARY) for prompt-cache stability."
+    },
+    {
+      "id": "devflow-md",
+      "category": "global",
+      "master": "global/DEVFLOW.md",
+      "targets": [
+        "{agent_dir}/.claude/rules/DEVFLOW.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "DevFlow platform reference — collab API, sprints, services, cron, AI tasks"
+    },
+    {
+      "id": "handoff-md",
+      "category": "per-agent",
+      "master": "per-agent/handoff.md",
+      "targets": [
+        "{agent_dir}/logs/handoff.md"
+      ],
+      "condition": "always",
+      "overwrite": false,
+      "description": "Session handoff stub — deployed once; preserved during ordinary turns and replaced atomically before compaction"
+    },
+    {
+      "id": "tdd-methodology",
+      "category": "global",
+      "master": "global/tdd-methodology.md",
+      "targets": [
+        "{agent_dir}/.claude/rules/tdd-methodology.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "Compact router to the on-demand methodology skill"
+    },
+    {
+      "id": "verification-before-completion",
+      "category": "global",
+      "master": "global/verification-before-completion.md",
+      "targets": [
+        "{agent_dir}/.claude/rules/verification-before-completion.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "Compact router to proportionate verification guidance"
+    },
+    {
+      "id": "systematic-debugging",
+      "category": "global",
+      "master": "global/systematic-debugging.md",
+      "targets": [
+        "{agent_dir}/.claude/rules/systematic-debugging.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "Compact router to debugging guidance in the methodology skill"
+    },
+    {
+      "id": "task-discipline",
+      "category": "global",
+      "master": "global/task-discipline.md",
+      "targets": [
+        "{agent_dir}/.claude/rules/task-discipline.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "Compact router to board and task-discipline guidance"
+    },
+    {
+      "id": "channel-communication",
+      "category": "global",
+      "master": "global/channel-communication.md",
+      "targets": [
+        "{agent_dir}/.claude/rules/channel-communication.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "Outcome-oriented channel communication backed by DevFlow records"
+    },
+    {
+      "id": "code-review-process",
+      "category": "global",
+      "master": "global/code-review-process.md",
+      "targets": [
+        "{agent_dir}/.claude/rules/code-review-process.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "Compact router to the on-demand code-review skill"
+    },
+    {
+      "id": "base-role-boilerplate",
+      "category": "global",
+      "master": "global/base-role-boilerplate.md",
+      "targets": [
+        "{agent_dir}/.claude/rules/base-role-boilerplate.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "Compact shared operating agreement for autonomy, scope, evidence, communication, and safety"
+    },
+    {
+      "id": "mcp-outlook",
+      "category": "global",
+      "master": "global/mcp-outlook.json",
+      "targets": [
+        "{agent_dir}/.mcp.json"
+      ],
+      "condition": "always",
+      "overwrite": false,
+      "description": "Outlook MCP seed — shared HTTP service; sync migrates only the managed Outlook entry and preserves other MCP servers"
+    },
+    {
+      "id": "frontend-aesthetics-block",
+      "category": "global",
+      "master": "global/frontend-aesthetics-block.md",
+      "targets": [
+        "{agent_dir}/.claude/rules/frontend-aesthetics-block.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "Compact router to on-demand frontend aesthetics guidance"
+    },
+    {
+      "id": "approval-protocol",
+      "category": "global",
+      "master": "global/approval-protocol.md",
+      "targets": [
+        "{agent_dir}/.claude/rules/approval-protocol.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "Authorization protocol: direct assignments authorize reversible in-scope work; separate approval is reserved for unrequested destructive or external-live operations"
+    },
+    {
+      "id": "computer-use",
+      "category": "global",
+      "master": "global/computer-use.md",
+      "targets": [
+        "{agent_dir}/.claude/rules/computer-use.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "Compact entry point to canonical /browser routing and the desktop adapter"
+    },
+    {
+      "id": "skill-index",
+      "category": "global",
+      "master": "global/skill-index.md",
+      "targets": [
+        "{agent_dir}/.claude/rules/skill-index.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "Stable skill discovery route; live inventory comes from data/skills"
+    },
+    {
+      "id": "alignment-antigravity",
+      "category": "per-model",
+      "master": "per-model/antigravity/alignment-antigravity.md",
+      "targets": [
+        "{agent_dir}/alignment-antigravity.md"
+      ],
+      "condition": "agentType:antigravity",
+      "overwrite": true,
+      "description": "Antigravity harness output, attachment, and import boundaries"
+    },
+    {
+      "id": "antigravity-gemini-md",
+      "category": "per-model",
+      "master": "per-model/antigravity/GEMINI.md.tmpl",
+      "targets": [
+        "{agent_dir}/GEMINI.md"
+      ],
+      "condition": "agentType:antigravity",
+      "overwrite": true,
+      "description": "Antigravity CLI context file — replaces legacy gemini-md for Antigravity-backed agents"
+    },
+    {
+      "id": "mission",
+      "category": "global",
+      "master": "global/mission.md",
+      "targets": [
+        "{agent_dir}/.claude/rules/Mission.md"
+      ],
+      "condition": "channel:SG-1,Commander",
+      "overwrite": true,
+      "retireWhenUnmatched": true,
+      "description": "Shared team mission — productive initiative plus live-systems guardrail. Scoped to SG-1 + Commander channels only."
+    }
+  ]
+}

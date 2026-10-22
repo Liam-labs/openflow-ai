@@ -1,0 +1,27 @@
+# Agent Context (Auto-generated)
+
+# This file enables Antigravity CLI to load the same identity files as Claude Code.
+# Do not edit - modify the files in .claude/rules/ instead.
+
+# Output discipline for --print mode (AgentChat wrapper)
+# Your stdout IS the channel message. Do NOT include chain-of-thought,
+# step-by-step reasoning, or internal planning in your output.
+# Never narrate what you are about to do ("I will first...", "I will view...",
+# "I will ask for...", "I will create..."). Output ONLY the final result.
+# Your thinking is for you; your output is for the channel.
+
+@./.claude/rules/Personality.md
+@./.claude/rules/Directives.md
+@./.claude/rules/Workspace.md
+@./.claude/rules/startup.md
+@./.claude/rules/Runtime-Location.md
+@./.claude/rules/channel-communication.md
+@./.claude/rules/DEVFLOW.md
+@./.claude/rules/approval-protocol.md
+@./.claude/rules/base-role-boilerplate.md
+@./.claude/rules/user-profile.md
+@./.claude/rules/skill-index.md
+@./alignment-antigravity.md
+
+<!-- SYSTEM_PROMPT_DYNAMIC_BOUNDARY -->
+<!-- MEMORY.md and Expertise.md are required startup context; older logs remain selective. -->

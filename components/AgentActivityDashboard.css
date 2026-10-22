@@ -1,0 +1,497 @@
+
+/* ============================================================
+   Agent Activity Dashboard (aad-*)
+   Command Center design system — System 1 from spec
+   ============================================================ */
+
+/* Design tokens */
+.aad-root {
+  --cc-bg-primary:       #09090b;
+  --cc-bg-surface:       #111114;
+  --cc-bg-surface-hover: #18181c;
+  --cc-bg-surface-raised:#1c1c21;
+  --cc-bg-inset:         #06060a;
+  --cc-text-primary:     #e4e4e7;
+  --cc-text-secondary:   #a1a1aa;
+  --cc-text-muted:       #63636e;
+  --cc-text-accent:      #22d3ee;
+  --cc-accent:           #22d3ee;
+  --cc-accent-hover:     #67e8f9;
+  --cc-accent-muted:     rgba(34,211,238,0.15);
+  --cc-accent-border:    rgba(34,211,238,0.25);
+  --cc-success:          #34d399;
+  --cc-warning:          #fbbf24;
+  --cc-error:            #f87171;
+  --cc-info:             #60a5fa;
+  --cc-border:           rgba(255,255,255,0.06);
+  --cc-border-active:    rgba(34,211,238,0.3);
+  --cc-border-subtle:    rgba(255,255,255,0.03);
+  --cc-shadow-sm:        0 1px 2px rgba(0,0,0,0.4);
+  --cc-shadow-md:        0 4px 12px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03);
+  --cc-shadow-lg:        0 12px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.05) inset;
+  --cc-radius-sm:        4px;
+  --cc-radius-md:        6px;
+  --cc-radius-lg:        8px;
+  --cc-radius-xl:        12px;
+  --cc-ease:             cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Page */
+.aad-root {
+  min-height: 100vh;
+  background: var(--cc-bg-primary);
+  color: var(--cc-text-primary);
+  font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+  font-size: 13.5px;
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Page-load animation */
+@keyframes aad-enter {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.aad-fade-in {
+  animation: aad-enter 300ms var(--cc-ease) both;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+.aad-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.aad-header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.aad-title {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: -0.01em;
+  color: var(--cc-text-primary);
+  margin: 0;
+}
+.aad-title-sub {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cc-text-muted);
+}
+.aad-time-nav {
+  display: flex;
+  gap: 4px;
+  background: var(--cc-bg-surface);
+  border: 1px solid var(--cc-border);
+  border-radius: var(--cc-radius-md);
+  padding: 3px;
+}
+.aad-time-btn {
+  padding: 5px 12px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--cc-text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: color 100ms, background 100ms;
+}
+.aad-time-btn:hover { color: var(--cc-text-secondary); }
+.aad-time-btn--active {
+  background: var(--cc-bg-surface-raised);
+  color: var(--cc-accent);
+  border: 1px solid var(--cc-accent-border);
+}
+.aad-time-btn:focus-visible { outline: 2px solid var(--cc-accent); outline-offset: 2px; }
+
+/* ── Bento grid ──────────────────────────────────────────── */
+.aad-bento {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* ── Hero metric ─────────────────────────────────────────── */
+.aad-hero {
+  background: var(--cc-bg-surface);
+  border: 1px solid var(--cc-border);
+  border-radius: var(--cc-radius-xl);
+  padding: 24px;
+  box-shadow: 0 0 20px rgba(34,211,238,0.1); /* Signature glow — primary metric only */
+  transition: box-shadow 180ms var(--cc-ease);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.aad-hero:hover { box-shadow: 0 0 32px rgba(34,211,238,0.15), var(--cc-shadow-md); }
+
+.aad-hero-label {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cc-text-muted);
+}
+.aad-hero-metric {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.aad-hero-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 48px;
+  letter-spacing: -0.01em;
+  color: var(--cc-accent);
+  line-height: 1;
+}
+.aad-hero-unit {
+  font-size: 16px;
+  color: var(--cc-text-secondary);
+  font-weight: 500;
+}
+.aad-hero-meta {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.aad-hero-delta {
+  font-size: 11.5px;
+  color: var(--cc-success);
+  font-weight: 500;
+}
+.aad-hero-range {
+  font-size: 11.5px;
+  color: var(--cc-text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.aad-sparkline { display: block; margin-top: 4px; }
+
+/* ── Sprint card ─────────────────────────────────────────── */
+.aad-sprint {
+  background: var(--cc-bg-surface);
+  border: 1px solid var(--cc-border);
+  border-radius: var(--cc-radius-xl);
+  padding: 24px;
+  transition: box-shadow 180ms var(--cc-ease);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.aad-sprint:hover { box-shadow: var(--cc-shadow-md); }
+
+.aad-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.aad-card-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: var(--cc-text-primary);
+  margin: 0;
+}
+.aad-card-badge {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--cc-accent-muted);
+  color: var(--cc-accent);
+  border: 1px solid var(--cc-accent-border);
+}
+.aad-phases { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+
+.aad-phase-meta {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.aad-phase-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--cc-text-secondary);
+  letter-spacing: 0.04em;
+}
+.aad-phase-label {
+  font-size: 11.5px;
+  color: var(--cc-text-muted);
+}
+.aad-phase-pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  color: var(--cc-text-secondary);
+}
+.aad-phase-track {
+  height: 4px;
+  background: var(--cc-bg-inset);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.aad-phase-fill {
+  height: 100%;
+  border-radius: 2px;
+  width: 0;
+}
+.aad-sprint-footer {
+  display: flex;
+  gap: 16px;
+  padding-top: 8px;
+  border-top: 1px solid var(--cc-border-subtle);
+}
+.aad-sprint-stat {
+  font-size: 11.5px;
+  color: var(--cc-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.aad-sprint-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--cc-text-secondary);
+}
+
+/* ── Section ─────────────────────────────────────────────── */
+.aad-section { margin-top: 24px; }
+.aad-section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--cc-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 12px 0;
+}
+.aad-section-count {
+  font-size: 11.5px;
+  font-weight: 400;
+  font-family: 'IBM Plex Sans', sans-serif;
+  color: var(--cc-accent);
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--cc-accent-muted);
+  border: 1px solid var(--cc-accent-border);
+}
+
+/* ── Agent grid ──────────────────────────────────────────── */
+.aad-agent-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+/* ── Agent card ──────────────────────────────────────────── */
+.aad-agent-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--cc-bg-surface);
+  border: 1px solid var(--cc-border);
+  border-radius: var(--cc-radius-lg);
+  padding: 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: box-shadow 180ms var(--cc-ease), border-color 180ms var(--cc-ease), background 100ms;
+  animation: aad-enter 300ms var(--cc-ease) both;
+}
+.aad-agent-card:hover {
+  box-shadow: var(--cc-shadow-md);
+  background: var(--cc-bg-surface-hover);
+  border-color: rgba(255,255,255,0.1);
+}
+.aad-agent-card--expanded {
+  border-color: var(--cc-accent-border);
+  box-shadow: var(--cc-shadow-md);
+}
+.aad-agent-card:focus-visible { outline: 2px solid var(--cc-accent); outline-offset: 2px; }
+
+.aad-agent-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.aad-agent-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.aad-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.aad-agent-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--cc-text-primary);
+  letter-spacing: -0.01em;
+}
+.aad-agent-role {
+  font-size: 11.5px;
+  color: var(--cc-text-muted);
+}
+.aad-agent-count {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.aad-agent-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--cc-text-primary);
+  line-height: 1;
+}
+.aad-agent-num-label {
+  font-size: 11.5px;
+  color: var(--cc-text-muted);
+}
+
+.aad-agent-task {
+  min-height: 16px;
+  overflow: hidden;
+}
+.aad-task-text {
+  font-size: 11.5px;
+  color: var(--cc-text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.aad-task-idle {
+  font-size: 11.5px;
+  color: var(--cc-text-muted);
+  font-style: italic;
+}
+
+.aad-mini-bars { display: block; }
+
+.aad-agent-detail {
+  border-top: 1px solid var(--cc-border-subtle);
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: aad-enter 180ms var(--cc-ease) both;
+}
+.aad-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.aad-detail-label {
+  font-size: 11.5px;
+  color: var(--cc-text-muted);
+}
+.aad-detail-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  color: var(--cc-text-secondary);
+}
+
+/* ── Activity feed ───────────────────────────────────────── */
+.aad-feed {
+  background: var(--cc-bg-surface);
+  border: 1px solid var(--cc-border);
+  border-radius: var(--cc-radius-lg);
+  height: 220px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.aad-feed::-webkit-scrollbar { width: 3px; }
+.aad-feed::-webkit-scrollbar-track { background: transparent; }
+.aad-feed::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 2px; }
+
+.aad-feed-row {
+  display: grid;
+  grid-template-columns: 48px 72px 80px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--cc-border-subtle);
+  transition: background 100ms;
+}
+.aad-feed-row:hover { background: var(--cc-bg-surface-hover); }
+.aad-feed-row:last-child { border-bottom: none; }
+.aad-feed-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  color: var(--cc-text-muted);
+  letter-spacing: 0.02em;
+}
+.aad-feed-agent {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cc-text-secondary);
+}
+.aad-feed-action {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.aad-feed-target {
+  font-size: 12px;
+  color: var(--cc-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .aad-bento { grid-template-columns: 1fr; }
+  .aad-agent-grid { grid-template-columns: repeat(2, 1fr); }
+  .aad-hero-number { font-size: 40px; }
+}
+
+@media (max-width: 768px) {
+  .aad-root { padding: 16px; }
+  .aad-title { font-size: 22px; }
+  .aad-agent-grid { grid-template-columns: repeat(2, 1fr); }
+  .aad-feed-row { grid-template-columns: 48px 60px 1fr; }
+  .aad-feed-action { display: none; }
+  .aad-hero-number { font-size: 36px; }
+}
+
+@media (max-width: 480px) {
+  .aad-root { padding: 12px; }
+  .aad-header { flex-direction: column; align-items: flex-start; }
+  .aad-agent-grid { grid-template-columns: 1fr; }
+  .aad-feed-row { grid-template-columns: 48px 1fr; }
+  .aad-feed-agent { display: none; }
+  .aad-hero-number { font-size: 32px; }
+}

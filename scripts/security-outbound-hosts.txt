@@ -1,0 +1,31 @@
+# External hosts the source code can contact, and why. scripts/security-outbound.py --fail-on-new fails for any host not listed here.
+# "only when you configure it" means nothing contacts the host until the user adds that integration or key.
+api.anthropic.com        # only when you configure it: key test and the Anthropic provider
+api.deepseek.com         # only when you configure it: DeepSeek provider and the prompt-enhance helper
+api.x.ai                 # only when you configure it: xAI provider
+x.ai                     # a link in a comment/help text
+openrouter.ai            # only when you configure it: key test
+api.supabase.com         # only when you configure it: the Supabase tools use your own Supabase account
+supabase.com             # links
+xxx.supabase.co          # placeholder shown in the UI
+xyz.supabase.co          # placeholder shown in the UI
+slack.com                # only when you configure it: the Slack bridge (api.slack.com is its API)
+api.slack.com            # links in the Slack setup guide
+graph.microsoft.com      # only when you configure it: the Teams bridge
+login.microsoftonline.com  # only when you configure it: the Teams bridge sign-in
+api.botframework.com     # only when you configure it: Teams bot token check
+smba.trafficmanager.net  # only when you configure it: Teams bot service address allow-list
+sts.windows.net          # only when you configure it: Teams token issuer check
+adaptivecards.io         # a schema address inside Teams card JSON; nothing is fetched
+portal.azure.com         # link in the Teams setup guide
+accounts.google.com      # link
+chatgpt.com              # link in the sign-in help text
+github.com               # links
+ollama.com               # links; models are pulled only when you press the button
+ollama.ai                # links
+registry.ollama.ai       # only when you press "pull" for a local model
+nodejs.org               # link shown by the setup script when Node is missing
+raw.githubusercontent.com  # the nvm install command the setup script prints; it is not run for you
+www.python.org           # link
+n8n.yourdomain.com       # placeholder shown in the UI
+your-devflow-url.ngrok.io  # placeholder shown in the UI

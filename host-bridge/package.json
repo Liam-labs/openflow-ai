@@ -1,0 +1,18 @@
+{
+  "name": "openflow-host-bridge",
+  "version": "1.0.0",
+  "description": "Host-bridge daemon for DevFlow — isolates system-level operations",
+  "main": "src/server.ts",
+  "scripts": {
+    "start": "npx tsx src/server.ts",
+    "dev": "npx tsx --watch src/server.ts"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.21.0"
+  }
+}

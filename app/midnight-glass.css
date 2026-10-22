@@ -1,0 +1,178 @@
+/* Midnight Glass (the approved design kit v1.0.0): data/design-kits/midnight-glass.
+   Copy of css/tokens.css + css/components.css with two scoping changes, because DevFlow already uses --accent, --card,
+   --muted, --text and others globally: tokens live on .mg-scope instead of :root, and the focus ring is scoped to
+   .mg-scope / .mg-menu. Fonts are served from /fonts. To update, re-copy from the kit and repeat both changes. */
+/* Midnight Glass tokens. Generated from tokens/tokens.json by tokens/build-tokens.js. Do not edit by hand. */
+@font-face{font-family:'Satoshi';font-weight:400;font-style:normal;font-display:swap;src:url('/fonts/Satoshi-Regular.woff2') format('woff2')}
+@font-face{font-family:'Satoshi';font-weight:500;font-style:normal;font-display:swap;src:url('/fonts/Satoshi-Medium.woff2') format('woff2')}
+@font-face{font-family:'Satoshi';font-weight:700;font-style:normal;font-display:swap;src:url('/fonts/Satoshi-Bold.woff2') format('woff2')}
+.mg-scope{
+  --bg:#040816;
+  --glass:rgba(9,17,40,0.66);
+  --menu-top:#0d1838;
+  --menu-bottom:#060c1e;
+  --card:#0a1330;
+  --navy:#14306e;
+  --line:rgba(70,135,255,0.16);
+  --line-strong:rgba(90,150,255,0.3);
+  --hover:rgba(70,135,255,0.09);
+  --selected:rgba(59,140,255,0.2);
+  --text:#ffffff;
+  --muted:#8ea3d0;
+  --faint:#6a7fae;
+  --accent:#3b8cff;
+  --accent-soft:#6db0ff;
+  --accent-glint:#a9d0ff;
+  --accent-tint:rgba(59,140,255,0.14);
+  --accent-edge:rgba(110,170,255,0.22);
+  --danger:#ff6b7a;
+  --danger-tint:rgba(255,107,122,0.14);
+  --orb-indigo:#5b5bf0;
+  --orb-sky:#0ea5e9;
+  --on-light:var(--bg);
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:24px;
+  --space-6:40px;
+  --radius-sm:6px;
+  --radius-md:10px;
+  --radius-lg:12px;
+  --radius-xl:14px;
+  --radius-menu:18px;
+  --radius-panel:20px;
+  --radius-pill:999px;
+  --shadow-panel:0 40px 90px -30px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.06);
+  --shadow-menu:0 30px 70px -12px rgba(0,0,0,0.9), 0 0 44px -14px rgba(59,140,255,0.6), inset 0 1px 0 rgba(255,255,255,0.08);
+  --shadow-glow:0 0 14px rgba(59,140,255,0.7);
+  --blur-glass:26px;
+  --blur-menu:18px;
+  --blur-orb:46px;
+  --font-sans:"Satoshi", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:dark;
+}
+
+/* Midnight Glass components. Values come from tokens.css; class prefix is mg-. */
+
+/* ---------- GlassPanel + backdrop ---------- */
+.mg-panel{position:relative;display:flex;flex-direction:column;width:312px;max-width:100%;overflow:hidden;
+  font-family:var(--font-sans);color:var(--text);font-size:13.5px;line-height:20px;font-weight:500;
+  background:var(--glass);border:1px solid var(--line);border-radius:var(--radius-panel);
+  -webkit-backdrop-filter:blur(var(--blur-glass)) saturate(150%);backdrop-filter:blur(var(--blur-glass)) saturate(150%);
+  box-shadow:var(--shadow-panel)}
+.mg-panel>*{position:relative;z-index:1}
+.mg-orbs{position:absolute;inset:0;overflow:hidden;pointer-events:none;border-radius:inherit;animation:mg-hue 30s ease-in-out infinite alternate}
+.mg-panel>.mg-orbs{position:absolute;z-index:0}
+.mg-orbs i{position:absolute;display:block;border-radius:50%;filter:blur(var(--blur-orb));opacity:.55;will-change:transform}
+.mg-orbs i:nth-child(1){width:230px;height:230px;left:-70px;top:-60px;background:radial-gradient(circle,var(--accent),transparent 70%);animation:mg-d1 22s ease-in-out infinite alternate,mg-pulse 8s ease-in-out infinite}
+.mg-orbs i:nth-child(2){width:220px;height:220px;right:-80px;top:230px;background:radial-gradient(circle,var(--orb-indigo),transparent 70%);animation:mg-d2 26s ease-in-out infinite alternate,mg-pulse 11s ease-in-out -3s infinite}
+.mg-orbs i:nth-child(3){width:250px;height:250px;left:-90px;bottom:60px;background:radial-gradient(circle,var(--orb-sky),transparent 70%);animation:mg-d3 24s ease-in-out infinite alternate,mg-pulse 9s ease-in-out -5s infinite}
+.mg-orbs i:nth-child(4){width:200px;height:200px;right:-40px;bottom:-60px;background:radial-gradient(circle,var(--accent),transparent 70%);animation:mg-d4 28s ease-in-out infinite alternate,mg-pulse 12s ease-in-out -7s infinite}
+@keyframes mg-hue{from{filter:hue-rotate(-20deg)}to{filter:hue-rotate(24deg)}}
+@keyframes mg-pulse{0%,100%{opacity:.22;scale:.85}50%{opacity:.78;scale:1.3}}
+@keyframes mg-d1{to{transform:translate(170px,150px)}}
+@keyframes mg-d2{to{transform:translate(-180px,-170px)}}
+@keyframes mg-d3{to{transform:translate(190px,-140px)}}
+@keyframes mg-d4{to{transform:translate(-160px,-190px)}}
+.mg-panel__top{display:flex;flex-direction:column;gap:var(--space-3);padding:18px 14px 6px}
+.mg-panel__scroll{flex:1;min-height:0;overflow-y:auto;padding:0 var(--space-2) 56px;scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
+.mg-panel>.mg-panel__fade{position:absolute;z-index:2;left:0;right:0;bottom:0;height:64px;pointer-events:none;background:linear-gradient(transparent,var(--menu-bottom))}
+.mg-title{display:flex;align-items:center;justify-content:space-between;padding:0 var(--space-1)}
+.mg-title h1{margin:0;font-size:15px;line-height:20px;font-weight:700;letter-spacing:-.01em}
+.mg-pill{display:inline-flex;align-items:center;gap:6px;margin-top:3px;padding:3px 8px 3px 7px;border:1px solid var(--line);border-radius:var(--radius-pill);background:var(--accent-tint);font-size:11px;line-height:14px;color:var(--text)}
+.mg-iconbtn{width:28px;height:28px;display:inline-grid;place-items:center;border:0;border-radius:var(--radius-md);background:none;color:var(--muted);font:inherit;cursor:pointer}
+.mg-iconbtn:hover{background:var(--hover);color:var(--text)}
+
+/* ---------- SearchField + Commander ---------- */
+.mg-search{display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--line);border-radius:var(--radius-md);background:rgba(0,0,0,.28);color:var(--muted);font-size:13px;line-height:18px}
+.mg-kbd{margin-left:auto;padding:1px 5px;border:1px solid var(--line);border-radius:5px;color:var(--faint);font-size:10.5px;line-height:14px}
+.mg-cmd{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--accent-edge);border-radius:var(--radius-lg);background:linear-gradient(90deg,var(--accent-tint),transparent);color:var(--text);font-size:13.5px;font-weight:500;cursor:pointer}
+.mg-cmd svg{color:var(--accent-soft)}
+.mg-cmd:hover{border-color:var(--accent)}
+
+/* ---------- SectionHeader ---------- */
+.mg-sec{margin-top:var(--space-4)}
+.mg-sec__hdr{display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:var(--radius-sm);color:var(--muted);font-size:11px;line-height:14px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;user-select:none}
+.mg-sec__hdr:hover{color:var(--text)}
+.mg-sec__icon{width:15px;height:15px;flex:none;color:var(--faint);transition:color .2s,filter .2s}
+.mg-sec--open .mg-sec__icon,.mg-sec__icon--on{color:var(--accent-soft);filter:drop-shadow(0 0 5px rgba(59,140,255,.7))}
+.mg-sec__count{margin-left:auto;display:flex;align-items:center;gap:6px;color:var(--faint);font-size:11px;letter-spacing:0;text-transform:none;font-variant-numeric:tabular-nums}
+.mg-flag{width:5px;height:5px;border-radius:50%;background:var(--accent-soft);box-shadow:0 0 8px var(--accent-soft)}
+.mg-sec__body{display:grid;grid-template-rows:1fr;transition:grid-template-rows .22s ease}
+.mg-sec__body>div{overflow:hidden;min-height:0}
+.mg-sec--collapsed .mg-sec__body{grid-template-rows:0fr}
+
+/* ---------- ChannelRow ---------- */
+.mg-row{position:relative;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-md);color:var(--text);font-size:13.5px;line-height:20px;font-weight:500;cursor:pointer;transition:background .15s,transform .15s}
+.mg-row:hover{background:var(--hover);transform:translateX(2px)}
+.mg-row--selected{background:var(--selected)}
+.mg-row--selected::before{content:"";position:absolute;left:-8px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:linear-gradient(var(--accent),var(--accent-soft));box-shadow:var(--shadow-glow)}
+.mg-row__name{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.mg-row__acts{order:9;display:flex;gap:2px;max-width:0;margin-left:-4px;overflow:hidden;opacity:0;transition:max-width .2s ease,opacity .15s,margin .2s}
+.mg-row:hover .mg-row__acts,.mg-row:focus-within .mg-row__acts,.mg-row--hover .mg-row__acts,.mg-row--menu-open .mg-row__acts{max-width:56px;margin-left:2px;opacity:1}
+.mg-act{width:24px;height:24px;flex:none;display:grid;place-items:center;border:0;border-radius:7px;background:none;color:var(--text);opacity:.75;cursor:pointer}
+.mg-act:hover{background:rgba(255,255,255,.12);opacity:1}
+.mg-act--on{color:var(--accent-soft);opacity:1}
+.mg-act--on svg{fill:currentColor}
+.mg-row--voice::after{content:"voice live";order:2;max-width:0;overflow:hidden;white-space:nowrap;opacity:0;color:var(--accent-soft);font-size:10px;font-weight:500;letter-spacing:.04em;transition:opacity .2s,max-width .25s}
+.mg-row--voice:hover::after,.mg-row--hover.mg-row--voice::after{max-width:64px;opacity:1}
+.mg-row--voice .mg-voice{order:3}
+.mg-nest{margin-left:15px;padding-left:8px;border-left:1px solid var(--line)}
+.mg-more{padding:7px 10px;border-radius:var(--radius-md);color:var(--muted);font-size:12px;line-height:16px;cursor:pointer}
+.mg-more:hover{background:var(--hover);color:var(--text)}
+
+/* ---------- Status indicators ---------- */
+.mg-voice{display:inline-flex;align-items:center;gap:2px;height:16px;flex:none}
+.mg-voice i{width:2px;height:14px;border-radius:2px;background:var(--accent);box-shadow:0 0 6px rgba(59,140,255,.7);animation:mg-eq 1.1s ease-in-out infinite}
+.mg-voice i:nth-child(1){--lo:.25;--hi:.5}
+.mg-voice i:nth-child(2){--lo:.3;--hi:.85;animation-delay:-.3s;animation-duration:.9s}
+.mg-voice i:nth-child(3){--lo:.2;--hi:1;animation-delay:-.7s;animation-duration:1.2s}
+.mg-voice i:nth-child(4){--lo:.3;--hi:.8;animation-delay:-.5s;animation-duration:.8s}
+.mg-voice i:nth-child(5){--lo:.25;--hi:.45;animation-delay:-.2s}
+@keyframes mg-eq{0%,100%{transform:scaleY(var(--lo))}50%{transform:scaleY(var(--hi))}}
+.mg-ring{width:8px;height:8px;flex:none;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--accent-soft);animation:mg-ring 2.2s infinite}
+@keyframes mg-ring{0%{box-shadow:inset 0 0 0 1.5px var(--accent-soft),0 0 0 0 rgba(109,176,255,.5)}70%,100%{box-shadow:inset 0 0 0 1.5px var(--accent-soft),0 0 0 7px rgba(109,176,255,0)}}
+.mg-dot-error{width:7px;height:7px;flex:none;border-radius:50%;background:var(--danger);box-shadow:0 0 8px rgba(255,107,122,.6)}
+.mg-badge{padding:1px 6px;border-radius:7px;background:var(--text);color:var(--on-light);font-size:11px;line-height:14px;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ---------- NeedsYouCard ---------- */
+@property --mg-ang{syntax:"<angle>";inherits:false;initial-value:0deg}
+.mg-attn{display:flex;align-items:center;gap:11px;padding:12px;border:1px solid transparent;border-radius:var(--radius-xl);cursor:pointer;
+  background:linear-gradient(var(--card),var(--card)) padding-box,conic-gradient(from var(--mg-ang),var(--accent-tint),var(--accent),var(--accent-glint),var(--accent),var(--accent-tint)) border-box;
+  box-shadow:0 0 28px -8px rgba(59,140,255,.6);animation:mg-spin 5s linear infinite}
+@keyframes mg-spin{to{--mg-ang:360deg}}
+.mg-attn__name{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--text);font-size:13.5px;font-weight:700}
+.mg-attn__age{color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+
+/* ---------- ContextMenu ---------- */
+.mg-menu{width:276px;padding:8px;font-family:var(--font-sans);color:var(--text);
+  background:linear-gradient(180deg,var(--menu-top),var(--menu-bottom));border:1px solid var(--line-strong);border-radius:var(--radius-menu);
+  box-shadow:var(--shadow-menu);transform-origin:top right;animation:mg-pop .16s ease-out}
+@keyframes mg-pop{from{opacity:0;transform:scale(.94) translateY(-4px)}}
+.mg-menu__head{display:flex;align-items:center;gap:10px;margin-bottom:6px;padding:4px 8px 10px;border-bottom:1px solid var(--line)}
+.mg-menu__head b{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:14px;font-weight:700}
+.mg-menu__head small{margin-left:auto;flex:none;padding:3px 9px;border:1px solid var(--line-strong);border-radius:var(--radius-pill);background:var(--accent-tint);color:var(--muted);font-size:11px;font-weight:500}
+.mg-mi{display:flex;align-items:center;gap:12px;width:100%;padding:7px 8px;border:0;border-radius:var(--radius-lg);background:none;color:var(--text);font:500 13.5px/20px var(--font-sans);text-align:left;cursor:pointer}
+.mg-mi:hover,.mg-mi:focus-visible{background:var(--accent-tint);outline:none}
+.mg-ti{width:30px;height:30px;flex:none;display:grid;place-items:center;border-radius:9px;color:var(--accent-soft);background:linear-gradient(180deg,var(--accent-tint),rgba(59,140,255,.06));box-shadow:inset 0 0 0 1px var(--accent-edge)}
+.mg-tx{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25;white-space:nowrap}
+.mg-tx small{margin-top:1px;overflow:hidden;color:var(--muted);font-size:12px;font-weight:400;text-overflow:ellipsis}
+.mg-mi--danger{color:var(--danger)}
+.mg-mi--danger .mg-ti{color:var(--danger);background:var(--danger-tint);box-shadow:inset 0 0 0 1px rgba(255,107,122,.28)}
+.mg-mi--danger:hover{background:var(--danger-tint)}
+.mg-menu hr{height:1px;margin:7px 4px;border:0;background:linear-gradient(90deg,transparent,var(--line-strong),transparent)}
+.mg-label{padding:6px 8px 8px;color:var(--muted);font-size:11px;line-height:14px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+.mg-chips{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 4px 2px}
+.mg-chip{display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid var(--line);border-radius:var(--radius-lg);background:rgba(255,255,255,.04);color:var(--text);font:500 13px/16px var(--font-sans);white-space:nowrap;cursor:pointer}
+.mg-chip::before{content:"";width:6px;height:6px;flex:none;border-radius:50%;background:rgba(255,255,255,.25)}
+.mg-chip:hover{background:var(--accent-tint)}
+.mg-chip--on{border-color:var(--accent);background:var(--selected)}
+.mg-chip--on::before{background:var(--accent-soft);box-shadow:0 0 8px var(--accent-soft)}
+.mg-switch{position:relative;width:36px;height:21px;flex:none;border-radius:var(--radius-pill);background:rgba(255,255,255,.14);transition:background .2s,box-shadow .2s}
+.mg-switch::after{content:"";position:absolute;top:2.5px;left:2.5px;width:16px;height:16px;border-radius:50%;background:var(--text);transition:transform .2s}
+.mg-switch--on{background:var(--accent);box-shadow:var(--shadow-glow)}
+.mg-switch--on::after{transform:translateX(15px)}
+
+.mg-scope :focus-visible,.mg-menu :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.mg-orbs,.mg-orbs i,.mg-voice i,.mg-ring,.mg-attn,.mg-menu{animation:none}.mg-row,.mg-sec__body,.mg-row__acts{transition:none}}

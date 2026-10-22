@@ -1,0 +1,24 @@
+# Agent Context (Auto-generated)
+
+# This file enables OpenAI Codex CLI to load the same identity files as Claude Code.
+# Do not edit — modify the files in .claude/rules/ instead.
+#
+# Codex loads AGENTS.md from the working directory at session start. Our policy is that
+# the canonical identity lives under .claude/rules/ (one source of truth across Claude /
+# Gemini / Grok / Codex). Codex must load those files at session start.
+
+@./.claude/rules/Personality.md
+@./.claude/rules/Directives.md
+@./.claude/rules/Workspace.md
+@./.claude/rules/startup.md
+@./.claude/rules/Runtime-Location.md
+@./alignment-codex.md
+
+<!-- SYSTEM_PROMPT_DYNAMIC_BOUNDARY -->
+<!-- MEMORY.md and Expertise.md are required startup context; older logs remain selective. -->
+
+## Codex-Specific Bootstrap
+
+If the runtime does not resolve `@./` includes, read the listed files once at
+startup. Follow `startup.md`: load the current handoff, MEMORY.md, Expertise.md,
+and ownership context; read older logs only when the active task needs them.

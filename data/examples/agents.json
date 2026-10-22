@@ -1,0 +1,45 @@
+{
+  "_comment": "The starter team offered by the first-run wizard. Plain data: name, role (a slug from data/roles/roles.json), personality (a file in data/roles/personalities/), whether it is ticked by default, and a first message that proves the agent answers. The names, roles and personalities are only a starting point: change any of them later from the roster in the app. Nothing here is specific to any runtime; the wizard fills in the runtime and model the user chose.",
+  "agents": [
+    {
+      "name": "Jack",
+      "roleSlug": "team-lead",
+      "personality": "Jack",
+      "default": true,
+      "summary": "Team lead. Sets the goal, splits the work and keeps everyone on it.",
+      "firstMessage": "Hello Jack. In two sentences, what is your job on this team and what would you do first for me?"
+    },
+    {
+      "name": "McKay",
+      "roleSlug": "backend-dev",
+      "personality": "McKay",
+      "default": true,
+      "summary": "Backend developer. Writes and tests code in the project folder you give it.",
+      "firstMessage": "Hello McKay. Look at the project folder and tell me, in three lines, what it is and how you would run it."
+    },
+    {
+      "name": "Heimdall",
+      "roleSlug": "researcher",
+      "personality": "Heimdall",
+      "default": true,
+      "summary": "Researcher. Reads and researches. Cannot edit files, so it is the safe one to try first.",
+      "firstMessage": "Hello Heimdall. In two sentences, what can you do for me here, and what can't you do?"
+    },
+    {
+      "name": "Samantha",
+      "roleSlug": "architect",
+      "personality": "Samantha",
+      "default": false,
+      "summary": "Architect. Plans the work before it is built and settles design questions.",
+      "firstMessage": "Hello Samantha. In two sentences, how would you start planning a new project with me?"
+    },
+    {
+      "name": "Siler",
+      "roleSlug": "frontend-dev",
+      "personality": "Siler",
+      "default": false,
+      "summary": "Frontend developer. Builds and checks what people see and touch.",
+      "firstMessage": "Hello Siler. In two sentences, what do you check before you call a screen finished?"
+    }
+  ]
+}

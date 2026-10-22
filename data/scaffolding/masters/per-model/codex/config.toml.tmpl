@@ -1,0 +1,32 @@
+# Codex Profile — agentchat
+#
+# Named profile loaded by `codex --profile agentchat` (Codex CLI 0.144+).
+# Deployed to ~/.codex/agentchat.config.toml as a seed-only file: an existing
+# user-tuned profile is never overwritten.
+#
+# Codex 0.144 rejects the old `[profiles.agentchat]` table in config.toml when
+# `--profile agentchat` is used. sync.py safely removes that obsolete table and
+# the legacy top-level `profile = "agentchat"` selector while preserving every
+# unrelated base-config section.
+#
+# This is a compatibility seed, not the live model registry or policy source.
+# The AgentChat wrapper passes the roster-selected model, reasoning effort,
+# sandbox, and approval mode explicitly. Keep this file usable when launched by
+# hand, but do not infer the current fleet configuration from it.
+#
+# Field reference:
+#   model_reasoning_effort  = "low" | "medium" | "high" | "xhigh" | "max".
+#   approval_policy         = "untrusted" | "on-request" | "never".
+#   sandbox_mode            = "read-only" | "workspace-write" | "danger-full-access".
+#   disable_response_storage = false (keep JSONL transcripts — wrapper depends on them).
+#   disable_paste_burst       = true (tmux-injected text is programmatic, not a
+#                               human multi-line paste; submit keys must not be swallowed).
+#
+# Wrapper CLI arguments take precedence. See alignment-codex.md.
+
+model = "gpt-5.6-sol"
+model_reasoning_effort = "medium"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+disable_response_storage = false
+disable_paste_burst = true

@@ -1,0 +1,21 @@
+{
+  "updated": "2026-10-21",
+  "hosts": {
+    "desktop": {
+      "label": "This computer",
+      "note": "Where OpenFlow and its agents run."
+    }
+  },
+  "services": [
+    {
+      "name": "OpenFlow (web app and API)",
+      "runsOn": "desktop",
+      "purpose": "AgentChat channels, task board, roster, Agent API",
+      "reach": {
+        "desktop": "http://localhost:3000"
+      },
+      "env": "DEVFLOW_URL"
+    }
+  ],
+  "layout": "current"
+}

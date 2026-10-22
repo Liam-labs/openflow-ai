@@ -1,0 +1,86 @@
+{
+  "roles": [
+    {
+      "id": "42ebd7dd-fa24-4ede-82a4-323c547cb3e9",
+      "name": "Backend Dev",
+      "slug": "backend-dev",
+      "description": "Advanced expert in backend application development",
+      "mdPath": "data/roles/backend-dev.md",
+      "characterIds": [
+        "McKay",
+        "Mason"
+      ],
+      "defaultCharacterId": "McKay",
+      "recommendedModelId": "sonnet",
+      "mcpServers": [],
+      "createdAt": "2026-02-12T23:34:54.732Z",
+      "updatedAt": "2026-04-10T18:50:00.000Z",
+      "builtIn": true
+    },
+    {
+      "id": "62a3ba33-aa78-4a23-b183-eb4809937e81",
+      "name": "Frontend Dev",
+      "slug": "frontend-dev",
+      "description": "Advanced expert in frontend application development",
+      "mdPath": "data/roles/frontend-dev.md",
+      "characterIds": [
+        "Siler"
+      ],
+      "recommendedModelId": "sonnet",
+      "mcpServers": [],
+      "createdAt": "2026-02-12T23:34:59.195Z",
+      "updatedAt": "2026-04-10T18:50:00.000Z",
+      "builtIn": true,
+      "defaultCharacterId": "Siler"
+    },
+    {
+      "id": "04eecdef-cc15-44f6-9d8c-366774c2a466",
+      "name": "Team Lead",
+      "slug": "team-lead",
+      "description": "Coordinates outcomes, ownership, decisions, review and completion across a team without turning the board into a permission gate.",
+      "mdPath": "data/roles/team-lead.md",
+      "characterIds": [
+        "Jack"
+      ],
+      "recommendedModelId": "sonnet",
+      "mcpServers": [],
+      "createdAt": "2026-02-13T00:10:33.252Z",
+      "updatedAt": "2026-04-10T18:50:00.000Z",
+      "builtIn": true,
+      "defaultCharacterId": "Jack"
+    },
+    {
+      "id": "e6134857-4657-42e8-894c-7bf3fd1330db",
+      "name": "Researcher",
+      "slug": "researcher",
+      "description": "Technology discovery and evaluation specialist \u2014 researches latest tools, services, libraries, and best practices to inform team decisions.",
+      "mdPath": "data/roles/researcher.md",
+      "characterIds": [
+        "Heimdall",
+        "Scout"
+      ],
+      "defaultCharacterId": "Heimdall",
+      "recommendedModelId": "haiku",
+      "mcpServers": [],
+      "createdAt": "2026-02-14T23:00:00.000Z",
+      "updatedAt": "2026-04-10T18:50:00.000Z",
+      "builtIn": true
+    },
+    {
+      "id": "a3f1d8e2-6c74-4b9f-8e5a-2d7c1b4f9e36",
+      "name": "Architect",
+      "slug": "architect",
+      "description": "Software and systems planning specialist \u2014 discovers project requirements, designs robust systems using the latest engineering techniques, and produces detailed plan.md files for the team to implement.",
+      "mdPath": "data/roles/architect.md",
+      "characterIds": [
+        "Samantha"
+      ],
+      "recommendedModelId": "sonnet",
+      "mcpServers": [],
+      "createdAt": "2026-02-20T00:00:00.000Z",
+      "updatedAt": "2026-04-10T18:50:00.000Z",
+      "builtIn": true,
+      "defaultCharacterId": "Samantha"
+    }
+  ]
+}

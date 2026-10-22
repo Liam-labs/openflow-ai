@@ -1,0 +1,27 @@
+# OpenFlow in a container. Start:  docker compose up -d     Open: http://localhost:3000
+# Stop: docker compose down (your data stays in the openflow-data volume; add -v to delete it).
+services:
+  openflow:
+    build: .
+    image: openflow-ai:local
+    container_name: openflow
+    init: true
+    restart: unless-stopped
+    ports:
+      # 127.0.0.1 only: the dashboard is reachable from this computer and no other. Do not change this to 0.0.0.0.
+      - "127.0.0.1:${OPENFLOW_PORT:-3000}:8080"
+    environment:
+      DEVFLOW_ALLOWED_HOSTS: "localhost,127.0.0.1"
+    volumes:
+      - openflow-data:/data                     # logins (Claude, Codex) and agent folders
+      - openflow-appdata:/opt/openflow/.AppData # channels, messages, settings
+      - openflow-userdata:/opt/openflow/.UserData
+      - openflow-logs:/opt/openflow/logs
+      # Optional: a folder on your computer your agents can work in. Uncomment, then pick it as an agent's folder: /workspace
+      # - ./workspace:/workspace
+
+volumes:
+  openflow-data:
+  openflow-appdata:
+  openflow-userdata:
+  openflow-logs:

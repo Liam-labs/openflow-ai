@@ -1,0 +1,130 @@
+/* Midnight Glass Team panel components (the "midnight-glass-team-handoff", 20 Oct 2026): buttons, presence marks, tags,
+   agent card, hover toolbar, working effects, status roll and the floating compact menu. Copied from the handoff page with the
+   demo layout, toast and stat tiles left out. Same scoping as midnight-glass.css: tokens live on .mg-scope. */
+.mg-scope{
+  --online:#34e0a1;
+  --online-tint:rgba(52,224,161,0.09);
+  --online-edge:rgba(52,224,161,0.3);
+  --model-blue:var(--accent-soft);
+  --model-indigo:#a3a3ff;
+  --model-sky:#62d3ff;
+}
+/* ---------- Button ---------- */
+.mg-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:8px 12px;border:1px solid var(--accent-soft);border-radius:var(--radius-lg);background:var(--accent);color:#fff;font:700 13.5px/18px var(--font-sans);cursor:pointer;transition:background .15s,border-color .15s}
+.mg-btn:hover{border-color:#fff;background:var(--accent-soft)}
+.mg-btn svg{color:#fff}
+.mg-btn--ghost{border-color:var(--faint);background:var(--card);color:var(--text)}
+.mg-btn--ghost svg{color:var(--accent-soft)}
+.mg-btn--ghost:hover{border-color:var(--accent-soft);background:var(--selected)}
+.mg-btn--danger{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 18%,var(--card));color:var(--danger)}
+.mg-btn--danger svg{color:var(--danger)}
+.mg-btn--danger:hover{border-color:var(--danger);background:rgba(255,107,122,.22)}
+
+/* ---------- Status marks: presence ---------- */
+.mg-dot{display:inline-block;width:7px;height:7px;flex:none;border-radius:50%}
+.mg-dot--online{background:var(--online);box-shadow:0 0 8px var(--online)}
+.mg-dot--offline{box-shadow:inset 0 0 0 1.5px var(--faint)}
+.mg-spin{display:inline-block;width:12px;height:12px;flex:none;border:2px solid var(--accent-edge);border-top-color:var(--accent-soft);border-radius:50%;animation:mg-rot .9s linear infinite}
+@keyframes mg-rot{to{transform:rotate(360deg)}}
+.mg-pip{position:absolute;right:0;bottom:0;width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 3px var(--card)}
+.mg-pip--online{background:var(--online);box-shadow:0 0 0 3px var(--card),0 0 12px rgba(52,224,161,.75)}
+.mg-pip--working{box-shadow:0 0 0 3px var(--card)}
+.mg-pip--offline{background:var(--card);box-shadow:0 0 0 3px var(--card),inset 0 0 0 2px var(--faint)}
+
+.mg-group{display:flex;align-items:center;gap:8px;padding:8px 6px 2px;color:var(--muted);font-size:11px;line-height:14px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+.mg-group::after{content:"";order:1;flex:1;height:1px;margin-left:4px;background:linear-gradient(90deg,var(--line-strong),transparent)}
+.mg-group em{order:2;font-style:normal;letter-spacing:0;color:var(--faint);font-variant-numeric:tabular-nums}
+.mg-group--online{color:var(--text)}
+
+/* ---------- Tag ---------- */
+.mg-tag{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:var(--radius-pill);background:rgba(255,255,255,.09);box-shadow:inset 0 0 0 1px var(--faint);color:var(--text);font-size:11.5px;line-height:16px;font-weight:500;white-space:nowrap}
+.mg-tag--model{color:var(--text);background:color-mix(in srgb,var(--model) 26%,transparent);box-shadow:inset 0 0 0 1px var(--model)}
+.mg-tag--voice{color:var(--text);background:color-mix(in srgb,var(--accent) 24%,transparent);box-shadow:inset 0 0 0 1px var(--accent)}
+.mg-tag--voice .mg-voice{height:12px}
+.mg-tag--voice .mg-voice i{height:10px}
+
+/* ---------- AgentCard ---------- */
+.mg-agent{--model:var(--model-blue);position:relative;display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:center;padding:14px;
+  border:1px solid transparent;border-radius:var(--radius-xl);background:transparent;
+  box-shadow:none;color:var(--text);font-family:var(--font-sans);transition:border-color .2s,box-shadow .2s}
+.mg-agent--indigo{--model:var(--model-indigo)}
+.mg-agent--sky{--model:var(--model-sky)}
+.mg-agent:hover{background:rgba(255,255,255,.05)}
+.mg-agent--ready{}
+.mg-agent--working{}
+.mg-agent--offline{}
+.mg-agent__av{position:relative;width:52px;height:52px;display:grid;place-items:center;border-radius:var(--radius-pill);color:var(--model);
+  background:color-mix(in srgb,var(--model) 14%,var(--card));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--model) 38%,transparent)}
+.mg-agent--offline .mg-agent__av{color:var(--faint);background:transparent;box-shadow:inset 0 0 0 1px var(--line-strong)}
+.mg-emb{width:36px;height:36px;display:block}
+.mg-agent__body{display:flex;flex-direction:column;gap:6px;min-width:0}
+.mg-agent__row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.mg-agent__name{display:flex;align-items:center;gap:7px;min-width:0;font-size:17px;line-height:22px;font-weight:700;letter-spacing:-.01em}
+.mg-agent__name svg{flex:none;color:var(--accent-soft)}
+.mg-agent__status{display:inline-flex;align-items:center;gap:8px;flex:none;color:var(--muted);font-size:13px;line-height:16px;font-weight:700;transition:opacity .15s}
+.mg-agent--ready .mg-agent__status{color:var(--online)}
+.mg-agent--working .mg-agent__status{color:var(--accent)}
+.mg-agent__meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}
+.mg-agent__meta .mg-tag--model{margin-left:auto}
+.mg-agent__name .mg-tag{flex:none;padding:0 6px;font-size:10.5px;line-height:14px;font-weight:500;color:var(--muted)}
+.mg-agent__role{color:color-mix(in srgb,var(--text) 75%,var(--muted));font-size:12.5px;line-height:16px}
+.mg-agent__ctx{display:flex;align-items:center;gap:10px}
+.mg-bar{flex:1;height:5px;overflow:hidden;border-radius:var(--radius-pill);background:rgba(255,255,255,.08)}
+.mg-bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--accent-soft));box-shadow:0 0 10px rgba(59,140,255,.7)}
+.mg-agent__pct{flex:none;color:var(--muted);font-size:11px;line-height:14px;font-variant-numeric:tabular-nums}
+.mg-agent--offline .mg-agent__row{align-items:center}
+
+/* ---------- AgentToolbar (hover actions) ---------- */
+.mg-toolbar{position:absolute;top:4px;right:6px;z-index:3;display:flex;gap:2px;padding:2px;border:1px solid var(--line-strong);border-radius:var(--radius-lg);
+  background:linear-gradient(180deg,var(--menu-top),var(--menu-bottom));box-shadow:var(--shadow-menu);opacity:0;transform:translateY(-3px);pointer-events:none;transition:opacity .15s,transform .15s}
+.mg-agent:hover .mg-toolbar,.mg-agent:focus-within .mg-toolbar,.mg-agent--hover .mg-toolbar{opacity:1;transform:none;pointer-events:auto}
+.mg-agent:hover .mg-agent__status,.mg-agent:focus-within .mg-agent__status,.mg-agent--hover .mg-agent__status{opacity:0}
+.mg-tool{position:relative;width:28px;height:28px;display:grid;place-items:center;border:0;border-radius:9px;background:none;color:var(--accent-soft);cursor:pointer}
+.mg-tool:hover,.mg-tool:focus-visible{background:var(--accent-tint);color:var(--text);outline:none}
+.mg-tool--on{background:var(--accent-tint);box-shadow:inset 0 0 0 1px var(--accent-edge)}
+.mg-tool--danger{color:var(--danger)}
+.mg-tool--danger:hover,.mg-tool--danger:focus-visible{background:var(--danger-tint);color:var(--danger)}
+.mg-tool::after{content:attr(data-tip);position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);z-index:4;padding:4px 9px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);
+  background:var(--menu-bottom);color:var(--text);font:500 11.5px/16px var(--font-sans);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s}
+.mg-tool:nth-last-child(-n+2)::after{left:auto;right:0;transform:none}
+.mg-tool:hover::after,.mg-tool:focus-visible::after{opacity:1}
+
+@media (prefers-reduced-motion:reduce){.mg-spin{animation:none}.mg-agent,.mg-toolbar,.mg-agent__status{transition:none}}
+/* Working agent: a comet circles the avatar, the inner ring breathes, and the status dot sends out radar pings. Reduced motion shows static rings. */
+.mg-agent--working .mg-agent__av{background:color-mix(in srgb,var(--accent) 14%,var(--card));animation:mg-breathe 2.4s ease-in-out infinite}
+.mg-agent--working .mg-agent__av::before,.mg-agent--working .mg-agent__av::after{content:"";position:absolute;inset:-5px;border-radius:50%;pointer-events:none;animation:mg-orbit 1.9s linear infinite}
+.mg-agent--working .mg-agent__av::before{background:conic-gradient(from 0deg,transparent 0 40%,color-mix(in srgb,var(--accent) 25%,transparent) 70%,var(--accent) 100%),linear-gradient(color-mix(in srgb,var(--accent) 20%,transparent),color-mix(in srgb,var(--accent) 20%,transparent));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2.5px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 2.5px),#000 calc(100% - 2px))}
+.mg-agent--working .mg-agent__av::after{background:radial-gradient(circle at 50% 1px,#fff 0 1.7px,color-mix(in srgb,var(--accent-soft) 85%,transparent) 2.6px,transparent 5.5px)}
+.mg-pip--working{background:radial-gradient(circle at 35% 30%,var(--accent-soft),var(--accent) 62%)}
+.mg-pip--working::before,.mg-pip--working::after{content:"";position:absolute;inset:0;border-radius:50%;border:1.5px solid var(--accent-soft);opacity:0;pointer-events:none;animation:mg-ping 1.8s ease-out infinite}
+.mg-pip--working::after{animation-delay:.9s}
+@keyframes mg-orbit{to{transform:rotate(360deg)}}
+@keyframes mg-breathe{0%,100%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 40%,transparent)}50%{box-shadow:inset 0 0 0 1px var(--accent)}}
+@keyframes mg-ping{0%{transform:scale(1);opacity:.85}100%{transform:scale(2.3);opacity:0}}
+@media (prefers-reduced-motion:reduce){.mg-agent--working .mg-agent__av,.mg-agent--working .mg-agent__av::before,.mg-agent--working .mg-agent__av::after{animation:none}.mg-pip--working::before,.mg-pip--working::after{display:none}}
+/* Working label: one blue shifts through the word and its three bouncing dots together. */
+.mg-wave{display:inline-block;background:linear-gradient(90deg,var(--accent),var(--accent-soft),var(--accent)) 0 0/200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:mg-flow 2.4s linear infinite}
+.mg-wave>b{display:inline-block;margin-left:1px;font-weight:700;color:var(--accent);animation:mg-dots 1.4s ease-in-out infinite}
+.mg-wave>b:nth-of-type(2){animation-delay:.15s}
+.mg-wave>b:nth-of-type(3){animation-delay:.3s}
+@keyframes mg-flow{to{background-position:-200% 0}}
+@keyframes mg-dots{0%,60%,100%{opacity:.35}30%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.mg-wave,.mg-wave>b{animation:none}.mg-wave{background:none;color:var(--accent)}}
+/* Working agent: a light sweeps along the filled part of the context bar, and its leading edge glints. */
+.mg-agent--working .mg-bar i{position:relative;overflow:hidden}
+.mg-agent--working .mg-bar i::after{content:"";position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.85),transparent);transform:translateX(-120%);animation:mg-sweep 1.5s ease-in-out infinite}
+.mg-agent--working .mg-bar i::before{content:"";position:absolute;top:0;right:0;bottom:0;width:3px;background:#fff;animation:mg-glint 1.5s ease-in-out infinite}
+@keyframes mg-sweep{0%{transform:translateX(-120%)}70%,100%{transform:translateX(260%)}}
+@keyframes mg-glint{0%,100%{opacity:.35}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.mg-agent--working .mg-bar i::after,.mg-agent--working .mg-bar i::before{animation:none}.mg-agent--working .mg-bar i::after{display:none}}
+/* Floating context menu for agents: compact rows so eleven actions stay on screen. */
+.mg-menu--float{position:fixed;z-index:60;width:264px}
+.mg-menu--compact .mg-mi{gap:10px;padding:4px 8px}
+.mg-menu--compact .mg-ti{width:26px;height:26px;border-radius:8px}
+.mg-menu--compact .mg-menu__head{padding-bottom:8px}
+/* Status swap: the old text slides up and out while the new text rolls in from below. */
+.mg-roll{display:inline-block;height:18px;overflow:hidden;vertical-align:top}
+.mg-roll__in{display:flex;flex-direction:column;animation:mg-roll .5s cubic-bezier(.7,0,.2,1) forwards}
+.mg-roll__in>span{display:flex;align-items:center;justify-content:flex-end;gap:8px;height:18px;white-space:nowrap}
+@keyframes mg-roll{to{transform:translateY(-18px)}}

@@ -1,0 +1,11 @@
+{
+  "repo": "microsoft/playwright-cli",
+  "npm": {
+    "package": "@playwright/cli",
+    "skillDir": "skills/playwright-cli"
+  },
+  "licence": "Apache-2.0",
+  "note": "Mirrored verbatim by scripts/skill-upstream-sync.py (daily DevFlow scheduled job) from the globally installed @playwright/cli, which the job also upgrades, so the skill always matches the installed CLI. Local edits here are overwritten; DevFlow routing lives in the browser and computer-use skills. Default browser (bundled Chromium) is set machine-wide in ~/.playwright/cli.config.json.",
+  "version": "0.1.22",
+  "checkedAt": "2026-09-30T12:54:54+00:00"
+}

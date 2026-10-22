@@ -1,0 +1,10 @@
+#!/bin/sh
+# Setup entry point: ./scripts/setup  (see scripts/setup.py for what it does). Only python3 is needed to start;
+# the script reports everything else that is missing, with the exact command for your system.
+cd "$(dirname "$0")/.." || exit 1
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "setup: python3 (3.10 or newer) is needed to run the setup script." >&2
+  echo "  Debian/Ubuntu/WSL2: sudo apt install -y python3     macOS: brew install python     Fedora: sudo dnf install -y python3" >&2
+  exit 1
+fi
+exec python3 scripts/setup.py "$@"

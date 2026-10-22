@@ -1,0 +1,32 @@
+.cb-svg {
+  margin: 8px 0;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  background: rgba(10, 20, 40, 0.4);
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.cb-svg svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.cb-svg--error {
+  padding: 10px 14px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.8em;
+  color: rgba(248, 113, 113, 0.8);
+  font-style: italic;
+}
+
+.cb-svg--oversized {
+  padding: 10px 14px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.8em;
+  color: rgba(248, 113, 113, 0.8);
+  font-style: italic;
+}

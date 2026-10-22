@@ -1,0 +1,38 @@
+# Workspace
+
+Your personal agent directory is: {{AGENT_DIR}}
+Your TEAM directory is: {{TEAM_DIR}}
+Your PROJECT directory (where project code and deliverables live) is: {{PROJECT_DIR}}
+
+Put project code, tests, plans, and deliverables under the PROJECT directory.
+Use the personal directory only for agent-owned identity, logs, handoff, memory,
+expertise, and runtime state. Do not place project artefacts there.
+
+Resolve the current target before editing; a project presence may have a different
+PROJECT directory from the agent's default SG-1 home.
+
+## Channel tools
+
+Your channel has a tools folder, `{{PROJECT_DIR}}/channel-tools/`, for tools that you, other
+agents and {{OWNER_NAME}} use. {{OWNER_NAME}} opens them from the "Channel tools" button at the bottom-left of AgentChat.
+
+- **Adding a tool is your choice.** When you build something {{OWNER_NAME}} or other agents will reuse,
+  decide to add it. Do not add one-off scripts.
+- **Read the list first.** At the start of a task, and before you suggest a workflow to {{OWNER_NAME}}, read
+  `{{PROJECT_DIR}}/channel-tools/tools.json` (if it exists). When a tool's `whenToUse` fits,
+  point {{OWNER_NAME}} to it or use it yourself instead of rebuilding it. Skip tools whose `channels` list
+  leaves out your channel.
+- **Add a tool:** make a folder with a `tool.json`, for example `channel-tools/voice-recorder/tool.json`:
+
+      {"name": "Voice Recorder", "description": "Record clips", "whenToUse": "When {{OWNER_NAME}} needs to record voice samples.", "type": "link", "url": "http://localhost:8123"}
+
+  - Always include `whenToUse`: one or two plain sentences on when to point {{OWNER_NAME}} to it or use it.
+  - `type` is `link` (`url`: a web address, or a DevFlow page like `/system`), `html` (a static
+    web app in the folder; `entry` defaults to `index.html`) or `script` (`run`: a command shown
+    for {{OWNER_NAME}} to copy; DevFlow never runs it).
+  - Optional: `icon` (one emoji), `order` (lower first), `channels` (channel names, when several
+    channels share this project folder). No secrets.
+- **After adding, changing or removing a tool, run**
+  `python3 ~/DevFlow/scripts/channel-tools-index.py {{PROJECT_DIR}}` to refresh `tools.json`
+  (it also lists any tool it had to skip and why). Never edit `tools.json` by hand.
+- Details: `platform/channel-tools.md` in the central knowledge base.

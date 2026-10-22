@@ -1,0 +1,147 @@
+#!/usr/bin/env python3
+"""DevFlow agent view: run a command in a private view where the desktop's shared folders appear at the desktop's own paths.
+
+An agent that runs on this machine but works on desktop files needs those files at the SAME absolute paths it would see on the desktop
+(Claude derives its project key and memory folder from the working directory, and notes and scripts name absolute paths). This machine's
+own folders of the same name (for example the scaffold copy in ~/SG-1, or the live DevFlow tree) must stay untouched for everything else.
+So each agent session gets its own mount namespace (bubblewrap): the whole real filesystem, with each requested desktop folder bind-mounted
+over its desktop path. Nothing outside that session, including DevFlow itself, sees the overlay.
+
+    devflow-agent-view --roots sg1,agent-name,mem-name --chdir ~/SG-1/Team/AgentName -- claude ...
+    devflow-agent-view --roots sg1 --check            # print whether every requested folder is mounted and answering, run nothing
+
+Every requested folder must be mounted and answering. If one is not, nothing starts (exit 3): an agent must never silently work on this
+machine's stale copy of a folder that is meant to be the desktop's.
+
+The desktop's library (every ordinary PC folder, one share named `library`) is optional and is added by itself when it is mounted and answering:
+a Windows folder appears at its PC path (/mnt/c/Users/..., /mnt/d/...) and a WSL home folder at /mnt/wsl-home/NAME. /mnt/c, /mnt/d, /mnt/wsl-home ... are LINKS
+into the share (not binds), so everything below them is a real directory. A bind of a share stays dead for the life of the session when the share restarts; a link follows the share back (measured 20 Oct 2026: 5 s).
+/mnt is a private empty folder in the view for this (this machine has nothing in /mnt). `--no-library` or DEVFLOW_AGENT_VIEW_LIBRARY=0 leaves it out.
+"""
+import argparse
+import importlib.machinery
+import importlib.util
+import json
+import os
+import re
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+BWRAP = "/usr/bin/bwrap"
+LIBRARY_ID = "library"
+LIBRARY_TOP = re.compile(r"[a-z0-9][a-z0-9-]{0,30}")
+NEVER_OVERLAY = ("/", "/usr", "/etc", "/bin", "/sbin", "/lib", "/lib64", "/proc", "/sys", "/dev", "/run", "/var", "/boot", "/root", "/home")
+
+
+class ViewError(Exception):
+    pass
+
+
+def load_gate():
+    """The gate owns the registry and mount-state rules; the view uses the very same ones."""
+    loader = importlib.machinery.SourceFileLoader("devflow_files_gate", os.path.join(HERE, "devflow-files-gate"))
+    spec = importlib.util.spec_from_loader("devflow_files_gate", loader)
+    module = importlib.util.module_from_spec(spec)
+    loader.exec_module(module)
+    return module
+
+
+def plan_view(wanted, registry, point_of, state_of, home=None):
+    """[(id, desktop path, mount point)] for the requested folders, shallowest first so a deeper folder is laid over a shallower one.
+    Raises ViewError naming the first folder that is unknown, unsafe to overlay, or not mounted and answering."""
+    home = os.path.realpath(home or os.path.expanduser("~"))
+    seen, plan = set(), []
+    for rid in wanted:
+        if rid in seen:
+            continue
+        seen.add(rid)
+        path = registry.get(rid)
+        if path is None:
+            raise ViewError("%s is not a registered desktop folder" % rid)
+        clean = os.path.normpath(path)
+        if clean in NEVER_OVERLAY or clean == home or not clean.startswith("/"):
+            raise ViewError("%s would cover %s, which is not allowed" % (rid, clean))
+        state = state_of(point_of(rid))
+        if state != "mounted":
+            raise ViewError("%s (%s) is not available: %s" % (rid, clean, state))
+        plan.append((rid, clean, point_of(rid)))
+    return sorted(plan, key=lambda item: (len(item[1]), item[0]))
+
+
+def library_links(registry, point_of, state_of, read_manifest, env=None):
+    """([(link path in the view, target in the share)], share mount point) for the library, or ([], None) when it is off or not answering
+    (the library is optional: an agent that does not need it must start when the desktop is asleep). Only the folders directly under /mnt are
+    linked (c, d, wsl-home ...), taken from the manifest's `tops` and checked, so every folder below them is a real directory."""
+    env = os.environ if env is None else env
+    if env.get("DEVFLOW_AGENT_VIEW_LIBRARY") == "0" or LIBRARY_ID not in registry:
+        return [], None
+    point = point_of(LIBRARY_ID)
+    if state_of(point) != "mounted":
+        return [], None
+    try:
+        tops = read_manifest(point).get("tops", [])
+    except (OSError, ValueError, AttributeError):
+        return [], None
+    links = []
+    for top in sorted(set(tops)) if isinstance(tops, list) and all(isinstance(t, str) for t in tops) else []:
+        if LIBRARY_TOP.fullmatch(top) and top != "desktop-library":
+            links.append(("/mnt/" + top, os.path.join(point, top)))
+    return links, point
+
+
+def bwrap_argv(plan, chdir, command, bwrap=BWRAP, links=(), library_point=None):
+    """The whole view as a command line. No pid namespace (agent pids must stay the pids the rest of DevFlow sees) and no new session
+    (the agent runs in a tmux pane and needs its terminal)."""
+    argv = [bwrap, "--bind", "/", "/", "--dev-bind", "/dev", "/dev", "--die-with-parent"]
+    for _, desktop_path, mount in plan:
+        argv += ["--bind", mount, desktop_path]
+    if links:
+        argv += ["--tmpfs", "/mnt"]
+        for view, target in links:
+            argv += ["--symlink", target, view]
+        argv += ["--symlink", library_point, "/mnt/desktop-library"]
+    if chdir:
+        argv += ["--chdir", chdir]
+    return argv + ["--"] + list(command)
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--roots", default="", help="comma separated folder ids to overlay (default: none)")
+    ap.add_argument("--chdir", help="working directory inside the view (an absolute path)")
+    ap.add_argument("--check", action="store_true", help="only report whether the folders are available")
+    ap.add_argument("--no-library", action="store_true", help="do not add the desktop library (every ordinary PC folder) to the view")
+    ap.add_argument("command", nargs=argparse.REMAINDER)
+    args = ap.parse_args(argv)
+    command = args.command[1:] if args.command[:1] == ["--"] else args.command
+    wanted = [r for r in args.roots.split(",") if r]
+    gate = load_gate()
+    try:
+        for rid in wanted:
+            if not gate.ID_RE.fullmatch(rid):
+                raise ViewError("%r is not a valid folder id" % rid)
+        if args.chdir is not None and not args.chdir.startswith("/"):
+            raise ViewError("--chdir must be an absolute path")
+        registry = gate.load_roots()
+        plan = plan_view(wanted, registry, gate.mount_point, gate.mount_state)
+        links, library_point = ([], None) if args.no_library else library_links(
+            registry, gate.mount_point, gate.mount_state, lambda point: json.load(open(os.path.join(point, ".library.json"))))
+        if args.check:
+            print(json.dumps({"ok": True, "roots": {rid: path for rid, path, _ in plan}, "library": len(links)}))
+            return 0
+        if not command:
+            raise ViewError("no command to run")
+    except ViewError as e:
+        if args.check:
+            print(json.dumps({"ok": False, "error": str(e)}))
+        else:
+            sys.stderr.write("devflow-agent-view: %s\n" % e)
+        return 3
+    if not links and not args.no_library and LIBRARY_ID in registry:
+        sys.stderr.write("devflow-agent-view: the desktop library is not available (the desktop may be off or asleep); starting without it\n")
+    full = bwrap_argv(plan, args.chdir, command, links=links, library_point=library_point)
+    os.execv(full[0], full)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

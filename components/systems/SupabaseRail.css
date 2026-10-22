@@ -1,0 +1,425 @@
+/* ─── Two-pane split layout (sdb-page--split) ───────────────────────────── */
+
+.sdb-page--split {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sdb-split {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sdb-detail-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sdb-detail-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.22);
+  font-size: 12px;
+}
+
+.sdb-detail-empty__icon { opacity: 0.28; }
+
+/* ─── Instance Rail (sdb-rail-*) ─────────────────────────────────────────── */
+
+.sdb-rail {
+  width: 260px;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(var(--sdb-local-rgb), 0.09);
+  background: rgba(5, 8, 20, 0.97);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sdb-rail__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.sdb-rail__header-left,
+.sdb-rail__header-right {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sdb-rail__title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.sdb-rail__online-count {
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(var(--sdb-online-rgb), 0.75);
+  background: rgba(var(--sdb-online-rgb), 0.07);
+  border: 1px solid rgba(var(--sdb-online-rgb), 0.15);
+  border-radius: 10px;
+  padding: 1px 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sdb-rail__countdown {
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.22);
+}
+
+.sdb-rail__auto-btn {
+  font-size: 9px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.28);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sdb-rail__auto-btn:hover { color: rgba(255, 255, 255, 0.55); border-color: rgba(255,255,255,0.18); }
+.sdb-rail__auto-btn--on {
+  color: rgba(var(--sdb-online-rgb), 0.80);
+  border-color: rgba(var(--sdb-online-rgb), 0.22);
+  background: rgba(var(--sdb-online-rgb), 0.06);
+}
+
+.sdb-rail__refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.32);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sdb-rail__refresh-btn:hover:not(:disabled) {
+  color: var(--foreground);
+  border-color: rgba(var(--sdb-local-rgb), 0.30);
+  background: rgba(var(--sdb-local-rgb), 0.06);
+}
+.sdb-rail__refresh-btn:disabled { opacity: 0.35; cursor: default; }
+
+@keyframes sdb-rail-spin { to { transform: rotate(360deg); } }
+.sdb-rail__spin { animation: sdb-rail-spin 0.8s linear infinite; }
+
+.sdb-rail__list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.sdb-rail__list::-webkit-scrollbar { width: 3px; }
+.sdb-rail__list::-webkit-scrollbar-track { background: transparent; }
+.sdb-rail__list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 2px; }
+
+.sdb-rail__empty {
+  padding: 24px 16px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.25);
+  text-align: center;
+}
+
+/* Section dividers */
+.sdb-rail-section {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px 4px;
+}
+.sdb-rail-section__label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  color: rgba(255, 255, 255, 0.20);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sdb-rail-section__line {
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Instance rows */
+.sdb-rail-row {
+  display: flex;
+  align-items: stretch;
+  position: relative;
+  border-left: 2px solid transparent;
+  transition: background 0.12s, border-color 0.12s;
+}
+.sdb-rail-row:hover { background: rgba(255, 255, 255, 0.03); }
+.sdb-rail-row--active {
+  background: rgba(var(--sdb-local-rgb), 0.07) !important;
+  border-left-color: rgba(var(--sdb-local-rgb), 0.55) !important;
+}
+.sdb-rail-row--online:hover  { background: rgba(var(--sdb-online-rgb), 0.025); }
+.sdb-rail-row--error:hover,
+.sdb-rail-row--offline:hover { background: rgba(var(--sdb-error-rgb), 0.03); }
+
+.sdb-rail-row__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 8px 9px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.sdb-rail-row__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.sdb-rail-row__name {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 130px;
+}
+.sdb-rail-row__url {
+  font-size: 9.5px;
+  font-family: monospace;
+  color: rgba(255, 255, 255, 0.28);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sdb-rail-row__error {
+  font-size: 9.5px;
+  color: rgba(var(--sdb-error-rgb), 0.70);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sdb-rail-row__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.sdb-rail-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 8.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.sdb-rail-type--local {
+  color: rgba(var(--sdb-local-rgb), 0.75);
+  background: rgba(var(--sdb-local-rgb), 0.08);
+}
+.sdb-rail-type--hosted {
+  color: rgba(var(--sdb-hosted-rgb), 0.75);
+  background: rgba(var(--sdb-hosted-rgb), 0.08);
+}
+
+.sdb-rail-latency {
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+.sdb-rail-latency--fast { color: rgba(var(--sdb-online-rgb), 0.70); }
+.sdb-rail-latency--slow { color: rgba(234, 179, 8, 0.75); }
+
+.sdb-rail-checked {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.20);
+}
+
+/* Row actions (⋯ menu button) */
+.sdb-rail-row__actions {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding-right: 6px;
+}
+
+.sdb-rail-ctx-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.0);
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+}
+.sdb-rail-row:hover .sdb-rail-ctx-btn { color: rgba(255, 255, 255, 0.30); }
+.sdb-rail-ctx-btn:hover,
+.sdb-rail-ctx-btn--open {
+  color: rgba(255, 255, 255, 0.70) !important;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* Rail context menu */
+.sdb-rail-ctx {
+  position: absolute;
+  top: 100%;
+  right: 4px;
+  z-index: 200;
+  min-width: 130px;
+  background: rgba(10, 16, 36, 0.98);
+  border: 1px solid rgba(var(--sdb-local-rgb), 0.18);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.55);
+  backdrop-filter: blur(12px);
+  animation: sdb-ctx-in 0.12s ease;
+}
+@keyframes sdb-ctx-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.sdb-rail-ctx__item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.70);
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.sdb-rail-ctx__item:hover {
+  background: rgba(var(--sdb-local-rgb), 0.10);
+  color: rgba(255, 255, 255, 0.92);
+}
+.sdb-rail-ctx__item--danger:hover {
+  background: rgba(var(--sdb-error-rgb), 0.12);
+  color: rgba(var(--sdb-error-rgb), 0.90);
+}
+.sdb-rail-ctx__sep {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 3px 6px;
+}
+
+/* Rail status pulse */
+.sdb-rail-pulse {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+}
+.sdb-rail-pulse__dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.sdb-rail-pulse__ring {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  animation: sdb-rail-ring 2s ease-out infinite;
+}
+.sdb-rail-pulse--online .sdb-rail-pulse__dot  { background: rgb(var(--sdb-online-rgb)); }
+.sdb-rail-pulse--online .sdb-rail-pulse__ring { background: rgba(var(--sdb-online-rgb), 0.30); }
+.sdb-rail-pulse--offline .sdb-rail-pulse__dot,
+.sdb-rail-pulse--error   .sdb-rail-pulse__dot { background: rgba(var(--sdb-error-rgb), 0.80); }
+.sdb-rail-pulse--unknown .sdb-rail-pulse__dot { background: rgba(255, 255, 255, 0.20); }
+.sdb-rail-pulse--checking .sdb-rail-pulse__dot { background: rgba(var(--sdb-local-rgb), 0.85); width: 6px; height: 6px; border-radius: 50%; animation: sdb-rail-checking 0.5s ease-in-out infinite alternate; }
+@keyframes sdb-rail-ring    { 0% { transform: scale(0.6); opacity: 0.8; } 100% { transform: scale(1.6); opacity: 0; } }
+@keyframes sdb-rail-checking { from { opacity: 0.4; } to { opacity: 1; } }
+
+/* Rail bottom actions */
+.sdb-rail__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+.sdb-rail__action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 8px;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sdb-rail__action-btn--discover {
+  background: rgba(var(--sdb-local-rgb), 0.06);
+  border-color: rgba(var(--sdb-local-rgb), 0.18);
+  color: rgba(var(--sdb-local-rgb), 0.75);
+}
+.sdb-rail__action-btn--discover:hover:not(:disabled) {
+  background: rgba(var(--sdb-local-rgb), 0.12);
+  border-color: rgba(var(--sdb-local-rgb), 0.35);
+  color: rgba(var(--sdb-local-rgb), 0.95);
+}
+.sdb-rail__action-btn--discover:disabled { opacity: 0.4; cursor: default; }
+.sdb-rail__action-btn--add {
+  background: rgba(var(--sdb-hosted-rgb), 0.06);
+  border-color: rgba(var(--sdb-hosted-rgb), 0.18);
+  color: rgba(var(--sdb-hosted-rgb), 0.75);
+}
+.sdb-rail__action-btn--add:hover {
+  background: rgba(var(--sdb-hosted-rgb), 0.12);
+  border-color: rgba(var(--sdb-hosted-rgb), 0.35);
+  color: rgba(var(--sdb-hosted-rgb), 0.95);
+}
