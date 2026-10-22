@@ -44,7 +44,7 @@ describe('isAgentAlive', () => {
   });
 
   describe('Linux / WSL platform (default)', () => {
-    it('returns true when /proc/<pid> exists', async () => {
+    it.skipIf(process.platform !== 'linux')('returns true when /proc/<pid> exists', async () => {
       mockFsAccess.mockResolvedValue(undefined);
       expect(await isAgentAlive(12345)).toBe(true);
       expect(mockFsAccess).toHaveBeenCalledWith('/proc/12345');
@@ -65,7 +65,7 @@ describe('isAgentAlive', () => {
       expect(mockFsAccess).not.toHaveBeenCalled();
     });
 
-    it('explicit platform="wsl" also uses /proc check', async () => {
+    it.skipIf(process.platform !== 'linux')('explicit platform="wsl" also uses /proc check', async () => {
       mockFsAccess.mockResolvedValue(undefined);
       expect(await isAgentAlive(5000, 'wsl')).toBe(true);
       expect(mockFsAccess).toHaveBeenCalledWith('/proc/5000');

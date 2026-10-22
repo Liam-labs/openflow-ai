@@ -16,7 +16,7 @@ Pages wired down:                         90000.
 
 const failing: Runner = async () => { throw new Error('boom'); };
 
-describe('proc-info on Linux (real /proc)', () => {
+describe.skipIf(process.platform !== 'linux')('proc-info on Linux (real /proc)', () => {   // a Mac has no /proc
   it('sees this process: alive, its own command line, no bogus ids', async () => {
     expect(await isPidAlive(process.pid, 'linux')).toBe(true);
     expect(await isPidAlive(2 ** 22 + 12345, 'linux')).toBe(false);
