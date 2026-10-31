@@ -5,16 +5,19 @@ import { Check, Copy, ExternalLink, Globe, Loader2, TriangleAlert } from 'lucide
 import {
   ADDRESS_COPY as T,
   INITIAL_ADDRESS_STATE,
+  canChooseAnother,
   canContinue,
   domainCheckMessage,
   fallbackAddress,
   nextAddressState,
   normaliseDomain,
   ownDomainHost,
+  showPortHint,
   unavailableMessage,
   type AddressChoice,
   type AddressService,
   type DomainCheckResult,
+  type RerollResult,
 } from '@/lib/setup/address-step';
 
 /** How often the screen asks how far the installer has got. The installer has no push channel yet. */
@@ -24,6 +27,8 @@ interface AddressStepProps {
   service: AddressService;
   /** Called once with the final address, when the person presses Continue on the last screen. */
   onDone: (address: string) => void;
+  /** How long a claim may stay pending before the port 80 hint shows. Tests and the preview shorten it. */
+  portHintAfterMs?: number;
 }
 
 function CopyButton({ value, label = T.buttons.copy }: { value: string; label?: string }) {
@@ -112,7 +117,7 @@ function SecondaryButton({ onClick, children }: { onClick: () => void; children:
   );
 }
 
-export function AddressStep({ service, onDone }: AddressStepProps) {
+export function AddressStep({ service, onDone, portHintAfterMs }: AddressStepProps) {
   const [state, dispatch] = useReducer(nextAddressState, INITIAL_ADDRESS_STATE);
   const [installDomain, setInstallDomain] = useState<string | null>(null);
   const [serverAddress, setServerAddress] = useState<string | null>(null);
@@ -120,9 +125,11 @@ export function AddressStep({ service, onDone }: AddressStepProps) {
   const [domainError, setDomainError] = useState(false);
   const [checking, setChecking] = useState(false);
   const [serverError, setServerError] = useState(false);
+  const [portHint, setPortHint] = useState(false);
   const doneSent = useRef(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const shownScreen = useRef(state.screen);
+  const watchStarted = useRef(0);
 
   // The install domain and the server address are read once. The wording never contains them as text.
   useEffect(() => {
@@ -158,10 +165,16 @@ export function AddressStep({ service, onDone }: AddressStepProps) {
   useEffect(() => {
     if (!watched) return;
     let alive = true;
+    watchStarted.current = Date.now();
+    setPortHint(false);
     const ask = () =>
       service
         .claimStatus(watched)
-        .then((status) => alive && dispatch({ type: 'claim', status }))
+        .then((status) => {
+          if (!alive) return;
+          setPortHint(showPortHint(status.state, Date.now() - watchStarted.current, portHintAfterMs));
+          dispatch({ type: 'claim', status });
+        })
         .catch(() => undefined);
     ask();
     const timer = setInterval(ask, CLAIM_POLL_MS);
@@ -169,7 +182,7 @@ export function AddressStep({ service, onDone }: AddressStepProps) {
       alive = false;
       clearInterval(timer);
     };
-  }, [watched, service]);
+  }, [watched, service, portHintAfterMs]);
 
   // A screen change replaces the button the person pressed. Move focus to the new heading so keyboard and screen reader users keep their place.
   useEffect(() => {
@@ -177,6 +190,17 @@ export function AddressStep({ service, onDone }: AddressStepProps) {
     shownScreen.current = state.screen;
     rootRef.current?.querySelector('h2')?.focus({ preventScroll: true });
   }, [state.screen]);
+
+  const chooseAnother = async () => {
+    if (state.screen !== 'free' || !state.name) return;
+    let result: RerollResult;
+    try {
+      result = await service.chooseAnother(state.name);
+    } catch {
+      result = { ok: false, reason: 'unreachable' };
+    }
+    dispatch({ type: 'rerolled', result });
+  };
 
   const finish = useCallback(() => {
     dispatch({ type: 'finish' });
@@ -270,6 +294,12 @@ export function AddressStep({ service, onDone }: AddressStepProps) {
           <Tick done={state.pointed}>{T.tickPointed}</Tick>
           <Tick done={state.padlock}>{T.tickPadlock}</Tick>
         </ul>
+        {state.screen === 'free' && portHint && !state.padlock ? (
+          <p role="alert" className="mt-4 text-sm text-amber-300 flex items-start gap-2">
+            <TriangleAlert className="w-4 h-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
+            {T.portNotReachable}
+          </p>
+        ) : null}
         {ready ? (
           <div className="mt-6" role="status">
             <p className="text-sm font-medium text-white">{T.ready}</p>
@@ -289,10 +319,10 @@ export function AddressStep({ service, onDone }: AddressStepProps) {
           </div>
         ) : null}
         <div className="flex items-center justify-between mt-6">
-          {state.screen === 'free' && !state.padlock && state.name ? (
+          {canChooseAnother(state) ? (
             <button
               type="button"
-              onClick={() => dispatch({ type: 'choose-another' })}
+              onClick={chooseAnother}
               className="text-xs text-white/50 hover:text-white underline underline-offset-2"
             >
               {T.chooseAnother}
@@ -424,6 +454,17 @@ export function AddressStep({ service, onDone }: AddressStepProps) {
           >
             {T.buttons.useServerAddress}
           </PrimaryButton>
+        </div>
+      </Card>
+    );
+  }
+
+  if (state.screen === 'expired') {
+    return (
+      <Card innerRef={rootRef}>
+        <Heading>{state.why === 'suspended' ? T.suspended : T.expired}</Heading>
+        <div className="flex justify-end mt-6">
+          <PrimaryButton onClick={() => dispatch({ type: 'retry' })}>{T.buttons.tryAgain}</PrimaryButton>
         </div>
       </Card>
     );

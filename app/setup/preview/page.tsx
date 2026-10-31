@@ -25,7 +25,7 @@ function Preview() {
           <p className="text-white">Done. The next step would use: {address}</p>
         </div>
       ) : (
-        <AddressStep key={scenario} service={service} onDone={setAddress} />
+        <AddressStep key={scenario} service={service} onDone={setAddress} portHintAfterMs={4000} />
       )}
     </div>
   );

@@ -8,18 +8,35 @@
 
 // ─── What the screens need from the backend ─────────────────────────────────
 
-/** Why the free addresses cannot be offered. */
-export type FreeNamesUnavailable = 'full' | 'unreachable';
+/**
+ * Why the free addresses cannot be offered.
+ * - full: the weekly cap of new names is reached.
+ * - limit: too many names were requested from this network today.
+ * - unreachable: the names service could not be reached.
+ */
+export type FreeNamesUnavailable = 'full' | 'limit' | 'unreachable';
+
+/** Where a claim stands in the names service. The service knows nothing about the padlock. */
+export type ClaimState = 'pending' | 'active' | 'suspended' | 'expired';
 
 /** What an outside check of the person's own domain found. */
 export type DomainCheck = 'found' | 'not-found' | 'wrong-address' | 'proxied' | 'certificate-blocked';
 
+/**
+ * Asking for a name is a claim, not a read-only suggestion. The service holds the name as pending
+ * for about ten minutes until the server confirms it.
+ */
 export type NameSuggestion =
-  | { ok: true; name: string }
+  | { ok: true; name: string; rerollsLeft: number }
   | { ok: false; reason: FreeNamesUnavailable };
+
+export type RerollResult =
+  | { ok: true; name: string; rerollsLeft: number }
+  | { ok: false; reason: 'no-more' | 'unreachable' };
 
 export interface ClaimStatus {
   name: string;
+  state: ClaimState;
   /** The name points at the server. */
   pointed: boolean;
   /** The padlock (HTTPS certificate) is issued. */
@@ -39,7 +56,10 @@ export interface AddressService {
   installDomain(): Promise<string>;
   /** The public address of the VPS. */
   vpsAddress(): Promise<string>;
+  /** Claims a new random name. */
   suggestName(): Promise<NameSuggestion>;
+  /** Swaps a pending claim for another random name. The service allows a few of these for each claim. */
+  chooseAnother(name: string): Promise<RerollResult>;
   claimStatus(name: string): Promise<ClaimStatus>;
   checkOwnDomain(host: string, expectedAddress: string): Promise<DomainCheckResult>;
 }
@@ -96,12 +116,13 @@ export type AddressChoice = 'free' | 'own';
 
 export type AddressState =
   | { screen: 'choose'; choice: AddressChoice }
-  | { screen: 'free'; name: string | null; pointed: boolean; padlock: boolean }
+  | { screen: 'free'; name: string | null; rerollsLeft: number; pointed: boolean; padlock: boolean }
   | { screen: 'own-domain' }
   | { screen: 'own-record'; host: string; check: DomainCheckResult | null }
   | { screen: 'own-ticks'; host: string; pointed: boolean; padlock: boolean }
   | { screen: 'unavailable'; reason: FreeNamesUnavailable }
   | { screen: 'padlock-failed'; reason: string; name: string; route: AddressChoice }
+  | { screen: 'expired'; why: 'expired' | 'suspended' }
   | { screen: 'done'; address: string };
 
 export type AddressEvent =
@@ -109,13 +130,15 @@ export type AddressEvent =
   | { type: 'continue' }
   | { type: 'suggested'; suggestion: NameSuggestion }
   | { type: 'claim'; status: ClaimStatus }
-  | { type: 'choose-another' }
+  | { type: 'rerolled'; result: RerollResult }
   | { type: 'domain-entered'; domain: string }
   | { type: 'domain-checked'; result: DomainCheckResult }
   | { type: 'use-server-address'; address: string }
   | { type: 'use-own-domain' }
   | { type: 'retry' }
   | { type: 'finish' };
+
+const freshFree = (): AddressState => ({ screen: 'free', name: null, rerollsLeft: 0, pointed: false, padlock: false });
 
 export const INITIAL_ADDRESS_STATE: AddressState = { screen: 'choose', choice: 'free' };
 
@@ -131,7 +154,7 @@ export function nextAddressState(state: AddressState, event: AddressEvent): Addr
     case 'continue':
       if (state.screen === 'choose') {
         return state.choice === 'free'
-          ? { screen: 'free', name: null, pointed: false, padlock: false }
+          ? freshFree()
           : { screen: 'own-domain' };
       }
       if (state.screen === 'own-record' && state.check?.result === 'found') {
@@ -142,12 +165,16 @@ export function nextAddressState(state: AddressState, event: AddressEvent): Addr
     case 'suggested':
       if (state.screen !== 'free' || state.name !== null) return state;
       return event.suggestion.ok
-        ? { ...state, name: event.suggestion.name }
+        ? { ...state, name: event.suggestion.name, rerollsLeft: event.suggestion.rerollsLeft }
         : { screen: 'unavailable', reason: event.suggestion.reason };
 
     case 'claim':
       if (state.screen === 'free') {
         if (state.name !== null && event.status.name !== state.name) return state;
+        // A claim that ran out of time or was suspended cannot be saved. The person starts again with a new name.
+        if (event.status.state === 'expired' || event.status.state === 'suspended') {
+          return { screen: 'expired', why: event.status.state };
+        }
         if (event.status.failure) return { screen: 'padlock-failed', reason: event.status.failure, name: event.status.name, route: 'free' };
         return {
           ...state,
@@ -163,11 +190,15 @@ export function nextAddressState(state: AddressState, event: AddressEvent): Addr
       }
       return state;
 
-    case 'choose-another':
+    case 'rerolled':
       // Only before the first padlock is issued.
-      return state.screen === 'free' && !state.padlock && state.name !== null
-        ? { screen: 'free', name: null, pointed: false, padlock: false }
-        : state;
+      if (state.screen !== 'free' || state.padlock || state.name === null) return state;
+      if (event.result.ok) {
+        return { screen: 'free', name: event.result.name, rerollsLeft: event.result.rerollsLeft, pointed: false, padlock: false };
+      }
+      return event.result.reason === 'no-more'
+        ? { ...state, rerollsLeft: 0 }
+        : { screen: 'unavailable', reason: 'unreachable' };
 
     case 'domain-entered': {
       if (state.screen !== 'own-domain') return state;
@@ -185,14 +216,14 @@ export function nextAddressState(state: AddressState, event: AddressEvent): Addr
       return state.screen === 'unavailable' ? { screen: 'own-domain' } : state;
 
     case 'retry':
-      if (state.screen === 'unavailable') {
-        return { screen: 'free', name: null, pointed: false, padlock: false };
+      if (state.screen === 'unavailable' || state.screen === 'expired') {
+        return freshFree();
       }
       if (state.screen === 'padlock-failed') {
         // Same name again: the installer retries the padlock, it does not pick a new name.
         return state.route === 'own'
           ? { screen: 'own-ticks', host: state.name, pointed: true, padlock: false }
-          : { screen: 'free', name: state.name, pointed: true, padlock: false };
+          : { screen: 'free', name: state.name, rerollsLeft: 0, pointed: true, padlock: false };
       }
       return state;
 
@@ -205,6 +236,65 @@ export function nextAddressState(state: AddressState, event: AddressEvent): Addr
       }
       return state;
   }
+}
+
+/** Whether the person can swap the pending name for another one. */
+export function canChooseAnother(state: AddressState): boolean {
+  return state.screen === 'free' && !state.padlock && state.name !== null && state.rerollsLeft > 0;
+}
+
+/** How long a claim may stay pending before the screen says port 80 may be closed. */
+export const PENDING_HINT_MS = 60_000;
+
+/**
+ * The server confirms a claim by letting the names service fetch a token from its port 80.
+ * A claim that stays pending usually means that port is not reachable.
+ */
+export function showPortHint(claimState: ClaimState, pendingForMs: number, afterMs = PENDING_HINT_MS): boolean {
+  return claimState === 'pending' && pendingForMs >= afterMs;
+}
+
+// ─── The names service's own spellings, mapped in one place ─────────────────
+
+export interface NamesServiceDomainCheck {
+  result: string;
+  domain?: string;
+  found?: string[];
+}
+
+const DOMAIN_RESULTS: Record<string, DomainCheck> = {
+  found: 'found',
+  not_found: 'not-found',
+  wrong_address: 'wrong-address',
+  proxied: 'proxied',
+  certificate_blocked: 'certificate-blocked',
+};
+
+/** Turns the answer of the names service into the screen's own shape. An answer it does not know counts as not found. */
+export function fromNamesServiceDomainCheck(raw: NamesServiceDomainCheck, expectedAddress: string): DomainCheckResult {
+  const result = DOMAIN_RESULTS[raw.result] ?? 'not-found';
+  if (result !== 'wrong-address') return { result };
+  // "found" is a list. Show the first address that is not the right one.
+  const foundAddress = raw.found?.find((a) => a !== expectedAddress) ?? raw.found?.[0];
+  return foundAddress ? { result, foundAddress } : { result };
+}
+
+export interface NamesServiceClaim {
+  name: string;
+  state: string;
+  claimed?: boolean;
+  pointed?: boolean;
+}
+
+const CLAIM_STATES: ClaimState[] = ['pending', 'active', 'suspended', 'expired'];
+
+/**
+ * Joins the answer of the names service with what the installer knows about the padlock.
+ * An unknown state counts as pending, so the screen keeps waiting and never claims success.
+ */
+export function fromNamesServiceClaim(raw: NamesServiceClaim, padlock: boolean, failure?: string): ClaimStatus {
+  const state = CLAIM_STATES.find((s) => s === raw.state) ?? 'pending';
+  return { name: raw.name, state, pointed: raw.pointed === true, padlock, ...(failure ? { failure } : {}) };
 }
 
 /** Whether the Continue button of the current screen can be pressed. */
@@ -255,10 +345,14 @@ export const ADDRESS_COPY = {
   certificateBlocked:
     'Your domain has a rule that stops us making the padlock. Add letsencrypt.org to it, then check again.',
   full: "OpenFlow's free addresses are all taken for this week.",
+  limit: 'Too many addresses were asked for from your internet connection today.',
   unreachable: 'We cannot reach the address service right now.',
   unavailableBody: (fallback: string) =>
     `Your server's own address works right now: ${fallback}. It changes if your server's address changes.`,
   padlockFailed: (reason: string) => `We could not make your padlock. ${reason}`,
+  portNotReachable: 'Port 80 on your server is not reachable.',
+  expired: 'Your address was not confirmed in time. Try again to get a new one.',
+  suspended: 'This address has been stopped. Try again to get a new one.',
   showDetails: 'Show details',
   buttons: {
     continue: 'Continue',
@@ -291,5 +385,5 @@ export function domainCheckMessage(check: DomainCheckResult, expectedAddress: st
 
 /** The opening sentence of the "names are full or the service is down" screen. */
 export function unavailableMessage(reason: FreeNamesUnavailable): string {
-  return reason === 'full' ? ADDRESS_COPY.full : ADDRESS_COPY.unreachable;
+  return reason === 'full' ? ADDRESS_COPY.full : reason === 'limit' ? ADDRESS_COPY.limit : ADDRESS_COPY.unreachable;
 }
