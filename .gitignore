@@ -1,0 +1,26 @@
+# Dependencies and build output
+node_modules/
+.next/
+.next-staging/
+coverage/
+dist/
+*.tsbuildinfo
+
+# Your settings, keys, tokens and data. These never belong in a commit.
+.env
+.env.local
+.env.*.local
+.AppData/
+.UserData/
+/logs/
+*.log
+
+# Python and editor leftovers
+__pycache__/
+*.pyc
+.DS_Store
+.idea/
+.vscode/
+
+# The optional folder agents work in (see docker-compose.yml)
+/workspace/
