@@ -1,0 +1,56 @@
+name: Checks
+# Typecheck, lint (changed files), unit tests, secret scan and a links and private-strings check of the public Markdown files. A pull request merges only when this passes.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint the files this change touches
+        # The whole tree still has lint errors from before this check existed. New and changed files must be clean.
+        # A branch named export/* (the export from DevFlow) touches hundreds of old files, so there lint only reports.
+        env:
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          base="$BASE"
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then base="HEAD~1"; fi
+          files=$(git diff --name-only --diff-filter=ACMR "$base" HEAD -- '*.ts' '*.tsx' '*.js' '*.mjs' | tr '\n' ' ')
+          if [ -z "$files" ]; then echo "No lintable files changed."; exit 0; fi
+          case "$BRANCH" in
+            export/*)
+              npx eslint $files || echo "::warning::Lint errors on an export branch are reported, not blocking."
+              ;;
+            *)
+              npx eslint $files
+              ;;
+          esac
+      - name: Unit tests
+        # tests/known-failing.txt lists files that already failed before this check. A new failure fails the job.
+        env:
+          NODE_ENV: test
+        run: |
+          args=$(grep -v '^#' tests/known-failing.txt | grep -v '^$' | sed 's/^/--exclude /' | tr '\n' ' ')
+          npx vitest run --maxWorkers=2 $args
+      - name: Public docs (links and private strings)
+        run: python3 -I scripts/check-public-docs.py
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
