@@ -1,26 +1,43 @@
+# Keys, tokens and your own data. These must never be committed.
+.env
+.env.*
+!.env.example
+/.AppData/
+/.UserData/
+*.pem
+*.key
+.secrets
+connectors.env
+
 # Dependencies and build output
 node_modules/
 .next/
-.next-staging/
-coverage/
-dist/
+/out/
+/build/
+/coverage/
 *.tsbuildinfo
+next-env.d.ts
 
-# Your settings, keys, tokens and data. These never belong in a commit.
-.env
-.env.local
-.env.*.local
-.AppData/
-.UserData/
-/logs/
-*.log
-
-# Python and editor leftovers
+# Python
 __pycache__/
 *.pyc
+.venv/
+venv/
+
+# Logs, scratch and local workspace
+/logs/
+/workspace/
+.session-scratch/
+*.log
+*.orig
+*.bak
 .DS_Store
+Thumbs.db
+
+# Editors
 .idea/
 .vscode/
-
-# The optional folder agents work in (see docker-compose.yml)
-/workspace/
+*.swp
+.next-staging/
+dist/
+coverage/
