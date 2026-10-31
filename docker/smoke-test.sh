@@ -26,7 +26,9 @@ wait_health() {
 wait_health && ok "dashboard answers" || { bad "dashboard did not answer"; "${COMPOSE[@]}" logs --tail 30; exit 1; }
 
 [ "$(curl -s -o /dev/null -w '%{http_code}' "$URL/setup")" = 200 ] && ok "setup wizard page" || bad "setup wizard page"
-[ "$(curl -s -o /dev/null -w '%{http_code}' "$URL/operations")" = 200 ] && ok "operations page (where the wizard ends)" || bad "operations page"
+# A fresh install sends every page to the setup wizard (middleware.ts), so /operations is a redirect until the wizard is finished
+fresh=$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "$URL/operations")
+[ "$fresh" = "307 $URL/setup" ] && ok "fresh install: /operations sends you to the setup wizard" || bad "fresh install /operations: expected 307 to $URL/setup, got: $fresh"
 [ "$(curl -s -o /dev/null -w '%{http_code}' "$URL/api/account")" = 200 ] && ok "account settings load on a fresh install" || bad "account settings"
 bind=$(docker inspect openflow --format '{{(index (index .NetworkSettings.Ports "8080/tcp") 0).HostIp}}')
 [ "$bind" = 127.0.0.1 ] && ok "published on 127.0.0.1 only" || bad "published on $bind"
@@ -40,6 +42,18 @@ verify=$(docker exec -e DEVFLOW_HOME=/opt/openflow openflow python3 data/scaffol
 # .mcp.json differs from the master by design (the app writes this agent's own tool list), so only missing files and errors count
 grep -q 'McKay:.*missing=0 .*errors=0' <<<"$verify" && ok "agent folder is complete" || bad "agent folder incomplete"
 
+# Finish the wizard the way its last screens do, then the page it ends on must load
+setup_ok=1
+save_step() { [ "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$URL/api/setup/save-step" -H 'Content-Type: application/json' -d "$1")" = 200 ] || setup_ok=0; }
+save_step '{"step":1,"data":{"name":"Smoke Test","role":"developer"}}'
+save_step '{"step":2,"data":{}}'
+save_step '{"step":3,"data":{"services":{}}}'
+save_step '{"step":4,"data":{"teamName":"Smoke Team","workspaceDir":"/tmp/smoke-workspace"}}'
+save_step '{"step":5,"data":{}}'
+[ "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$URL/api/setup/complete" -H 'Content-Type: application/json' -d '{}')" = 200 ] || setup_ok=0
+[ "$setup_ok" = 1 ] && ok "wizard steps 1 to 5 and complete accepted" || bad "wizard steps or complete refused"
+wait_health
+[ "$(curl -s -o /dev/null -w '%{http_code}' "$URL/operations")" = 200 ] && ok "operations page loads once setup is complete (where the wizard ends)" || bad "operations page after setup"
 before=$(docker exec openflow sh -c 'cat /data/openflow.env /opt/openflow/.AppData/api-tokens.json | sha256sum')
 docker restart openflow >/dev/null
 wait_health && ok "restart: dashboard answers again" || bad "restart"
