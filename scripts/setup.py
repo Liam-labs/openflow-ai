@@ -223,7 +223,7 @@ def register_token(store: Path, token: str, name: str = "setup", reset: bool = F
     return True
 
 
-def configure(repo: Path, port: int | None = None, reset_tokens: bool = False) -> dict:
+def configure(repo: Path, port: int | None = None, reset_tokens: bool = False, server: bool = False) -> dict:
     """Create/complete .env. Returns what changed, by name only (never a value)."""
     example, env_path = repo / ".env.example", repo / ".env"
     changes: list[str] = []
@@ -239,6 +239,13 @@ def configure(repo: Path, port: int | None = None, reset_tokens: bool = False) -
     explicit = {}
     if port:                                    # asked for on the command line, so it wins over what is in the file
         explicit = {"PORT": str(port), "DEVFLOW_URL": "http://localhost:%d" % port}
+    if server:                                  # a server behind a proxy: every request needs the token, even one that looks like it comes from this machine
+        wanted_server = {"DEVFLOW_SERVER_MODE": "1", "DEVFLOW_REQUIRE_TOKEN": "1"}
+        for name, value in wanted_server.items():
+            if values.get(name) != value:
+                text = set_env_value(text, name, value)
+                changes.append("set %s" % name)
+        values = parse_env(text)
     for name, value in {**wanted, **explicit}.items():
         if name in explicit and values.get(name) != value or not values.get(name):
             text = set_env_value(text, name, value)
@@ -272,15 +279,45 @@ def run_step(label: str, cmd: list[str], cwd: Path) -> None:
         raise SystemExit("setup: '%s' failed (exit %d). Fix the error above and run ./scripts/setup again." % (" ".join(cmd), done.returncode))
 
 
+def install_command(repo: Path) -> list[str]:
+    """--include=dev: a shell with NODE_ENV=production makes npm skip devDependencies, and the build needs them (Tailwind, TypeScript)."""
+    return ["npm", "ci" if (repo / "package-lock.json").exists() else "install", "--include=dev"]
+
+
+def clear_old_build(repo: Path) -> bool:
+    """A build that failed half-way leaves a .next folder the next build trips over. Setup always builds from scratch.
+    Only a real folder inside the app is removed; a link (someone's own layout) is left alone."""
+    build = repo / ".next"
+    if build.is_symlink() or not build.is_dir():
+        return False
+    shutil.rmtree(build)
+    return True
+
+
+def root_refusal(euid: int | None) -> str | None:
+    """Claude Code refuses to run its agents as root, so an install made as root builds fine and then no agent ever starts."""
+    if euid != 0:
+        return None
+    return ("setup: you are running as root (the administrator account). The AI tools will not start agents as root, so OpenFlow would build and then\n"
+            "  the example agents would never start. Run setup as a normal user instead. On a fresh Linux machine or container, make one first:\n"
+            "    adduser --disabled-password --gecos '' openflow && su - openflow\n"
+            "  then clone OpenFlow again as that user and run ./scripts/setup.")
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--check", action="store_true", help="only check this machine")
     ap.add_argument("--no-install", action="store_true")
     ap.add_argument("--no-build", action="store_true")
     ap.add_argument("--port", type=int)
+    ap.add_argument("--server", action="store_true", help="run this if anything sits in front of the app (a proxy, a tunnel, a VPS web address) or the app is reachable from the internet: every request then needs the access token, even one that looks like it comes from this machine")
     ap.add_argument("--reset-token-store", action="store_true", help="if the token file is damaged, keep a copy and start a new one")
     ap.add_argument("--repo", type=Path, default=REPO, help=argparse.SUPPRESS)
     args = ap.parse_args(argv)
+    refusal = root_refusal(os.geteuid() if hasattr(os, "geteuid") else None)
+    if refusal:
+        print(refusal, file=sys.stderr)
+        return 1
     here = detect_platform()
     if here["os"] in ("windows", "other"):
         print("setup: this system is not supported yet. Use Linux, macOS or WSL2 (Windows Subsystem for Linux).", file=sys.stderr)
@@ -300,14 +337,15 @@ def main(argv: list[str] | None = None) -> int:
         print("\nThis machine is ready.")
         return 0
     print("\nSettings:")
-    result = configure(args.repo, args.port, args.reset_token_store)
+    result = configure(args.repo, args.port, args.reset_token_store, args.server)
     for line in result["changes"] or ["nothing to change: settings and token were already in place"]:
         print("  - %s" % line)
     if not args.no_install:
         print("\nInstalling packages (this can take a few minutes):")
-        run_step("npm ci", ["npm", "ci"] if (args.repo / "package-lock.json").exists() else ["npm", "install"], args.repo)
+        run_step("npm install", install_command(args.repo), args.repo)
     if not args.no_build and not args.no_install:
         print("\nBuilding:")
+        clear_old_build(args.repo)
         run_step("npm run build:local", ["npm", "run", "build:local"], args.repo)
     print("\nDone. Start it with:  npm start\nThen open http://localhost:%s in your browser. Your access token is in .env (do not share or commit it)." %
           (parse_env((args.repo / ".env").read_text()).get("PORT") or "3000"))

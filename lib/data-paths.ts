@@ -62,6 +62,30 @@ export const DataPaths = {
   // Agent API tokens
   apiTokens: path.join(APP_DATA_BASE, 'api-tokens.json'),
 
+  // Dashboard sign-in: owner password hash and browser sessions (lib/dashboard-auth.ts)
+  dashboardAuth: path.join(APP_DATA_BASE, 'dashboard-auth.json'),
+
+  // Remote access wizard state: {enabled, method, ...} (lib/exposure-guard.ts reads `enabled` at every start)
+  remoteAccess: path.join(APP_DATA_BASE, 'remote-access.json'),
+
+  // Cloudflare wizard (lib/wizards/cloudflare.ts): what it created; the scoped API token; the tunnel token; the connector's pid and log.
+  // The tokens are private files read only by the wizard code, NOT part of the secret store (whose values every child process inherits).
+  cloudflareAccess: path.join(APP_DATA_BASE, 'cloudflare-access.json'),
+  cloudflareApiToken: path.join(APP_DATA_BASE, 'cloudflare-api-token'),
+  cloudflaredToken: path.join(APP_DATA_BASE, 'cloudflared-tunnel-token'),
+  cloudflaredPid: path.join(APP_DATA_BASE, 'cloudflared.pid'),
+  cloudflaredLog: path.join(APP_DATA_BASE, 'cloudflared.log'),
+
+  // Access token for the Computer Use bridge on the PC (lib/computer-use-bridge-token.ts): a private file, never part of the secret store.
+  computerUseBridgeToken: path.join(APP_DATA_BASE, 'computer-use-bridge-token'),
+
+  // Browser wizard (lib/wizards/browser-use.ts): the browser it started, and its log. The signed-in profile lives beside them in chrome-profile/.
+  browserUse: path.join(APP_DATA_BASE, 'browser-use.json'),
+  browserLog: path.join(APP_DATA_BASE, 'browser-use.log'),
+
+  // Memory (RAG) wizard (lib/wizards/memory.ts): what it set up. Qdrant's storage and the Python environment sit beside it.
+  memoryWizard: path.join(APP_DATA_BASE, 'memory-wizard.json'),
+
   // Model Registry (available AI models per provider/agent type)
   models: path.join(APP_DATA_BASE, 'models.json'),
 
@@ -83,7 +107,9 @@ export const DataPaths = {
 
   // Feature Docs (Sprint Summaries)
   featureDocs: path.join(APP_DATA_BASE, 'feature-docs.json'),
+  sprintArchiveDir: path.join(APP_DATA_BASE, 'sprint-archive'),     // Append-only <channelId>-<date>.json files: sprints and tasks moved off the board
   sprintSummaries: path.join(APP_DATA_BASE, 'sprint-summaries'),
+  sprintSummariesPrivate: path.join(APP_DATA_BASE, 'sprint-summaries-private'), // Articles of channels with RAG switched off; the RAG watcher skips this folder by name
 
   // Terminal Tasks (AI Terminal Sessions)
   terminalTasks: path.join(APP_DATA_BASE, 'terminal-tasks.json'),
@@ -228,6 +254,7 @@ export async function ensureDataDirectory(): Promise<void> {
     path.join(APP_DATA_BASE, 'cron-logs'),
     path.join(APP_DATA_BASE, 'idea-images'),
     path.join(APP_DATA_BASE, 'sprint-summaries'),
+    path.join(APP_DATA_BASE, 'sprint-summaries-private'),
     path.join(APP_DATA_BASE, 'keep-alive'),
     path.join(APP_DATA_BASE, 'delivery-evidence'),
     path.join(/* turbopackIgnore: true */ APP_CWD, 'logs', 'event-logs'),

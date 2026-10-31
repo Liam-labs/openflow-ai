@@ -11,6 +11,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { DataPaths } from './data-paths';
 import { readJsonFileStrict, JsonFileCorruptError, writeJsonFile, withFileLock } from './data-io';
 import { allowLocalTrust, listensOnLoopbackOnly } from './local-trust';
+import { HTTP_VERSION_HEADER, PEER_HEADER, peerStampActive } from './peer-stamp';
+import { requestHasSession } from './dashboard-auth';
 import type {
   ApiToken,
   ApiTokenScope,
@@ -88,6 +90,17 @@ export function hashToken(token: string): string {
  * Get client IP from request
  */
 export function getClientIp(request: NextRequest): string {
+  // The connection is the only address a caller cannot write (lib/peer-stamp.ts). A forwarding header is believed only when the
+  // connection comes from this machine's own tunnel proxy and the proxy proves itself with the shared tunnel secret; anyone else
+  // (a tailnet or LAN caller) is judged by the address they connect from, whatever X-Forwarded-For says. That keeps a forged header
+  // from walking round a token's IP allowlist, from locking out another address, or from posing as 127.0.0.1 to dodge the lockout.
+  if (peerStampActive()) {
+    const peer = request.headers.get(PEER_HEADER);
+    if (peer) {
+      const viaOwnProxy = (peer === '127.0.0.1' || peer === '::1' || peer === '::ffff:127.0.0.1') && isCloudflaredRequest(request);
+      if (!viaOwnProxy) return peer;
+    }
+  }
   // Check various headers for proxied requests
   // The LAST entry is the one the nearest proxy added (Cloudflare appends the address it saw). The first is whatever the sender wrote.
   const forwarded = request.headers.get('x-forwarded-for');
@@ -469,8 +482,10 @@ function buildLocalIpSet(): Set<string> {
 
   // WSL2 NAT mode: the Windows host connects via the default gateway IP.
   // Requests from Windows browser appear as x-forwarded-for: <gateway>.
-  // The gateway IS the local machine — trust it.
+  // The gateway IS the local machine — trust it. Only there: on any other Linux the default gateway is the router.
   try {
+    const { readFileSync } = require('fs');
+    if (!/microsoft/i.test(readFileSync('/proc/version', 'utf8'))) return ips;
     const { execSync } = require('child_process');
     const gw = execSync("ip route show default 2>/dev/null | awk '{print $3}'", { encoding: 'utf8', timeout: 2000 }).trim();
     if (gw && /^\d+\.\d+\.\d+\.\d+$/.test(gw)) {
@@ -502,7 +517,31 @@ const MACHINE_NAME = (() => {
  * In WSL2 mirrored mode with iptables DNAT, requests via 192.168.x.x still
  * originate from the same machine — Next.js sees the LAN IP in x-forwarded-for.
  */
+/**
+ * Headers only a reverse proxy in front of this app adds (Cloudflare, Cloudflare Access, Tailscale Serve). A request that carries one
+ * came from outside this machine however its address looks: a proxy that sends no X-Forwarded-For would otherwise read as a direct
+ * local connection. A caller who adds one yourself only lowers their own trust.
+ */
+const PROXY_MARKER_HEADERS = [
+  'cf-connecting-ip', 'cf-ray', 'cf-access-jwt-assertion', 'tailscale-user-login',
+  // What other reverse proxies add (nginx guides, Caddy, Traefik, Apache, HAProxy, cloud load balancers, Tailscale Funnel).
+  'x-real-ip', 'forwarded', 'via', 'x-forwarded-server', 'x-original-forwarded-for', 'true-client-ip', 'x-client-ip',
+  'x-cluster-client-ip', 'x-azure-clientip', 'fastly-client-ip', 'x-envoy-external-address', 'tailscale-funnel-request',
+];
+
+export function hasProxyMarkers(headers: { get(name: string): string | null }): boolean {
+  return PROXY_MARKER_HEADERS.some((name) => headers.get(name) !== null);
+}
+
 export function isLocalRequest(request: NextRequest): boolean {
+  if (hasProxyMarkers(request.headers)) return false;
+  // The caller's headers prove nothing, the connection does (lib/peer-stamp.ts). Once the server stamps its own peer address on
+  // every request, a request is "from this machine" only if the connection is: a LAN caller who writes "X-Forwarded-For: 127.0.0.1"
+  // arrives from a LAN address and is refused. A peer speaking HTTP/1.0 is a plain proxy in front of us (nginx's default).
+  if (peerStampActive()) {
+    if (!isTrustedAddress(request.headers.get(PEER_HEADER) ?? '')) return false;
+    if (request.headers.get(HTTP_VERSION_HEADER) === '1.0') return false;
+  }
   const forwarded = request.headers.get('x-forwarded-for');
   // Every address in the chain must be this machine's (or a trusted tailnet peer): the sender can write the first entries
   // themselves ("X-Forwarded-For: 127.0.0.1"), a proxy adds the real one at the end.
@@ -593,6 +632,11 @@ export async function requireAuthOrLocal(
   // Allow access via Cloudflare tunnel (webgate) — private infrastructure
   if (isCloudflaredRequest(request)) {
     return null; // Allowed via webgate tunnel
+  }
+
+  // A browser signed in with the owner password (lib/dashboard-auth.ts). requireTokenOrLocal below does not accept this.
+  if (await requestHasSession(request)) {
+    return null;
   }
 
   if (authResult.code === 'RATE_LIMITED') return rateLimitedResponse(authResult);

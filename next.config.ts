@@ -5,6 +5,7 @@ import { CHANNEL_TOOL_CSP } from "./lib/channel-tool-csp";
 const nextConfig: NextConfig = {
   // One setting for the owner's name (lib/human-identity.ts): DEVFLOW_OWNER_NAME at build time, inlined for server and browser alike.
   env: {
+    NEXT_PUBLIC_DEVFLOW_PROJECT_NAME: process.env.DEVFLOW_PROJECT_NAME || process.env.NEXT_PUBLIC_DEVFLOW_PROJECT_NAME || '',
     NEXT_PUBLIC_DEVFLOW_OWNER_NAME: process.env.DEVFLOW_OWNER_NAME || process.env.NEXT_PUBLIC_DEVFLOW_OWNER_NAME || '',
     // Browser code cannot read HOME: the build's home folder and DevFlow checkout are inlined for lib/home-dir.ts.
     NEXT_PUBLIC_DEVFLOW_HOME_DIR: process.env.HOME ?? process.env.USERPROFILE ?? '',
@@ -37,6 +38,10 @@ const nextConfig: NextConfig = {
   // ("non-ecmascript placeable asset"), so both stay as plain require()s at run time. Harmless on Linux.
   serverExternalPackages: ['chokidar', 'fsevents'],
 
+  // DevFlow never uses next/image, so the /_next/image optimiser (the target of the Next <=16.4.0 image-optimisation
+  // remote-code advisory) is switched off: nothing needs it, and it removes that attack surface even on a future Next advisory.
+  images: { unoptimized: true },
+
   // Enable gzip compression — reduces API response sizes ~80% over webgate tunnel
   compress: true,
 
@@ -49,18 +54,13 @@ const nextConfig: NextConfig = {
       : 12,
   },
 
-  async rewrites() {
-    return [
-      {
-        source: '/portal/:path*',
-        destination: 'http://localhost:3187/:path*',
-      },
-    ];
-  },
-
   // AgentChat is the home page; old /collab links (bookmarks, installed app, agent messages) keep working.
   async redirects() {
-    return [{ source: '/collab', destination: '/', permanent: false }];
+    return [
+      { source: '/collab', destination: '/', permanent: false },
+      // The PA system used to be called Life Admin: a real 308 so old links and tools that skip scripts still arrive.
+      { source: '/life-admin', destination: '/pa', permanent: true },
+    ];
   },
 
   async headers() {
@@ -90,8 +90,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
-              // The Riley Voice server on this PC: the sidebar shows and switches which channels it watches.
-              "connect-src 'self' ws: wss: http://localhost:7860 http://127.0.0.1:7860",
+              "connect-src 'self' ws: wss:",
               "worker-src 'self' blob:",
               "frame-ancestors 'self'",
             ].join('; '),
@@ -101,36 +100,16 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Riley Voice window: the only page allowed to use the microphone. It
-        // calls the local voice server (services/riley-voice-pipecat) on :7860
-        // and shows its stage pictures from there (on the phone both are 'self');
-        // Daily's engine bundle is served locally from /vendor/daily. Videos on the stage play
-        // in their site's own player (frame-src) or from a video address or the voice server.
-        // Declared after the global rule so these keys override it here only.
-        source: '/voice',
-        headers: [
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=()' },
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:",
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https: http://localhost:7860 http://127.0.0.1:7860",
-              "font-src 'self' data:",
-              "connect-src 'self' ws: wss: http://localhost:7860 http://127.0.0.1:7860",
-              "worker-src 'self' blob:",
-              "frame-src https:",
-              "media-src 'self' blob: https: http://localhost:7860 http://127.0.0.1:7860",
-              "frame-ancestors 'self'",
-            ].join('; '),
-          },
-        ],
-      },
-      {
         // Channel tool pages (served from a channel's channel-tools folder): sandboxed, opaque origin.
         // Declared after the global rule so its CSP replaces the global one for these files only.
         source: '/api/channel-tools/file/:path*',
+        headers: [
+          { key: 'Content-Security-Policy', value: CHANNEL_TOOL_CSP },
+        ],
+      },
+      {
+        // Design kit files (preview, fonts, example pages): sandboxed like channel tool pages, so a kit's example cannot reach DevFlow.
+        source: '/api/design-kits/:id/file/:path*',
         headers: [
           { key: 'Content-Security-Policy', value: CHANNEL_TOOL_CSP },
         ],

@@ -6,6 +6,7 @@ import { requireAuthOrLocal } from '@/lib/api-auth';
 import { tracked } from '@/lib/api-tracking';
 import { appRoot } from '@/lib/app-paths';
 import { getHomeDir } from '@/lib/home-dir';
+import { importPathAllowed } from '@/lib/docs-import-path';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,37 +40,35 @@ export const POST = tracked('/api/docs/import', async (request: NextRequest) => 
       resolvedPath = path.resolve(appRoot(), resolvedPath);
     }
 
-    // Security: restrict to safe roots.
-    // Allowed: DevFlow project dir (process.cwd()) or non-hidden, non-sensitive home subdirs.
-    // Blocked: hidden dirs, known-sensitive non-hidden dirs, anything outside HOME or cwd.
-    const SENSITIVE_DIRS = new Set(['secrets', 'credentials', 'private', 'keys', 'certs', 'tokens', 'vault']);
-    const HOME = getHomeDir();
-    const isUnderCwd = resolvedPath.startsWith(appRoot() + path.sep) || resolvedPath === appRoot();
-    const isUnderHome = resolvedPath.startsWith(HOME + path.sep);
-    const topDirUnderHome = isUnderHome
-      ? resolvedPath.slice(HOME.length + 1).split(path.sep)[0]
-      : '';
-    const isNonHiddenHomeSubdir = isUnderHome
-      && topDirUnderHome !== ''
-      && !topDirUnderHome.startsWith('.')
-      && !SENSITIVE_DIRS.has(topDirUnderHome.toLowerCase());
-
-    if (!isUnderCwd && !isNonHiddenHomeSubdir) {
+    // Security: decide on the real path (symlinks and ".." followed), so a visible-looking path cannot reach a hidden folder.
+    let realPath: string;
+    let roots: { home: string; app: string };
+    try {
+      roots = { home: await fs.promises.realpath(getHomeDir()), app: await fs.promises.realpath(appRoot()) };
+    } catch {
+      return NextResponse.json({ error: 'File not found' }, { status: 404 });
+    }
+    try {
+      realPath = await fs.promises.realpath(resolvedPath);
+    } catch {
+      // Missing file: refuse a forbidden location the same way as an existing one, so the answer does not reveal what exists there.
+      return importPathAllowed(path.resolve(resolvedPath), roots)
+        ? NextResponse.json({ error: 'File not found' }, { status: 404 })
+        : NextResponse.json({ error: 'Access to this path is not allowed' }, { status: 403 });
+    }
+    if (!importPathAllowed(realPath, roots)) {
       return NextResponse.json(
         { error: 'Access to this path is not allowed' },
         { status: 403 }
       );
     }
 
-    // Check if file exists and get metadata
+    // Check if the file exists and get its metadata
     let stats: Awaited<ReturnType<typeof fs.promises.stat>>;
     try {
-      stats = await fs.promises.stat(resolvedPath);
+      stats = await fs.promises.stat(realPath);
     } catch {
-      return NextResponse.json(
-        { error: `File not found: ${resolvedPath}` },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'File not found' }, { status: 404 });
     }
 
     // Check if it's a file (not directory)
@@ -89,7 +88,7 @@ export const POST = tracked('/api/docs/import', async (request: NextRequest) => 
     }
 
     // Check file extension
-    const ext = path.extname(resolvedPath).toLowerCase();
+    const ext = path.extname(realPath).toLowerCase();
     const validExtensions = ['.md', '.txt', '.markdown'];
     if (!validExtensions.includes(ext)) {
       return NextResponse.json(
@@ -99,7 +98,7 @@ export const POST = tracked('/api/docs/import', async (request: NextRequest) => 
     }
 
     // Read file content
-    const content = await fs.promises.readFile(resolvedPath, 'utf-8');
+    const content = await fs.promises.readFile(realPath, 'utf-8');
     const filename = path.basename(resolvedPath);
 
     // Try to parse frontmatter if it exists

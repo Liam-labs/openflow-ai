@@ -17,12 +17,36 @@ declare global {
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
+    // Write the real connection address on every request, before anything else can answer one (lib/peer-stamp.ts). Without it the
+    // server cannot tell a caller on this machine from one who only claims to be, so local trust is switched off for the process.
+    if (process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
+      try {
+        const { installPeerStamp } = await import('@/lib/peer-stamp');
+        installPeerStamp();
+      } catch (error) {
+        process.env.DEVFLOW_REQUIRE_TOKEN = '1';
+        console.error('[peer-stamp] not installed, so same-machine trust is OFF and every request needs a token:', error instanceof Error ? error.message : error);
+      }
+    }
     // Keys saved by the setup wizard live in a private file the app reads itself; values already in the environment win.
     try {
       const { loadSecretsIntoEnv } = await import('@/lib/secret-store');
       loadSecretsIntoEnv();
     } catch (error) {
       console.error('[secret-store] not loaded:', error instanceof Error ? error.message : error);
+    }
+    // Reachable from other computers without a sign-in password: refuse to start (lib/exposure-guard.ts). Not under test runners.
+    if (process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
+      try {
+        const { checkExposureAtStartup, EXIT_CODE_EXPOSED_WITHOUT_LOGIN } = await import('@/lib/exposure-guard');
+        const verdict = await checkExposureAtStartup();
+        if (!verdict.ok) {
+          console.error(`[exposure-guard] ${verdict.message}`);
+          process.exit(EXIT_CODE_EXPOSED_WITHOUT_LOGIN);
+        }
+      } catch (error) {
+        console.error('[exposure-guard] could not check:', error instanceof Error ? error.message : error);
+      }
     }
     const fs = (await import('fs')).default;
     const path = (await import('path')).default;
