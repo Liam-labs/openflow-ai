@@ -25,7 +25,9 @@ jobs:
       - name: Lint the files this change touches
         # The whole tree still has lint errors from before this check existed. New and changed files must be clean.
         # A branch named export/* (the export from DevFlow) touches hundreds of old files, so there lint only reports.
+        # A push to main re-lints what the squash merge brought in, so it only reports too: the pull request already had the blocking run.
         env:
+          EVENT: ${{ github.event_name }}
           BRANCH: ${{ github.head_ref || github.ref_name }}
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
@@ -33,6 +35,10 @@ jobs:
           if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then base="HEAD~1"; fi
           files=$(git diff --name-only --diff-filter=ACMR "$base" HEAD -- '*.ts' '*.tsx' '*.js' '*.mjs' | tr '\n' ' ')
           if [ -z "$files" ]; then echo "No lintable files changed."; exit 0; fi
+          if [ "$EVENT" = push ]; then
+            npx eslint $files || echo "::warning::Lint errors after a merge are reported, not blocking. The pull request was the gate."
+            exit 0
+          fi
           case "$BRANCH" in
             export/*)
               npx eslint $files || echo "::warning::Lint errors on an export branch are reported, not blocking."
