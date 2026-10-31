@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import sharp from 'sharp';
+import type { ResizeOptions } from 'sharp';
 import { OptimizeSettings, OptimizeResult, CropDirection } from '@/lib/types';
 import { requireAuthOrLocal } from '@/lib/api-auth';
 import { getProjectById } from '@/lib/config';
@@ -74,7 +75,7 @@ async function optimizeImage(
 
     // Apply resize
     if (settings.resize && (settings.resize.width || settings.resize.height)) {
-      const resizeOptions: sharp.ResizeOptions = {
+      const resizeOptions: ResizeOptions = {
         fit: settings.resize.maintainAspect ? 'inside' : 'fill',
       };
       if (settings.resize.width) resizeOptions.width = settings.resize.width;
@@ -118,7 +119,7 @@ async function optimizeImage(
       case 'original':
       default:
         // Apply quality based on original format
-        if (metadata.format === 'jpeg' || metadata.format === 'jpg') {
+        if (metadata.format === 'jpeg') {        // sharp reports JPEG as 'jpeg'; there is no 'jpg' format name
           image = image.jpeg({ quality: settings.quality, mozjpeg: true });
         } else if (metadata.format === 'png') {
           image = image.png({ quality: settings.quality });

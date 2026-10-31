@@ -1,4 +1,10 @@
+import { createHash, timingSafeEqual } from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
+
+/** Compare digests, so neither the content nor the length of the token shows in the timing. */
+export function sameToken(provided: string, expected: string): boolean {
+  return timingSafeEqual(createHash('sha256').update(provided).digest(), createHash('sha256').update(expected).digest());
+}
 
 export function authMiddleware(token: string) {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -22,7 +28,7 @@ export function authMiddleware(token: string) {
     }
 
     const provided = authHeader.slice(7);
-    if (provided !== token) {
+    if (!sameToken(provided, token)) {
       res.status(401).json({
         success: false,
         error: 'Invalid token',

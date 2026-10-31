@@ -12,6 +12,7 @@
 
 import { NextRequest } from 'next/server';
 import { isCloudflaredRequest } from './api-auth';
+import { accessConfigFromEnv, verifyAccessJwt } from './cf-access-jwt';
 import { readJsonFile } from './data-io';
 import { DataPaths } from './data-paths';
 import path from 'path';
@@ -45,34 +46,17 @@ function deriveName(email: string): string {
 }
 
 /**
- * Decode the payload of a Cloudflare Access JWT without verification.
- *
- * Cryptographic verification is unnecessary here: the request already passed
- * through Cloudflare Zero Trust (which validated the JWT) AND the cloudflared
- * tunnel secret check (which proves the request originated from our tunnel).
- * We only need the email claim — not proof of authenticity.
- */
-function decodeCfAccessJwt(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = Buffer.from(parts[1], 'base64url').toString('utf-8');
-    return JSON.parse(payload) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Resolve a webgate-authenticated user's identity from request headers.
  *
  * Reads Cf-Access-Jwt-Assertion header (injected by Cloudflare Zero Trust),
- * decodes the JWT payload, extracts the email claim, and resolves it to a
- * canonical participant ID + display name via the identity-map override file.
+ * verifies Cloudflare's signature on it (lib/cf-access-jwt.ts), extracts the
+ * email claim, and resolves it to a canonical participant ID + display name
+ * via the identity-map override file.
  *
  * Returns null if:
  * - Request didn't come through the cloudflared tunnel
- * - Cf-Access-Jwt-Assertion header is missing or invalid
+ * - WEBGATE_ACCESS_TEAM_DOMAIN / WEBGATE_ACCESS_AUD are not set
+ * - Cf-Access-Jwt-Assertion header is missing, forged, expired or for another application
  * - JWT payload doesn't contain an email claim
  */
 export async function resolveWebGateIdentity(
@@ -84,7 +68,7 @@ export async function resolveWebGateIdentity(
   const jwt = request.headers.get('Cf-Access-Jwt-Assertion');
   if (!jwt) return null;
 
-  const payload = decodeCfAccessJwt(jwt);
+  const payload = await verifyAccessJwt(jwt, accessConfigFromEnv());
   if (!payload) return null;
 
   const email = typeof payload.email === 'string' ? payload.email : null;
@@ -104,27 +88,4 @@ export async function resolveWebGateIdentity(
   }
 
   return { email, canonicalParticipantId: canonicalId, canonicalName };
-}
-
-/**
- * Synchronous variant that skips the override map (for use in hot paths
- * where the file read would contend the lock). Uses only derived name.
- */
-export function resolveWebGateIdentitySync(request: NextRequest): ResolvedWebGateIdentity | null {
-  if (!isCloudflaredRequest(request)) return null;
-
-  const jwt = request.headers.get('Cf-Access-Jwt-Assertion');
-  if (!jwt) return null;
-
-  const payload = decodeCfAccessJwt(jwt);
-  if (!payload) return null;
-
-  const email = typeof payload.email === 'string' ? payload.email : null;
-  if (!email) return null;
-
-  return {
-    email,
-    canonicalParticipantId: deriveParticipantId(email),
-    canonicalName: deriveName(email),
-  };
 }

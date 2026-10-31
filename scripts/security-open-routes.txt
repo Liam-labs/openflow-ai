@@ -6,5 +6,10 @@ POST /api/teams-bot/messages     # Bot Framework token checked by verifyBotToken
 POST /api/teams-bot/lifecycle    # Graph subscription handshake; lifecycle events are only logged
 GET /api/teams-bot/lifecycle     # fixed health reply
 POST /api/teams-bot/notifications  # each notification must carry the secret we gave Graph (clientState); handshake echoes its own token
-POST /api/voice/enrollment       # both branches refuse before any work; which guard applies depends on the "operation" in the JSON body, so the body is read first
-POST /api/voice/turn/cancel      # same: the guard is chosen from the body's "action" (companion token or normal auth), then refuses before any work
+POST /api/auth/login             # the way in: checks the owner password itself, throttled per address and globally, same-origin only
+POST /api/auth/logout            # only ever ends the session named by the caller's own cookie
+GET /api/auth/session            # booleans about the caller's own request (password set, signed in, on this machine)
+GET /api/auth/gate               # one boolean about the caller's own request, asked by middleware for page requests
+GET /api/gateway                # a stand-in in this edition: answers a fixed 501 and reads nothing
+POST /api/gateway               # same stand-in
+POST /api/auth/password         # first-password exception for the tailnet owner: needs loopback peer stamp, owner login, tailnet address, no password yet; closes after the first password
