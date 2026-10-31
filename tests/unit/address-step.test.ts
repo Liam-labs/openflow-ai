@@ -264,7 +264,7 @@ describe('own domain route', () => {
     expect(s).toEqual({ screen: 'own-domain' });
   });
 
-  it.each(['not-found', 'wrong-address', 'proxied', 'certificate-blocked'] as const)(
+  it.each(['not-found', 'wrong-address', 'proxied', 'certificate-blocked', 'rate-limited'] as const)(
     'cannot continue after the check result %s',
     (result) => {
       const s = nextAddressState(toRecord(), { type: 'domain-checked', result: { result } });
@@ -358,6 +358,7 @@ describe('wording', () => {
     expect(domainCheckMessage({ result: 'not-found' }, '203.0.113.5')).toBe(ADDRESS_COPY.notFound);
     expect(domainCheckMessage({ result: 'proxied' }, '203.0.113.5')).toBe(ADDRESS_COPY.proxied);
     expect(domainCheckMessage({ result: 'certificate-blocked' }, '203.0.113.5')).toBe(ADDRESS_COPY.certificateBlocked);
+    expect(domainCheckMessage({ result: 'rate-limited' }, '203.0.113.5')).toBe('Too many checks. Wait a few minutes and try again.');
   });
 
   it('names both addresses when the wrong one is found', () => {
@@ -396,6 +397,7 @@ describe('names service spellings', () => {
     ['wrong_address', 'wrong-address'],
     ['proxied', 'proxied'],
     ['certificate_blocked', 'certificate-blocked'],
+    ['rate_limited', 'rate-limited'],
   ])('maps %s to %s', (raw, mapped) => {
     expect(fromNamesServiceDomainCheck({ result: raw, found: ['203.0.113.5'] }, '203.0.113.5').result).toBe(mapped);
   });

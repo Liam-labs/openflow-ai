@@ -20,7 +20,14 @@ export type FreeNamesUnavailable = 'full' | 'limit' | 'unreachable';
 export type ClaimState = 'pending' | 'active' | 'suspended' | 'expired';
 
 /** What an outside check of the person's own domain found. */
-export type DomainCheck = 'found' | 'not-found' | 'wrong-address' | 'proxied' | 'certificate-blocked';
+export type DomainCheck =
+  | 'found'
+  | 'not-found'
+  | 'wrong-address'
+  | 'proxied'
+  | 'certificate-blocked'
+  /** The service answered HTTP 429, code rate_limited. The screen never retries by itself. */
+  | 'rate-limited';
 
 /**
  * Asking for a name is a claim, not a read-only suggestion. The service holds the name as pending
@@ -268,6 +275,7 @@ const DOMAIN_RESULTS: Record<string, DomainCheck> = {
   wrong_address: 'wrong-address',
   proxied: 'proxied',
   certificate_blocked: 'certificate-blocked',
+  rate_limited: 'rate-limited',
 };
 
 /** Turns the answer of the names service into the screen's own shape. An answer it does not know counts as not found. */
@@ -342,6 +350,7 @@ export const ADDRESS_COPY = {
   wrongAddress: (found: string, expected: string) =>
     `We found ${found}, but it should be ${expected}. Change it, then check again.`,
   proxied: 'Your provider is passing visitors through its own servers. Set the record to DNS only, then check again.',
+  rateLimited: 'Too many checks. Wait a few minutes and try again.',
   certificateBlocked:
     'Your domain has a rule that stops us making the padlock. Add letsencrypt.org to it, then check again.',
   full: "OpenFlow's free addresses are all taken for this week.",
@@ -380,6 +389,8 @@ export function domainCheckMessage(check: DomainCheckResult, expectedAddress: st
       return ADDRESS_COPY.proxied;
     case 'certificate-blocked':
       return ADDRESS_COPY.certificateBlocked;
+    case 'rate-limited':
+      return ADDRESS_COPY.rateLimited;
   }
 }
 
