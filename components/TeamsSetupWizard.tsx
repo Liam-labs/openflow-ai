@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { getDevflowHome } from '@/lib/home-dir';
 import {
   CheckCircle,
   ChevronRight,
@@ -149,14 +148,6 @@ function Step1AzureApp({ onNext, onCancel }: { onNext: () => void; onCancel: () 
         Open Azure Portal
       </a>
 
-      <button
-        onClick={() => fetch('/api/folder', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: `${getDevflowHome()}/.DevData/docs/DevFlow/setup-guides/setup-guide-teams.md` }) })}
-        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl mb-6
-          text-white/40 hover:text-white/60 transition-all text-sm"
-      >
-        <ExternalLink className="w-3.5 h-3.5" />
-        Full Setup Guide
-      </button>
 
       <div className="flex items-center gap-3">
         <button onClick={onCancel} className="glass-button px-4 py-2.5 text-sm text-white/60 hover:text-white/80">

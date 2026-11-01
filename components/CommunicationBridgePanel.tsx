@@ -178,7 +178,9 @@ export function CommunicationBridgePanel({ onClose }: CommunicationBridgePanelPr
   };
 
   useEffect(() => {
-    pollWhatsApp();
+    // This refresh updates state after the bridge HTTP request completes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void pollWhatsApp();
     wasPollRef.current = setInterval(pollWhatsApp, 30000);
     return () => { if (wasPollRef.current) clearInterval(wasPollRef.current); };
   }, []);
@@ -226,7 +228,9 @@ export function CommunicationBridgePanel({ onClose }: CommunicationBridgePanelPr
   };
 
   useEffect(() => {
-    pollSlack();
+    // This refresh updates state after the bridge HTTP request completes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void pollSlack();
     slackPollRef.current = setInterval(pollSlack, 30000);
     return () => { if (slackPollRef.current) clearInterval(slackPollRef.current); };
   }, []);
@@ -249,7 +253,9 @@ export function CommunicationBridgePanel({ onClose }: CommunicationBridgePanelPr
   };
 
   useEffect(() => {
-    pollTeams();
+    // This refresh updates state after the bridge HTTP request completes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void pollTeams();
     teamsPollRef.current = setInterval(pollTeams, 30000);
     return () => { if (teamsPollRef.current) clearInterval(teamsPollRef.current); };
   }, []);
