@@ -815,6 +815,14 @@ export default function ComputerUsePage() {
   const checkDependencies = useCallback(async (fromModal = false) => {
     if (fromModal) setDepModalState('checking');
     try {
+      const capabilityResponse = await fetch('/api/computer-use/wizard');
+      if (!capabilityResponse.ok) throw new Error('Could not check desktop setup support');
+      const capability = await capabilityResponse.json();
+      if (capability.supported === false) {
+        setShowDepModal(false);
+        return;
+      }
+
       const res = await fetch('/api/computer-use', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -837,12 +845,10 @@ export default function ComputerUsePage() {
         setShowDepModal(true);
       }
     } catch {
-      // Fail-open: show modal with all packages rather than silently hiding it
-      setMissingDeps(ALL_REQUIRED_PACKAGES);
-      setDepModalState('missing');
-      setShowDepModal(true);
+      setShowDepModal(false);
+      addToast('Could not check desktop setup. Use Setup Wizard to retry.');
     }
-  }, []);
+  }, [addToast]);
 
   // ── Trigger dependency install ─────────────────────────────────────────────
   const installDependencies = useCallback(async () => {

@@ -292,10 +292,17 @@ export function CommunicationBridgePanel({ onClose }: CommunicationBridgePanelPr
         </div>
 
         {/* Body */}
-        <div className="flex flex-1 min-h-0">
+        <div className="flex flex-col sm:flex-row flex-1 min-h-0">
+          <label className="sm:hidden px-4 py-3 text-sm border-b border-white/10">
+            Platform
+            <select aria-label="Platform" className="glass-input mt-2 w-full" value={selectedBridge ?? ''} onChange={event => setSelectedBridge((event.target.value || null) as BridgeId | null)}>
+              <option value="">Choose a platform</option>
+              {BRIDGES.map(bridge => <option key={bridge.id} value={bridge.id}>{bridge.label}</option>)}
+            </select>
+          </label>
 
           {/* Sidebar */}
-          <div className="w-60 flex-shrink-0 border-r border-white/8 py-3 overflow-y-auto">
+          <div className="hidden sm:block w-60 flex-shrink-0 border-r border-white/8 py-3 overflow-y-auto">
             <div className="px-4 pb-2">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-white/30">
                 Available
@@ -361,7 +368,7 @@ export function CommunicationBridgePanel({ onClose }: CommunicationBridgePanelPr
           </div>
 
           {/* Right content */}
-          <div className="flex-1 flex flex-col min-h-0 relative">
+          <div className="flex-1 flex flex-col min-w-0 min-h-0 relative">
 
             {/* Empty state */}
             {selectedBridge === null && (

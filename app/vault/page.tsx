@@ -15,6 +15,7 @@ import type { Secret } from '@/lib/vault/types';
 
 function VaultContent() {
   const { status } = useVault();
+  const [setupInProgress, setSetupInProgress] = useState(false);
   const [showAddSecret, setShowAddSecret] = useState(false);
   const [editingSecret, setEditingSecret] = useState<Secret | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -46,8 +47,8 @@ function VaultContent() {
     );
   }
 
-  if (status === 'setup-required') {
-    return <VaultSetupWizard />;
+  if (status === 'setup-required' || setupInProgress) {
+    return <VaultSetupWizard onStart={() => setSetupInProgress(true)} onComplete={() => setSetupInProgress(false)} />;
   }
 
   if (status === 'locked') {

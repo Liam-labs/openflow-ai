@@ -15,7 +15,7 @@ const STEPS: { id: SetupStep; label: string; icon: typeof Lock }[] = [
   { id: 'backup-codes', label: 'Backup Codes', icon: Key },
 ];
 
-export function VaultSetupWizard() {
+export function VaultSetupWizard({ onStart, onComplete }: { onStart?: () => void; onComplete?: () => void } = {}) {
   const { setupVault, isProcessing } = useVault();
   const [currentStep, setCurrentStep] = useState<SetupStep>('password');
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
@@ -26,6 +26,7 @@ export function VaultSetupWizard() {
   const handlePasswordComplete = async (password: string) => {
     try {
       setError(null);
+      onStart?.();
       const result = await setupVault(password);
       setBackupCodes(result.backupCodes);
       setCurrentStep('passkey');
@@ -121,6 +122,7 @@ export function VaultSetupWizard() {
 
         {currentStep === 'complete' && (
           <div className="text-center space-y-6">
+            {onComplete && <button type="button" className="glass-button primary w-full" onClick={onComplete}>Open vault</button>}
             <div className="w-20 h-20 mx-auto bg-success/20 rounded-full flex items-center justify-center">
               <Check className="w-10 h-10 text-success" />
             </div>

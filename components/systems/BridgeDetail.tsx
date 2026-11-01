@@ -130,7 +130,7 @@ function StatusTab({ data, bridge, onRefresh }: { data: BridgeData | null; bridg
 
 function ConfigTab({ data, bridge }: { data: BridgeData | null; bridge: string }) {
   const cfg = data?.config;
-  if (!cfg) return <div className="bridge-detail__empty">No configuration found.</div>;
+  if (!cfg) return <div className="bridge-detail__empty">{bridge === 'whatsapp' ? 'This bridge has not been configured yet.' : 'This bridge has not been configured yet. Choose Set up above to begin.'}</div>;
 
   const entries: { label: string; value: string }[] = [
     (cfg.enabled ?? cfg.syncEnabled) !== undefined && { label: 'Enabled', value: (cfg.enabled ?? cfg.syncEnabled) ? 'Yes' : 'No' },
