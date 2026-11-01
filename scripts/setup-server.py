@@ -8,6 +8,22 @@ import re
 import subprocess
 
 
+def prepare_appdata(image, volume):
+    """Match the volume root and installer result to the image's app user.
+
+    Writing the address before first mount prevents Docker's empty-volume
+    ownership initialization. Do not recursively change existing user data.
+    """
+    subprocess.run([
+        'docker', 'run', '--rm', '--network', 'none', '--user', '0:0',
+        '--entrypoint', 'python3', '-v', volume + ':/appdata', image, '-c',
+        "import os,pwd; u=pwd.getpwnam('node'); "
+        "os.chown('/appdata',u.pw_uid,u.pw_gid); "
+        "p='/appdata/install-address.json'; "
+        "os.path.exists(p) and os.chown(p,u.pw_uid,u.pw_gid)",
+    ], check=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--image', help='Use this already-built immutable image instead of building')
@@ -36,6 +52,10 @@ def main():
     address = json.loads(state.read_text())
     if address['state'] != 'ready':
         raise SystemExit('Address provisioning did not finish')
+    image = args.image or 'openflow-ai:local'
+    if not args.image:
+        subprocess.run(['docker', 'build', '-t', image, str(repo)], check=True)
+    prepare_appdata(image, volume)
     host = address['url'].removeprefix('https://')
     saved_claim = Path('/var/lib/openflow-install-name') / args.project / 'public-claim.json'
     fallback = json.loads(saved_claim.read_text())['fallbackHost'] if saved_claim.exists() else host
@@ -52,7 +72,7 @@ def main():
     if not args.configure_only:
         env = dict(os.environ, OPENFLOW_PORT=str(args.port))
         command = ['docker', 'compose', '-p', args.project, '-f', str(repo / 'docker-compose.yml'), '-f', str(override), 'up', '-d']
-        command += ['--no-build'] if args.image else ['--build']
+        command += ['--no-build']
         subprocess.run(command, check=True, env=env)
     print('OpenFlow address: ' + address['url'])
     print('Installer result: ' + str(state))
