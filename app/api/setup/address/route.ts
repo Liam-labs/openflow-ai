@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     if (!saved || typeof saved.url !== 'string' ||
         !['claiming', 'certificate', 'ready', 'failed'].includes(saved.state) ||
         !['managed', 'fallback'].includes(saved.source) ||
+        (saved.state === 'ready' && saved.url === '') ||
         (saved.url !== '' && !/^https:\/\/[a-z0-9.-]+\/?$/i.test(saved.url))) {
       return NextResponse.json({ serverMode, address: null }, { headers: { 'Cache-Control': 'no-store' } });
     }

@@ -115,7 +115,7 @@ def provision(state_dir: Path, public_state: Path, webroot: Path, fragment: Path
                 fallback = True
         if fallback:
             host = ip.replace('.', '-') + '.sslip.io'
-            result.update(url='https://' + host, source='fallback', reason='The names service could not be reached.')
+            result.update(url='https://' + host, source='fallback', reason='unreachable')
         else:
             claim = names.run('claim', state_dir, webroot, raw_state, registry, base, ip)
             host = claim['name']
