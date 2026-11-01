@@ -32,11 +32,3 @@ Run `./scripts/setup --server --host your-server.example.org`. The installer wri
 ## Test status
 
 The backend has focused tests for concurrent claims, expired codes, repeated use, password reset, rate limits, session cookies and cross-site requests. The first VPS build and the complete browser journey are under test. The first-login screen is a separate change and must be included before this journey is available.
-
-## Fresh trials after a merge
-
-The merge workflow can invoke `python3 scripts/vps-trial.py FULL_COMMIT --host your-server.example.org` as the dedicated application user. The command accepts only commits reachable from public `main`. It builds that exact revision in separate volumes and publishes the trial on loopback port 3102. It does not change the public deployment.
-
-The command stores private build logs and a JSON result under that user's `.local/state/openflow-vps` directory. Duplicate delivery of the current healthy revision reuses its result. A failed build preserves the previous trial. A failed start attempts to restart the previous trial. Failed trial data stays available for diagnosis. Tests must still exercise the wizard before a trial is promoted to the public address.
-
-The workflow invocation is event-driven. The command performs a bounded container startup health wait, not a scheduled source or repository scan. The merge workflow and source-export worker are separate integration work.
