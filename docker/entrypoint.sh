@@ -9,8 +9,18 @@ chmod 700 /data/home .AppData
 if [ -f /data/openflow.env ]; then
   install -m 600 /data/openflow.env .env
 else
-  python3 scripts/setup.py --no-install --no-build >/dev/null
+  args=(--no-install --no-build)
+  if [ "${DEVFLOW_SERVER_MODE:-0}" = 1 ]; then
+    args+=(--server)
+    if [ -n "${OPENFLOW_HOST:-}" ]; then args+=(--host "$OPENFLOW_HOST"); fi
+  fi
+  python3 scripts/setup.py "${args[@]}" >/dev/null
   install -m 600 .env /data/openflow.env
+fi
+
+if [ "${DEVFLOW_SERVER_MODE:-0}" = 1 ]; then
+  echo "First login: open /setup and enter the code below (valid 60 minutes)."
+  python3 scripts/setup-code.py
 fi
 
 socat TCP-LISTEN:"${OPENFLOW_PUBLIC_PORT}",fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:"${PORT}" &

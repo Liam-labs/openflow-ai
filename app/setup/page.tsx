@@ -1,6 +1,6 @@
 'use client';
 
-import { SetupWizard } from '@/components/SetupWizard';
+import { SetupEntry } from '@/components/setup/SetupEntry';
 
 export default function SetupPage() {
   return (
@@ -14,7 +14,7 @@ export default function SetupPage() {
       }}
     >
       <div className="w-full max-w-2xl">
-        <SetupWizard />
+        <SetupEntry />
       </div>
     </div>
   );

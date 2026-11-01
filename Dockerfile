@@ -1,7 +1,7 @@
 # OpenFlow in one container: the dashboard, the agent runner (tmux + python) and the Claude Code and Codex programs.
 # For Mac (Docker Desktop, OrbStack, Colima) and for anyone who prefers a container on Linux. Native install: see the README.
 # The build needs no secrets. Your logins and data live in the /data volume, never in the image.
-FROM node:20-bookworm
+FROM node:22-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         tmux python3 python3-pexpect git curl socat ca-certificates build-essential \
@@ -29,5 +29,5 @@ RUN npm ci --include=dev && npm run build:local && npm cache clean --force \
 ENV HOME=/data/home
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
-  CMD curl -sf http://127.0.0.1:3000/api/health || exit 1
+  CMD python3 /opt/openflow/docker/healthcheck.py
 ENTRYPOINT ["/opt/openflow/docker/entrypoint.sh"]

@@ -13,3 +13,5 @@ GET /api/auth/gate               # one boolean about the caller's own request, a
 GET /api/gateway                # a stand-in in this edition: answers a fixed 501 and reads nothing
 POST /api/gateway               # same stand-in
 POST /api/auth/password         # first-password exception for the tailnet owner: needs loopback peer stamp, owner login, tailnet address, no password yet; closes after the first password
+GET /api/auth/setup              # first-login availability and server-mode booleans only; no code or account data
+POST /api/auth/setup             # installer code creates only the first password/session; expiring single-use hash, same-origin check, per-address/global rate limit

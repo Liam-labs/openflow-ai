@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronRight, ChevronLeft, SkipForward, AlertTriangle, Loader2 } from 'lucide-react';
@@ -97,6 +97,35 @@ export function SetupWizard() {
   const [firstChannelId, setFirstChannelId] = useState<string | null>(null);
   // Track direction for slide animation: 1 = forward, -1 = backward
   const [direction, setDirection] = useState<1 | -1>(1);
+  const [restoring, setRestoring] = useState(true);
+  const [restoreError, setRestoreError] = useState(false);
+  const [restoreAttempt, setRestoreAttempt] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    async function restore() {
+      try {
+        const response = await fetch('/api/setup/status', { cache: 'no-store', signal: controller.signal });
+        if (!response.ok) throw new Error('Setup status unavailable');
+        const status = await response.json();
+        if (!status.steps || typeof status.steps !== 'object') throw new Error('Invalid setup status');
+        const profile = status.steps[1]?.data;
+        if (typeof profile?.name === 'string' && profile.name) {
+          setData((current) => ({ ...current, profile: { name: profile.name, role: typeof profile.role === 'string' ? profile.role : 'Solo Developer' } }));
+          // The status API also describes the old five-step wizard. Only the
+          // profile and credentials map to this wizard's first two steps.
+          setView(status.steps[2]?.complete === true ? 3 : 2);
+        }
+        setRestoreError(false);
+      } catch {
+        if (!controller.signal.aborted) setRestoreError(true);
+      } finally {
+        if (!controller.signal.aborted) setRestoring(false);
+      }
+    }
+    void restore();
+    return () => controller.abort();
+  }, [restoreAttempt]);
 
   const isComplete = view === 'complete';
   const currentStep = isComplete ? TOTAL_STEPS : (view as WizardStep);
@@ -226,6 +255,9 @@ export function SetupWizard() {
       x: dir * -24,
     }),
   };
+
+  if (restoring) return <p role="status" className="text-white/70">Loading your saved setup…</p>;
+  if (restoreError) return <div className="glass-card p-5 text-white"><p role="alert" className="mb-4">We could not load your saved setup. Try again before making changes.</p><button type="button" className="glass-button px-5 py-3" onClick={() => { setRestoring(true); setRestoreAttempt((value) => value + 1); }}>Try again</button></div>;
 
   return (
     <div className="flex flex-col w-full">

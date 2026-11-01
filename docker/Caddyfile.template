@@ -1,0 +1,4 @@
+# Substitute your hostname and the loopback port published by Compose.
+{$OPENFLOW_HOST} {
+    reverse_proxy 127.0.0.1:{$OPENFLOW_PORT:3000}
+}

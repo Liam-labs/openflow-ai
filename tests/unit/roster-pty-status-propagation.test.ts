@@ -35,6 +35,7 @@ beforeEach(() => {
 
 afterEach(() => {
   global.fetch = originalFetch;
+  vi.unstubAllEnvs();
 });
 
 function mockPtyResponse(status: number, body: Record<string, unknown>) {
@@ -167,5 +168,26 @@ describe('roster.spawn successful path is unchanged', () => {
     );
     expect((result as { session: { id: string } }).session.id).toBe('sess-1');
     expect((result as { participant: { name: string } }).participant.name).toBe('Builder');
+  });
+});
+
+
+describe('server-mode internal roster authentication', () => {
+  it('authenticates the internal PTY request when loopback access requires a token', async () => {
+    vi.stubEnv('DEVFLOW_SERVER_MODE', '1');
+    vi.stubEnv('DEVFLOW_REQUIRE_TOKEN', '1');
+    vi.stubEnv('DEVFLOW_API_TOKEN', 'dvf_server_roster_regression');
+    mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+      expect(new URL(url).hostname).toBe('127.0.0.1');
+      const authenticated = new Headers(init.headers).get('Authorization') === 'Bearer dvf_server_roster_regression';
+      return {
+        status: authenticated ? 200 : 401,
+        json: async () => authenticated
+          ? { success: true, agents: [] }
+          : { success: false, error: 'Authentication required' },
+      };
+    });
+    const { list } = await import('@/app/api/agent/actions/roster');
+    await expect(list({ channelId: 'server-test' } as never, {} as never)).resolves.toEqual({ agents: [], count: 0 });
   });
 });

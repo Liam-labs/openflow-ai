@@ -89,7 +89,7 @@ interface PtyCallResult {
 async function callPtyApi(body: Record<string, unknown>): Promise<PtyCallResult> {
   const res = await fetch(PTY_API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getDevFlowApiToken()}` },
     body: JSON.stringify(body),
   });
   const parsed = await res.json().catch(() => ({}));

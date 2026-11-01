@@ -36,3 +36,20 @@ def test_server_flag_corrects_a_file_that_turned_the_requirement_off():
         (repo / ".env").write_text("PORT=3000\nDEVFLOW_REQUIRE_TOKEN=0\n")
         setup.configure(repo, server=True)
         assert setup.parse_env((repo / ".env").read_text())["DEVFLOW_REQUIRE_TOKEN"] == "1"
+
+
+def test_public_host_is_written_and_unsafe_hosts_are_rejected_before_writes():
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = make_repo(Path(tmp))
+        setup.configure(repo, server=True, host='trial.example.org')
+        values = setup.parse_env((repo / '.env').read_text())
+        assert values['DEVFLOW_ALLOWED_HOSTS'] == 'localhost,127.0.0.1,trial.example.org'
+        assert values['DEVFLOW_ALLOWED_ORIGINS'] == 'https://trial.example.org'
+        assert values['DEVFLOW_URL'] == 'https://trial.example.org'
+        for bad in ['https://trial.example.org', 'x\nEVIL=1', '*.example.org', '-bad.example', 'a..b', 'a:443', 'a/path']:
+            before = (repo / '.env').read_bytes()
+            try:
+                setup.configure(repo, server=True, host=bad)
+                raise AssertionError('accepted unsafe host')
+            except SystemExit:
+                assert (repo / '.env').read_bytes() == before
