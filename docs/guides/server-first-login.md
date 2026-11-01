@@ -31,4 +31,4 @@ Run `./scripts/setup --server --host your-server.example.org`. The installer wri
 
 ## Test status
 
-The backend has focused tests for concurrent claims, expired codes, repeated use, password reset, rate limits, session cookies and cross-site requests. The first VPS build and the complete browser journey are under test. The first-login screen is a separate change and must be included before this journey is available.
+The backend has focused tests for concurrent claims, expired codes, repeated use, password reset, rate limits, session cookies and cross-site requests. A production Docker build and live API checks pass on an isolated VPS install. The owner login survives a container restart. The complete browser journey is under test. The first-login screen is a separate change and must be included before this journey is available.
