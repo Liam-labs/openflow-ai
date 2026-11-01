@@ -19,6 +19,6 @@ The receiving model feature card owns the pending model choice and its confirmat
 - URL tests cover local destinations, query and hash preservation, invalid destinations and supported providers.
 - A headless browser checked the real Operations provider link and a save through the private file store using a disposable placeholder key.
 - A browser check with simulated failures confirmed that a failed save stays on the form.
-- Desktop and 360-pixel layouts were inspected. The Connections breadcrumb returns to the list without reopening the provider.
+- The full Systems layout was checked at 360, 375, 480, 481, 768 and 1280 pixels, including reload and the phone navigation drawer. The phone layout uses one grid column when its sidebar is hidden. The Connections breadcrumb returns to the list without reopening the provider.
 
 The model feature API and card are separate changes. Their combined deployment still needs verification before features become available.
