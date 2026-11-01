@@ -87,13 +87,13 @@ export function optionsFromModels(models: RegistryModel[], providers: ServerProv
 }
 
 /** The page to come back to after the key page. It is this page without the resume marker. */
-export function returnToFor(location: { pathname: string; search: string }): string {
+export function returnToFor(location: { pathname: string; search: string; hash?: string }): string {
   const params = new URLSearchParams(location.search);
   params.delete('resume');
   params.delete('returnTo');
   params.delete('provider');
   const query = params.toString();
-  return query ? `${location.pathname}?${query}` : location.pathname;
+  return `${location.pathname}${query ? `?${query}` : ''}${location.hash ?? ''}`;
 }
 
 export function requestToServer(request: UpdateRequest, returnTo: string | null): Record<string, unknown> {
@@ -136,7 +136,7 @@ export async function resultFromResponse(
 /** The client the real screens use. A test or the preview passes its own `fetch`. */
 export function makeHttpClient(
   fetchImpl: typeof fetch = (...a) => fetch(...a),
-  currentLocation: () => { pathname: string; search: string } | null = () => (typeof window === 'undefined' ? null : window.location),
+  currentLocation: () => { pathname: string; search: string; hash?: string } | null = () => (typeof window === 'undefined' ? null : window.location),
 ): ModelFeatureClient {
   const readList = async (): Promise<ServerList> => {
     const res = await fetchImpl('/api/model-features');

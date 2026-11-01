@@ -176,9 +176,12 @@ describe('coming back from the key page', () => {
     expect(s.stage).toBe('saving');
     expect(s.request).toEqual({ enabled: true, provider: 'alpha', model: 'a-small' });
   });
-  it('does nothing when the feature is already on', () => {
+  it('resumes the confirmed provider change when the feature is already on', () => {
     const s = initialCardState(feature({ enabled: true, active: A }));
-    expect(nextCardState(s, { type: 'resume', choice: B, level: null })).toBe(s);
+    const resumed = nextCardState(s, { type: 'resume', choice: B, level: null });
+    expect(resumed.request).toEqual({ enabled: true, provider: B.provider, model: B.model });
+    expect(resumed.active).toEqual(A);
+    expect(nextCardState(resumed, { type: 'resume', choice: B, level: null })).toBe(resumed);
   });
   it('keeps the level the person had chosen', () => {
     const s = nextCardState(initialCardState(feature({ levels: LEVELS })), { type: 'resume', choice: A, level: 'auto' });

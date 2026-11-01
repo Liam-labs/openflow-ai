@@ -213,8 +213,8 @@ export function nextCardState(state: CardState, event: CardEvent): CardState {
       };
 
     case 'resume':
-      // The person already confirmed before leaving to link the key.
-      if (state.enabled || state.stage === 'saving') return state;
+      // The person already confirmed the switch-on or model change before linking the key.
+      if (state.stage === 'saving') return state;
       return saving(
         { ...state, choice: event.choice, level: event.level ?? state.level },
         {
