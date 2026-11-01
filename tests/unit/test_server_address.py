@@ -2,6 +2,7 @@ import importlib.util
 import json
 from pathlib import Path
 import socket
+import shutil
 import ssl
 import tempfile
 import unittest
@@ -14,6 +15,26 @@ spec.loader.exec_module(adapter)
 
 
 class ServerAddressTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('caddy'), 'requires actual Caddy validation')
+    def test_existing_site_does_not_import_empty_fragment_on_install_or_retry(self):
+        real_run = adapter.subprocess.run
+        def isolated_run(args, *a, **kw):
+            if args[0] == 'systemctl':
+                return adapter.subprocess.CompletedProcess(args, 0)
+            return real_run(args, *a, **kw)
+        for already_imported in (False, True):
+            with self.subTest(already_imported=already_imported), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                config, fragment = root / 'Caddyfile', root / 'fallback.caddy'
+                site = 'http://localhost:56789 {\n respond "existing"\n}\n'
+                config.write_text(site + (f'import {fragment}\n' if already_imported else ''))
+                fragment.write_text('')
+                with patch.object(adapter.subprocess, 'run', side_effect=isolated_run):
+                    adapter.caddy_fragment(fragment, '', config)
+                    adapter.caddy_fragment(fragment, '', config)
+                self.assertEqual(config.read_text(), site)
+                self.assertNotIn('import ', config.read_text())
+
     def test_only_network_unreachability_allows_fallback(self):
         self.assertTrue(adapter.network_unreachable(urllib.error.URLError(socket.gaierror('DNS unavailable'))))
         self.assertTrue(adapter.network_unreachable(TimeoutError()))

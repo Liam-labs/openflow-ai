@@ -56,7 +56,13 @@ def caddy_fragment(fragment: Path, content: str, config: Path) -> None:
         raise ValueError('Unsupported Caddy fragment path')
     directive = 'import ' + str(fragment)
     config.parent.mkdir(parents=True, exist_ok=True)
-    if directive not in previous_config.splitlines():
+    if not content.strip():
+        # Caddy rejects an empty import; there is no site to import here.
+        # The main config already owns this site: remove our import on retries.
+        config.write_text('\n'.join(line for line in previous_config.splitlines()
+                                    if line.strip() != directive) + '\n')
+        content = '# Site already provided by the main Caddyfile; not imported.\n'
+    elif directive not in previous_config.splitlines():
         config.write_text(previous_config.rstrip() + '\n' + directive + '\n')
     fragment.write_text(content)
     result = subprocess.run(['caddy', 'validate', '--config', str(config)], capture_output=True)
