@@ -152,7 +152,6 @@ import Link from 'next/link';
 import { useEventStreamContext } from '@/lib/contexts/EventStreamContext';
 import { writeRichClipboard } from '@/lib/chat-rich-clipboard';
 import { motion, AnimatePresence } from 'framer-motion';
-import { VoiceModeOverlay } from './VoiceModeOverlay';
 import { RileyVoiceControl } from './RileyVoiceControl';
 import {
   getSidebarUnreadCount,
@@ -545,7 +544,6 @@ export function ColabPanel({ isOpen, onClose, initialChannelId, mode = 'modal' }
   });
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [inputValue, setInputValue] = useState('');
-  const [isVoiceModeOpen, setIsVoiceModeOpen] = useState(false);
   const [spellcheckEnabled, setSpellcheckEnabled] = useState(false);
   const [spellcheckResults, setSpellcheckResults] = useState<Array<{ word: string; isCorrect: boolean; suggestions: string[] }>>([]);
   const spellcheckDebounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -3459,33 +3457,6 @@ export function ColabPanel({ isOpen, onClose, initialChannelId, mode = 'modal' }
     } catch { /* silently ignore */ }
   };
 
-  // Direct send for voice mode — bypasses the inputValue state/closure timing issue.
-  // Skips mention validation + broadcast confirmation (voice msgs are always targeted).
-  const sendVoiceMessage = useCallback(async (text: string) => {
-    if (!text.trim() || !activeChannel) return;
-    let pid = participantId;
-    if (!pid) {
-      pid = await rejoinChannel(activeChannel.id);
-      if (!pid) return;
-    }
-    const content = text.trim();
-    const ts = new Date().toISOString();
-    const sender = activeChannel.participants?.find(p => p.id === pid) || {
-      id: pid!, type: 'user' as const, name: 'You', source: 'Browser', joinedAt: ts, lastSeen: ts,
-    };
-    const optId = `voice-${Date.now()}`;
-    setMessages(prev => [...prev, {
-      id: optId, channelId: activeChannel.id, from: sender,
-      content, timestamp: ts,
-      metadata: { deliveryMode: 'broadcast' as const },
-    } as CollabMessage]);
-    fetch('/api/collab', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'message', channelId: activeChannel.id, participantId: pid, content }),
-    }).catch(err => console.error('[voice-send]', err));
-  }, [activeChannel, participantId, rejoinChannel, setMessages]);
-
   // Send message
   const handleSend = async () => {
     if (pendingAttachmentReads > 0) {
@@ -5747,19 +5718,6 @@ export function ColabPanel({ isOpen, onClose, initialChannelId, mode = 'modal' }
             );
           })()}
 
-          {/* Voice Mode Overlay — floats above the input when active */}
-          {activeChannel && isVoiceModeOpen && (
-            <div className="px-3 pb-2">
-              <VoiceModeOverlay
-                isOpen={isVoiceModeOpen}
-                onClose={() => setIsVoiceModeOpen(false)}
-                sendMessage={sendVoiceMessage}
-                messages={messages}
-                teamLeadId={activeChannel.teamLeadId}
-              />
-            </div>
-          )}
-
           {/* Input */}
           {activeChannel && (
             <ColabInput
@@ -5803,7 +5761,6 @@ export function ColabPanel({ isOpen, onClose, initialChannelId, mode = 'modal' }
               codeSuggestion={codeSuggestion}
               onAcceptCodeSuggestion={acceptCodeSuggestion}
               onDismissCodeSuggestion={dismissCodeSuggestion}
-              onVoiceModeOpen={() => setIsVoiceModeOpen(true)}
             />
           )}
         </div>

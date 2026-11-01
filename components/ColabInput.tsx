@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { ImageMarkupModal } from '@/components/modals/ImageMarkupModal';
-import { ArrowRightLeft, Code, Loader2, Mic, Paperclip, Send, Reply, Sparkles, X } from 'lucide-react';
+import { ArrowRightLeft, Code, Loader2, Paperclip, Send, Reply, Sparkles, X } from 'lucide-react';
 import type { Editor } from '@tiptap/react';
 import { CollabChannel, CollabMessage, CollabParticipant, CrossChannelTarget } from '@/lib/types';
 import { FormattingToolbar } from './FormattingToolbar';
@@ -92,9 +92,6 @@ interface ColabInputProps {
   onAcceptCodeSuggestion?: () => void;
   onDismissCodeSuggestion?: () => void;
 
-  // Voice mode — optional; when provided, a mic button appears in the send row
-  onVoiceModeOpen?: () => void;
-
   // Mobile "Paste image": files read from the system clipboard (Edge on Android
   // refuses keyboard image paste, so the page reads the clipboard itself).
   onFilesAdded?: (files: File[]) => void;
@@ -140,7 +137,6 @@ export function ColabInput({
   codeSuggestion,
   onAcceptCodeSuggestion,
   onDismissCodeSuggestion,
-  onVoiceModeOpen,
   onFilesAdded,
 }: ColabInputProps) {
   // Mobile attach menu: Photos opens Android's photo picker (includes Google
@@ -555,16 +551,6 @@ export function ColabInput({
               >
                 <Paperclip className="w-4 h-4" />
               </button>
-              {onVoiceModeOpen && (
-                <button
-                  onClick={onVoiceModeOpen}
-                  className="rounded-md hover:bg-white/10 text-muted hover:text-emerald-400 transition-colors w-9 h-9 flex items-center justify-center"
-                  title="Voice mode"
-                  aria-label="Open voice mode"
-                >
-                  <Mic className="w-4 h-4" />
-                </button>
-              )}
             </>
           ) : undefined}
         />
@@ -625,16 +611,6 @@ export function ColabInput({
         />
         {!isMobile && (
           <div className="flex items-center gap-1 self-end">
-            {onVoiceModeOpen && (
-              <button
-                onClick={onVoiceModeOpen}
-                className="rounded-xl text-emerald-500/50 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors p-3"
-                title="Voice mode"
-                aria-label="Open voice mode"
-              >
-                <Mic className="w-5 h-5" />
-              </button>
-            )}
             <button
               onClick={handleSend}
               disabled={(!inputValue.trim() && pendingImages.length === 0) || isReconnecting}
