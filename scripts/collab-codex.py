@@ -7,7 +7,7 @@ All Codex sessions started with this wrapper can be dynamically
 pulled into DevFlow collab channels.
 
 Modelled on collab-claude.py. Key differences:
-  - Binary: ~/.nvm/.../bin/codex
+  - Binary: PATH, then supported local/npm/nvm installations
   - System prompt: AGENTS.md in working dir (not --append-system-prompt)
   - JSONL: ~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl
   - Completion signal: response_item with payload.phase=='final_answer'
@@ -42,6 +42,9 @@ import urllib.error
 import urllib.parse
 import subprocess
 import random
+import shutil
+
+from harness_signin import search_path
 
 import proc_info
 from codex_workspace_trust import ensure_codex_workspace_trusted
@@ -599,8 +602,12 @@ IDLE_THRESHOLD = 1.5  # seconds since last keystroke before injecting
 MAX_CATCHUP_AGE_SECONDS = 480  # Max age (8 min) for inbox file catch-up only (the owner's directive: older messages dropped)
 MAX_CATCHUP_MESSAGES = 50  # Max messages to fetch on reconnect catch-up (replaces time-based cap for SSE/poll paths)
 
-# Codex binary path
-CODEX_BINARY = os.path.expanduser("~/.nvm/versions/node/v20.19.5/bin/codex")
+# Use the same discovery as sign-in, including container /usr/local/bin and native nvm installs.
+def find_codex_binary():
+    return shutil.which("codex", path=search_path())
+
+
+CODEX_BINARY = find_codex_binary()
 
 # Debug log
 DEBUG_LOG = "/tmp/collab-codex-debug.log"
@@ -4758,8 +4765,8 @@ class CollabCodexWrapper:
 
     def run(self):
         # Find Codex binary
-        if not os.path.exists(CODEX_BINARY):
-            print(f"\033[31mError: Codex not found at {CODEX_BINARY}\033[0m", file=sys.stderr)
+        if not CODEX_BINARY or not os.path.isfile(CODEX_BINARY) or not os.access(CODEX_BINARY, os.X_OK):
+            print(f"\033[31mError: Codex is not installed or executable on PATH or in a supported installation\033[0m", file=sys.stderr)
             return 1
 
         debug(f"Starting Codex: {CODEX_BINARY} {self.codex_args}")
@@ -4877,7 +4884,9 @@ class CollabCodexWrapper:
                 refresh_wsl_interop_environment()
                 self._reset_child_startup_state()
                 # Spawn Codex in a real PTY using pexpect
-                self.child = pexpect.spawn(CODEX_BINARY, final_args, encoding='utf-8', timeout=None)
+                child_env = os.environ.copy()
+                child_env['PATH'] = os.path.dirname(CODEX_BINARY) + os.pathsep + search_path()
+                self.child = pexpect.spawn(CODEX_BINARY, final_args, encoding='utf-8', timeout=None, env=child_env)
                 # Disable pexpect's 50ms sleep-before-send
                 self.child.delaybeforesend = 0
 
