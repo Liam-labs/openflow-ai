@@ -223,8 +223,10 @@ def register_token(store: Path, token: str, name: str = "setup", reset: bool = F
     return True
 
 
-def configure(repo: Path, port: int | None = None, reset_tokens: bool = False, server: bool = False) -> dict:
+def configure(repo: Path, port: int | None = None, reset_tokens: bool = False, server: bool = False, host: str | None = None) -> dict:
     """Create/complete .env. Returns what changed, by name only (never a value)."""
+    if host and (not server or not re.fullmatch(r"(?=.{1,253}$)[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?", host) or any(not label or len(label) > 63 or label.startswith("-") or label.endswith("-") for label in host.split("."))):
+        raise SystemExit("setup: --host needs --server and a hostname without a scheme, path or port")
     example, env_path = repo / ".env.example", repo / ".env"
     changes: list[str] = []
     if not env_path.exists():
@@ -241,6 +243,9 @@ def configure(repo: Path, port: int | None = None, reset_tokens: bool = False, s
         explicit = {"PORT": str(port), "DEVFLOW_URL": "http://localhost:%d" % port}
     if server:                                  # a server behind a proxy: every request needs the token, even one that looks like it comes from this machine
         wanted_server = {"DEVFLOW_SERVER_MODE": "1", "DEVFLOW_REQUIRE_TOKEN": "1"}
+        if host:
+            wanted_server.update({"DEVFLOW_ALLOWED_HOSTS": "localhost,127.0.0.1," + host, "DEVFLOW_ALLOWED_ORIGINS": "https://" + host, "DEVFLOW_URL": "https://" + host, "OPENFLOW_HOST": host})
+            explicit.pop("DEVFLOW_URL", None)
         for name, value in wanted_server.items():
             if values.get(name) != value:
                 text = set_env_value(text, name, value)
@@ -311,6 +316,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--no-build", action="store_true")
     ap.add_argument("--port", type=int)
     ap.add_argument("--server", action="store_true", help="run this if anything sits in front of the app (a proxy, a tunnel, a VPS web address) or the app is reachable from the internet: every request then needs the access token, even one that looks like it comes from this machine")
+    ap.add_argument("--host", help="public HTTPS hostname for --server, without a scheme or path")
     ap.add_argument("--reset-token-store", action="store_true", help="if the token file is damaged, keep a copy and start a new one")
     ap.add_argument("--repo", type=Path, default=REPO, help=argparse.SUPPRESS)
     args = ap.parse_args(argv)
@@ -337,7 +343,7 @@ def main(argv: list[str] | None = None) -> int:
         print("\nThis machine is ready.")
         return 0
     print("\nSettings:")
-    result = configure(args.repo, args.port, args.reset_token_store, args.server)
+    result = configure(args.repo, args.port, args.reset_token_store, args.server, args.host)
     for line in result["changes"] or ["nothing to change: settings and token were already in place"]:
         print("  - %s" % line)
     if not args.no_install:
@@ -347,8 +353,11 @@ def main(argv: list[str] | None = None) -> int:
         print("\nBuilding:")
         clear_old_build(args.repo)
         run_step("npm run build:local", ["npm", "run", "build:local"], args.repo)
-    print("\nDone. Start it with:  npm start\nThen open http://localhost:%s in your browser. Your access token is in .env (do not share or commit it)." %
-          (parse_env((args.repo / ".env").read_text()).get("PORT") or "3000"))
+    if args.server:
+        print("\nCreate your login using this one-time code (expires in 60 minutes):", flush=True)
+        run_step("issue setup code", ["python3", "scripts/setup-code.py", "--repo", str(args.repo)], args.repo)
+    address = "https://" + args.host if args.host else "http://localhost:" + (parse_env((args.repo / ".env").read_text()).get("PORT") or "3000")
+    print("\nDone. Start it with:  npm start\nThen open %s in your browser. Your access token is in .env (do not share or commit it)." % address)
     return 0
 
 

@@ -1,0 +1,10 @@
+# Run with docker compose -f docker-compose.yml -f docker-compose.server.yml up -d --build
+# Set OPENFLOW_HOST to your HTTPS hostname. Caddy forwards to the loopback port.
+services:
+  openflow:
+    environment:
+      DEVFLOW_SERVER_MODE: "1"
+      DEVFLOW_REQUIRE_TOKEN: "1"
+      OPENFLOW_HOST: "${OPENFLOW_HOST:?Set OPENFLOW_HOST to the public HTTPS hostname}"
+      DEVFLOW_ALLOWED_HOSTS: "localhost,127.0.0.1,${OPENFLOW_HOST}"
+      DEVFLOW_ALLOWED_ORIGINS: "https://${OPENFLOW_HOST}"

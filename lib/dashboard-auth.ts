@@ -14,6 +14,7 @@
  */
 
 import { createHash, randomBytes, scrypt as scryptCb, timingSafeEqual } from 'crypto';
+import path from 'path';
 import type { NextRequest } from 'next/server';
 import { DataPaths } from './data-paths';
 import { readJsonFileStrict, writeJsonFile, withFileLock } from './data-io';
@@ -55,6 +56,7 @@ interface AttemptRecord {
 export interface DashboardAuthStore {
   version: 1;
   password?: { hash: string; setAt: string };
+  setupCodeConsumed?: string;
   sessions: Record<string, SessionRecord>;
   attempts: Record<string, AttemptRecord>;
   globalAttempts: AttemptRecord;
@@ -341,4 +343,39 @@ export async function sessionCount(): Promise<number> {
   const now = Date.now();
   const store = await load();
   return Object.values(store.sessions).filter((s) => sessionUsable(s, now)).length;
+}
+
+// The installer writes only a hash. Claiming it and setting the password use the
+// same lock as every other password writer, so two first-login requests cannot win.
+export type SetupLoginResult =
+  | { ok: true; cookie: string; maxAgeSeconds: number }
+  | { ok: false; reason: 'already_configured' | 'invalid_code' | 'throttled' | 'bad_password'; error?: string; retryAfterSeconds?: number };
+
+export async function claimSetupCode(code: unknown, password: unknown, ip: string, userAgent: string, now = Date.now()): Promise<SetupLoginResult> {
+  const problem = passwordProblem(password);
+  if (problem) return { ok: false, reason: 'bad_password', error: problem };
+  return mutate(async (store): Promise<SetupLoginResult> => {
+    if (store.password) return { ok: false, reason: 'already_configured' };
+    const gate = loginThrottle(store, ip, now);
+    if (!gate.allowed) return { ok: false, reason: 'throttled', retryAfterSeconds: gate.retryAfterSeconds };
+    const issued = await readJsonFileStrict<{ hash?: string; expiresAt?: number }>(path.join(path.dirname(DataPaths.dashboardAuth), 'setup-code.json'), {});
+    const supplied = typeof code === 'string' && /^[A-Za-z0-9_-]{32,128}$/.test(code) ? sessionKey(code) : '';
+    const valid = supplied && supplied !== store.setupCodeConsumed && typeof issued.hash === 'string' && /^[a-f0-9]{64}$/.test(issued.hash)
+      && typeof issued.expiresAt === 'number' && now < issued.expiresAt
+      && timingSafeEqual(Buffer.from(supplied, 'hex'), Buffer.from(issued.hash, 'hex'));
+    if (!valid) {
+      const own = store.attempts[ip];
+      store.attempts[ip] = own && now - own.firstAt < LOGIN_WINDOW_MS ? { count: own.count + 1, firstAt: own.firstAt } : { count: 1, firstAt: now };
+      const g = store.globalAttempts;
+      store.globalAttempts = g.firstAt && now - g.firstAt < LOGIN_GLOBAL_WINDOW_MS ? { count: g.count + 1, firstAt: g.firstAt } : { count: 1, firstAt: now };
+      return { ok: false, reason: 'invalid_code' };
+    }
+    store.setupCodeConsumed = supplied;
+    store.password = { hash: await hashPassword(password as string), setAt: new Date(now).toISOString() };
+    store.attempts = {};
+    store.globalAttempts = { count: 0, firstAt: 0 };
+    const cookie = randomBytes(32).toString('base64url');
+    store.sessions = { [sessionKey(cookie)]: { createdAt: now, lastSeenAt: now, expiresAt: now + SESSION_ABSOLUTE_MS, ip, userAgent: userAgent.slice(0, 200) } };
+    return { ok: true, cookie, maxAgeSeconds: Math.floor(SESSION_ABSOLUTE_MS / 1000) };
+  });
 }
