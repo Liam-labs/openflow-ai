@@ -18,7 +18,8 @@ export function resumeDestination(search: string): string | null {
   const path = params.get('returnTo');
   const resume = params.get('resume');
   if (!path || !path.startsWith('/') || path.startsWith('//') || /[\\\u0000-\u0020\u007f]/.test(path)) return null;
-  const base = 'https://local.invalid';
+  // Parsing base only: no network request is made.
+  const base = 'http://localhost';
   try {
     const url = new URL(path, base);
     if (url.origin !== base || url.pathname.startsWith('//')) return null;
