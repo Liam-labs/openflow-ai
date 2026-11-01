@@ -9,3 +9,5 @@ The setup page reads `GET /api/auth/setup`. It shows the first-login screen only
 The form sends `{ code, newPassword }` to `POST /api/auth/setup` and then verifies the session at `/api/auth/session`. The code and password stay in component memory, are never placed in a URL or browser storage, and clear after success. Deploy the setup-code backend with these screen changes; an older backend without the status endpoint cannot load this entry screen.
 
 The component tests cover validation, duplicate submissions, server refusals, retry, and session-cookie failure. A real VPS browser test is still required for deployment acceptance.
+
+After a reload, the wizard reads the saved profile and resumes at AI access or the team step. It maps the saved profile and credentials to the current three-step flow, rather than using the legacy five-step index. A failed restoration shows a retry message before allowing edits.
