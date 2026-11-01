@@ -317,6 +317,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--port", type=int)
     ap.add_argument("--server", action="store_true", help="run this if anything sits in front of the app (a proxy, a tunnel, a VPS web address) or the app is reachable from the internet: every request then needs the access token, even one that looks like it comes from this machine")
     ap.add_argument("--host", help="public HTTPS hostname for --server, without a scheme or path")
+    ap.add_argument("--container-init", action="store_true", help=argparse.SUPPRESS)
     ap.add_argument("--reset-token-store", action="store_true", help="if the token file is damaged, keep a copy and start a new one")
     ap.add_argument("--repo", type=Path, default=REPO, help=argparse.SUPPRESS)
     args = ap.parse_args(argv)
@@ -342,6 +343,24 @@ def main(argv: list[str] | None = None) -> int:
     if args.check:
         print("\nThis machine is ready.")
         return 0
+    if args.server and not args.host and not args.container_init:
+        # Server installs get their address before the settings/UI are exposed.
+        app_data = args.repo / '.AppData'
+        address_port = args.port or 3000
+        if (args.repo / '.env').exists():
+            saved_env = parse_env((args.repo / '.env').read_text())
+            configured = saved_env.get('DEVFLOW_APP_DATA_DIR', '.AppData')
+            address_port = args.port or int(saved_env.get('PORT') or 3000)
+            app_data = Path(configured) if Path(configured).is_absolute() else args.repo / configured
+        app_data.mkdir(parents=True, exist_ok=True)
+        network = ["sudo", str(args.repo / 'scripts/server-address'),
+                   '--state-dir', '/var/lib/openflow-install-name', '--public-state', str(app_data / 'install-address.json'),
+                   '--port', str(address_port)]
+        run_step('claim server address and obtain HTTPS', network, args.repo)
+        address_state = json.loads((app_data / 'install-address.json').read_text())
+        if address_state.get('state') != 'ready':
+            raise SystemExit('setup: server address is not ready; see the persisted address status')
+        args.host = address_state['url'].removeprefix('https://').rstrip('/')
     print("\nSettings:")
     result = configure(args.repo, args.port, args.reset_token_store, args.server, args.host)
     for line in result["changes"] or ["nothing to change: settings and token were already in place"]:

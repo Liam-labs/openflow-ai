@@ -1,6 +1,8 @@
 """./scripts/setup --server writes the two settings that make every request need the access token (a proxy on this machine must not be trusted as the owner)."""
 import importlib.util
+import json
 import tempfile
+from unittest.mock import patch
 from pathlib import Path
 
 SPEC = importlib.util.spec_from_file_location("openflow_setup", Path(__file__).resolve().parent.parent / "scripts" / "setup.py")
@@ -53,3 +55,34 @@ def test_public_host_is_written_and_unsafe_hosts_are_rejected_before_writes():
                 raise AssertionError('accepted unsafe host')
             except SystemExit:
                 assert (repo / '.env').read_bytes() == before
+
+
+def test_container_initialization_does_not_attempt_host_network_configuration():
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = make_repo(Path(tmp))
+        calls = []
+        with patch.object(setup.os, 'geteuid', return_value=1000), \
+             patch.object(setup, 'check_prerequisites', return_value=[]), \
+             patch.object(setup, 'run_step', side_effect=lambda label, command, cwd: calls.append(command)):
+            assert setup.main(['--repo', str(repo), '--server', '--container-init', '--no-install', '--no-build']) == 0
+        assert len(calls) == 1
+        assert 'scripts/setup-code.py' in calls[0]
+        assert setup.parse_env((repo / '.env').read_text())['DEVFLOW_SERVER_MODE'] == '1'
+
+
+def test_native_server_default_uses_the_installer_selected_name_without_host_input():
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = make_repo(Path(tmp))
+        calls = []
+        def run(label, command, cwd):
+            calls.append(command)
+            if '--public-state' in command:
+                Path(command[command.index('--public-state') + 1]).write_text(json.dumps({
+                    'url': 'https://calm-otter-4821.my.openflow-ai.com', 'state': 'ready', 'source': 'managed',
+                }))
+        with patch.object(setup.os, 'geteuid', return_value=1000), \
+             patch.object(setup, 'check_prerequisites', return_value=[]), \
+             patch.object(setup, 'run_step', side_effect=run):
+            assert setup.main(['--repo', str(repo), '--server', '--no-install', '--no-build']) == 0
+        assert '--public-state' in calls[0]
+        assert setup.parse_env((repo / '.env').read_text())['OPENFLOW_HOST'] == 'calm-otter-4821.my.openflow-ai.com'

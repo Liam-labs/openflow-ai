@@ -65,6 +65,11 @@ The first build takes a few minutes. Then open <http://localhost:3000> and follo
 - **Your data and logins** live in Docker volumes (`openflow-data`, `openflow-appdata`, `openflow-userdata`, `openflow-logs`), so `docker compose down` and an update keep them. `docker compose down -v` deletes them, including your sign-ins.
 - **Update:** `git pull && docker compose up -d --build`.
 - **Another port:** `OPENFLOW_PORT=3005 docker compose up -d`.
+
+For a public Linux VPS, use `./scripts/setup-server` instead. It automatically
+obtains a free OpenFlow hostname and trusted HTTPS, then starts the protected
+server. No DNS setup or hostname choice is required. See
+[server installation and first login](docs/guides/server-first-login.md).
 - **Agents working on your own files:** uncomment the `./workspace:/workspace` line in `docker-compose.yml`, then pick `/workspace` as an agent's folder. Agents inside the container cannot see the rest of your computer.
 - **Limits:** the sign-in runs inside the container, so Claude Code and Codex open their sign-in link for you to follow in your own browser (the wizard shows it). Anything that needs your desktop (a local browser, the Mac's own apps) is out of reach for agents in the container.
 

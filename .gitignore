@@ -41,3 +41,7 @@ Thumbs.db
 .next-staging/
 dist/
 coverage/
+
+# Installer-generated host configuration
+docker-compose.address.json
+docker-compose.address.*.json
