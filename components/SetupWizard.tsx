@@ -11,6 +11,7 @@ import { StepCredentials } from '@/components/setup/StepCredentials';
 import { StepMeetTeam } from '@/components/setup/StepMeetTeam';
 import { StepComplete } from '@/components/setup/StepComplete';
 import { PRODUCT_NAME } from '@/lib/brand';
+import { InstallAddress } from '@/components/setup/InstallAddress';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -89,7 +90,7 @@ function SkipConfirmBanner({
 
 // ─── Main Wizard ─────────────────────────────────────────────────────────────
 
-export function SetupWizard() {
+export function SetupWizard({ showInstallAddress = false }: { showInstallAddress?: boolean } = {}) {
   const router = useRouter();
   const [view, setView] = useState<ViewState>(1);
   const [data, setData] = useState<SetupData>(INITIAL_DATA);
@@ -268,6 +269,8 @@ export function SetupWizard() {
         </p>
         <h1 className="text-2xl font-semibold text-white">Welcome to {PRODUCT_NAME}</h1>
       </div>
+
+      {showInstallAddress && <InstallAddress />}
 
       {/* Step indicator — hidden on complete screen */}
       {!isComplete && (
