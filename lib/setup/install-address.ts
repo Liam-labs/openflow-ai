@@ -29,8 +29,9 @@ export function parseInstallAddressResult(value: unknown): InstallAddressResult 
   if (!result.address || typeof result.address !== 'object') throw new Error('Missing address');
   const address = result.address as Record<string, unknown>;
   if (!['claiming', 'certificate', 'ready', 'failed'].includes(String(address.state)) || !['managed', 'fallback'].includes(String(address.source))) throw new Error('Invalid address state');
-  const url = address.url === null ? null : installedAddressUrl(address.url);
-  if (address.url !== null && url === null) throw new Error('Invalid address URL');
+  const hasNoUrl = address.url === null || address.url === '';
+  const url = hasNoUrl ? null : installedAddressUrl(address.url);
+  if (!hasNoUrl && url === null) throw new Error('Invalid address URL');
   if (address.state === 'ready' && !url) throw new Error('Missing ready address');
   if (address.state === 'ready' && address.source === 'managed' && !url?.startsWith('https://')) throw new Error('Managed address is not secure');
   return { serverMode: true, address: { url, state: address.state as InstalledAddress['state'], source: address.source as InstalledAddress['source'], reason: typeof address.reason === 'string' ? address.reason : undefined } };

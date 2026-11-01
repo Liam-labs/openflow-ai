@@ -86,3 +86,16 @@ it.each(['quota', 'proof', 'certificate'])('keeps %s failures explicit and reche
   expect(fetchMock).toHaveBeenCalledTimes(2);
   expect(fetchMock.mock.calls.every(([url, init]) => url === '/api/setup/address' && !init.method)).toBe(true);
 });
+
+
+it.each(['claiming', 'failed'])('accepts an empty installer URL during %s without inventing a link', async state => {
+  fetchMock.mockResolvedValue(response({ url: '', state, source: 'managed', reason: state === 'failed' ? 'proof_failed' : undefined }));
+  await render();
+  expect(host.querySelector('a')).toBeNull();
+  expect(host.textContent).not.toContain('could not read');
+  expect(host.textContent).toContain(state === 'failed' ? 'proof_failed' : 'preparing your address');
+});
+
+it('rejects an empty URL if the installer reports ready', () => {
+  expect(() => parseInstallAddressResult({ serverMode: true, address: { url: '', state: 'ready', source: 'managed' } })).toThrow();
+});
