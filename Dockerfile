@@ -1,7 +1,7 @@
 # OpenFlow in one container: the dashboard, the agent runner (tmux + python) and the Claude Code and Codex programs.
 # For Mac (Docker Desktop, OrbStack, Colima) and for anyone who prefers a container on Linux. Native install: see the README.
 # The build needs no secrets. Your logins and data live in the /data volume, never in the image.
-FROM node:22-bookworm
+FROM node:26-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         tmux python3 python3-pexpect git curl socat ca-certificates build-essential \
