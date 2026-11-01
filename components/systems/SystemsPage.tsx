@@ -22,6 +22,7 @@ import { WatchdogSection } from './WatchdogSection';
 import { MemoryProtectionSection } from './MemoryProtectionSection';
 import { PortRegistrySection } from './PortRegistrySection';
 import { FirewallSection } from './FirewallSection';
+import { PROVIDER_PREFIX } from './connections/provider-link';
 import { ConnectionsSection } from './ConnectionsSection';
 import { BridgesSection } from './BridgesSection';
 import { ConnectionDetail } from './ConnectionDetail';
@@ -85,6 +86,7 @@ function readNavFromHash(): SystemsNavState {
   return {
     section: (section as SystemsNavState['section']) || 'overview',
     entityId: entityId || undefined,
+    entityType: section === 'connections' && entityId?.startsWith(PROVIDER_PREFIX) ? 'connection' : undefined,
     tab: (tab as EntityTab) || undefined,
   } as SystemsNavState;
 }
@@ -94,7 +96,7 @@ function writeNavToHash(nav: SystemsNavState) {
   const parts: string[] = ['#systems', nav.section];
   if (nav.entityId) parts.push(nav.entityId);
   if (nav.entityId && nav.tab) parts.push(nav.tab);
-  window.history.replaceState(null, '', parts.join('/'));
+  window.history.replaceState(window.history.state, '', parts.join('/'));
 }
 
 async function pm2Action(action: 'start' | 'stop' | 'restart', name: string, port?: number) {
@@ -230,7 +232,7 @@ export function SystemsPage({ onProcessCountChange, refreshInterval }: SystemsPa
           )}
         </div>
 
-        {navState.entityType && (
+        {navState.entityType && !(navState.section === 'connections' && navState.entityId?.startsWith(PROVIDER_PREFIX)) && (
           <SystemsTabStrip navState={navState} onTabChange={onTabChange} />
         )}
 

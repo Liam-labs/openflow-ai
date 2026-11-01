@@ -3,6 +3,7 @@
 import React from 'react';
 import { ChevronRight, Home } from 'lucide-react';
 import type { BreadcrumbSegment, SystemsNavState } from './systems-types';
+import { keyProvider, PROVIDER_PREFIX } from './connections/provider-link';
 import { SECTION_LABELS } from './systems-types';
 
 interface SystemsBreadcrumbProps {
@@ -68,7 +69,9 @@ function buildSegments(navState: SystemsNavState): BreadcrumbSegment[] {
   if (navState.entityId && navState.entityType) {
     // Entity name will come from navState once populated
     segments.push({
-      label: navState.entityId,
+      label: navState.section === 'connections' && navState.entityId.startsWith(PROVIDER_PREFIX)
+        ? keyProvider(navState.entityId.slice(PROVIDER_PREFIX.length))?.label ?? navState.entityId
+        : navState.entityId,
       section: navState.section,
       entityId: navState.entityId,
     });
