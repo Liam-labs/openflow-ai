@@ -27,6 +27,8 @@ from datetime import datetime
 _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
     sys.path.insert(0, _HERE)      # proc_info sits beside this file, also when it is loaded by path
+from devflow_http import urlopen as devflow_urlopen
+
 import proc_info
 
 DEVFLOW_URL = os.environ.get("DEVFLOW_URL", "http://localhost:3000").rstrip("/")
@@ -177,7 +179,7 @@ def _load_channels_data() -> dict:
         with open(CHANNELS_DATA_FILE) as f:
             return json.load(f)
     import urllib.request
-    with urllib.request.urlopen(f"{API_BASE}?action=channels", timeout=5) as resp:
+    with devflow_urlopen(f"{API_BASE}?action=channels", timeout=5) as resp:
         return json.loads(resp.read().decode('utf-8'))
 
 
@@ -748,7 +750,7 @@ def _api_call(endpoint: str, method: str = "GET", data: dict = None) -> dict:
         )
 
     try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with devflow_urlopen(req, timeout=10) as resp:
             body = resp.read().decode('utf-8')
             try:
                 return json.loads(body)
@@ -864,7 +866,7 @@ def _agent_api_call(data: dict, timeout: int = 10) -> dict:
         method=method,
     )
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with devflow_urlopen(req, timeout=timeout) as resp:
             return json.loads(resp.read().decode('utf-8'))
     except urllib.error.HTTPError as e:
         body = ''
@@ -960,7 +962,7 @@ def _report_context_health(channel_id: str, participant_id: str) -> None:
             headers={'Content-Type': 'application/json'},
             method='POST'
         )
-        with urllib.request.urlopen(req, timeout=3) as resp:
+        with devflow_urlopen(req, timeout=3) as resp:
             pass  # Best-effort, result ignored
     except Exception:
         pass  # Never let health reporting crash the message send

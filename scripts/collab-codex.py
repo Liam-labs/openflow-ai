@@ -46,6 +46,8 @@ import shutil
 
 from harness_signin import search_path
 
+from devflow_http import urlopen as devflow_urlopen
+
 import proc_info
 from codex_workspace_trust import ensure_codex_workspace_trusted
 from design_reference_harness import (
@@ -1143,7 +1145,7 @@ class CollabCodexWrapper:
                     headers={'Content-Type': 'application/json'},
                     method=method
                 )
-            with urllib.request.urlopen(req, timeout=5) as resp:
+            with devflow_urlopen(req, timeout=5) as resp:
                 return json.loads(resp.read().decode('utf-8'))
         except Exception as e:
             debug(f"API error: {e}")
@@ -1158,7 +1160,7 @@ class CollabCodexWrapper:
                 headers={'Content-Type': 'application/json'},
                 method='POST',
             )
-            with urllib.request.urlopen(req, timeout=5) as resp:
+            with devflow_urlopen(req, timeout=5) as resp:
                 return json.loads(resp.read().decode('utf-8'))
         except urllib.error.HTTPError as e:
             try:
@@ -1187,7 +1189,7 @@ class CollabCodexWrapper:
                 f"{DELIVERY_API_BASE}?{urllib.parse.urlencode(query)}",
                 method='GET',
             )
-            with urllib.request.urlopen(request, timeout=3) as response:
+            with devflow_urlopen(request, timeout=3) as response:
                 body = json.loads(response.read().decode('utf-8'))
             records = body.get('records') if isinstance(body, dict) else None
             return records if isinstance(records, list) else []
@@ -1210,7 +1212,7 @@ class CollabCodexWrapper:
                     headers={'Content-Type': 'application/json'},
                     method='POST',
                 )
-            with urllib.request.urlopen(request, timeout=3) as response:
+            with devflow_urlopen(request, timeout=3) as response:
                 return json.loads(response.read().decode('utf-8'))
         except urllib.error.HTTPError as e:
             try:
@@ -1360,7 +1362,7 @@ class CollabCodexWrapper:
                     headers={'Content-Type': 'application/json'},
                     method='POST',
                 )
-                urllib.request.urlopen(request, timeout=5).close()
+                devflow_urlopen(request, timeout=5).close()
             except Exception as e:
                 debug(f"Claim-fault alert failed: {e}")
 
@@ -2907,7 +2909,7 @@ class CollabCodexWrapper:
             role_id = my_entry["roleId"]
             try:
                 req = urllib.request.Request(f"{DEVFLOW_URL}/api/roles")
-                with urllib.request.urlopen(req, timeout=5) as resp:
+                with devflow_urlopen(req, timeout=5) as resp:
                     roles_result = json.loads(resp.read().decode('utf-8'))
                 if roles_result.get("success"):
                     for role in roles_result.get("roles", []):
@@ -2946,7 +2948,7 @@ class CollabCodexWrapper:
                 headers={"Content-Type": "application/json"},
                 method="POST"
             )
-            urllib_req.urlopen(req, timeout=3)
+            devflow_urlopen(req, timeout=3)
             debug(f"Delivery event logged: {status} for msg {msg_id[:8]}")
         except Exception as e:
             debug(f"Delivery event log failed (non-fatal): {e}")
@@ -3321,7 +3323,7 @@ class CollabCodexWrapper:
                     },
                     method="POST"
                 )
-                urllib.request.urlopen(req, timeout=3)
+                devflow_urlopen(req, timeout=3)
             except Exception:
                 pass  # Best-effort — never block message recovery
         return queued
@@ -3357,7 +3359,7 @@ class CollabCodexWrapper:
             inject_iso = self.last_inject_time_iso
             for channel_id in channel_ids:
                 query = urllib.parse.urlencode({'channelId': channel_id, 'since': inject_iso, 'limit': 200})
-                with urllib.request.urlopen(f"{API_BASE}?{query}", timeout=5) as resp:
+                with devflow_urlopen(f"{API_BASE}?{query}", timeout=5) as resp:
                     data = json.loads(resp.read().decode('utf-8'))
                 messages = data.get('messages') if isinstance(data, dict) else None
                 if not isinstance(messages, list):
@@ -3930,7 +3932,7 @@ class CollabCodexWrapper:
 
             try:
                 req = urllib.request.Request(url, headers=headers)
-                resp = urllib.request.urlopen(req, timeout=90)
+                resp = devflow_urlopen(req, timeout=90)
                 self._sse_resp = resp
                 self.sse_connected = True
                 self.sse_last_data_time = time.time()  # Connection itself counts as data
@@ -3974,7 +3976,7 @@ class CollabCodexWrapper:
                         # limit cannot permanently hide its oldest records.
                         for _page in range(20):
                             poll_req = urllib.request.Request(page_url)
-                            poll_resp = urllib.request.urlopen(poll_req, timeout=5)
+                            poll_resp = devflow_urlopen(poll_req, timeout=5)
                             poll_data = json.loads(poll_resp.read().decode('utf-8'))
                             page_messages = poll_data.get('messages', [])
                             catchup_msgs.extend(page_messages)
@@ -4370,7 +4372,7 @@ class CollabCodexWrapper:
                                     headers={"Content-Type": "application/json", "Authorization": f"Bearer {os.environ.get('DEVFLOW_API_TOKEN', '')}"},
                                     method="POST"
                                 )
-                                urllib_req.urlopen(warn_req, timeout=3)
+                                devflow_urlopen(warn_req, timeout=3)
                             except Exception:
                                 pass  # Non-fatal — best-effort warning
                         # Long Codex rollouts can begin emitting malformed,
@@ -4502,7 +4504,7 @@ class CollabCodexWrapper:
                             )
                             if catchup_since:
                                 catchup_url += f"&since={catchup_since}"
-                            cu_resp = urllib.request.urlopen(
+                            cu_resp = devflow_urlopen(
                                 urllib.request.Request(catchup_url), timeout=5
                             )
                             cu_data = json.loads(cu_resp.read().decode('utf-8'))
@@ -5016,7 +5018,7 @@ class CollabCodexWrapper:
 def list_channels():
     try:
         req = urllib.request.Request(f"{API_BASE}?action=list")
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with devflow_urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read().decode('utf-8'))
             channels = data.get("channels", [])
             if not channels:

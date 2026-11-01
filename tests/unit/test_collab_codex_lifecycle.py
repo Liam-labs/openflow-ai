@@ -2226,7 +2226,8 @@ class TestCodexReplayMatrix(unittest.TestCase):
         stored = [{'timestamp': '2026-10-01T10:00:00.000Z', 'from': {'id': 'p-1'}}]
 
         def fake_urlopen(url, timeout=None):
-            q = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
+            address = getattr(url, 'full_url', url)
+            q = urllib.parse.parse_qs(urllib.parse.urlparse(address).query)
             since = q['since'][0]
             body = {'messages': [m for m in stored if m['timestamp'] >= since]}
             return io.BytesIO(json.dumps(body).encode())
