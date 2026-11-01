@@ -345,13 +345,16 @@ def main(argv: list[str] | None = None) -> int:
     if args.server and not args.host:
         # Server installs get their address before the settings/UI are exposed.
         app_data = args.repo / '.AppData'
+        address_port = args.port or 3000
         if (args.repo / '.env').exists():
-            configured = parse_env((args.repo / '.env').read_text()).get('DEVFLOW_APP_DATA_DIR', '.AppData')
+            saved_env = parse_env((args.repo / '.env').read_text())
+            configured = saved_env.get('DEVFLOW_APP_DATA_DIR', '.AppData')
+            address_port = args.port or int(saved_env.get('PORT') or 3000)
             app_data = Path(configured) if Path(configured).is_absolute() else args.repo / configured
         app_data.mkdir(parents=True, exist_ok=True)
         network = ["sudo", str(args.repo / 'scripts/server-address'),
                    '--state-dir', '/var/lib/openflow-install-name', '--public-state', str(app_data / 'install-address.json'),
-                   '--port', str(args.port or 3000)]
+                   '--port', str(address_port)]
         run_step('claim server address and obtain HTTPS', network, args.repo)
         address_state = json.loads((app_data / 'install-address.json').read_text())
         if address_state.get('state') != 'ready':

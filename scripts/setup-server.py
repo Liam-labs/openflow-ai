@@ -47,7 +47,7 @@ def main():
     }}
     if args.image:
         service['image'] = args.image
-    override = repo / 'docker-compose.address.json'
+    override = repo / ('docker-compose.address.' + args.project + '.json')
     override.write_text(json.dumps({'services': {'openflow': service}}, indent=2) + '\n')
     if not args.configure_only:
         env = dict(os.environ, OPENFLOW_PORT=str(args.port))
