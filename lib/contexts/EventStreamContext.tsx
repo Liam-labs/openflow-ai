@@ -282,6 +282,10 @@ export function useEventStream<T>(
   const ctx = useContext(EventStreamContext);
   const [data, setData] = useState<T | undefined>(options?.initialData);
   const fallbackTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const fallbackTransformRef = useRef(options?.fallbackTransform);
+  useEffect(() => {
+    fallbackTransformRef.current = options?.fallbackTransform;
+  }, [options?.fallbackTransform]);
 
   const isConnected = ctx?.connectionState === 'connected';
   const sseActive = ctx?.isSSE ?? false;
@@ -305,12 +309,13 @@ export function useEventStream<T>(
     }
 
     const interval = options.fallbackInterval ?? 10000;
+    const controller = new AbortController();
     const poll = async () => {
       try {
-        const res = await fetch(options.fallbackUrl!);
+        const res = await fetch(options.fallbackUrl!, { signal: controller.signal });
         const json = await res.json();
-        const transformed = options.fallbackTransform ? options.fallbackTransform(json) : json as T;
-        setData(transformed);
+        const transformed = fallbackTransformRef.current ? fallbackTransformRef.current(json) : json as T;
+        if (!controller.signal.aborted) setData(transformed);
       } catch {
         // Silently ignore polling errors
       }
@@ -320,12 +325,13 @@ export function useEventStream<T>(
     fallbackTimerRef.current = setInterval(poll, interval);
 
     return () => {
+      controller.abort();
       if (fallbackTimerRef.current) {
         clearInterval(fallbackTimerRef.current);
         fallbackTimerRef.current = null;
       }
     };
-  }, [sseActive, options?.fallbackUrl, options?.fallbackInterval, options?.fallbackTransform]);
+  }, [sseActive, options?.fallbackUrl, options?.fallbackInterval]);
 
   return { data, isConnected: isConnected ?? false, isSSE: sseActive };
 }
