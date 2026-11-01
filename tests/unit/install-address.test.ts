@@ -72,3 +72,17 @@ it.each(['javascript:alert(1)', 'https://owner:password@example.test', 'https://
 it('does not treat an insecure managed name as ready', () => {
   expect(() => parseInstallAddressResult({ serverMode: true, address: { url: 'http://chosen.example.test', state: 'ready', source: 'managed' } })).toThrow();
 });
+
+
+it.each(['quota', 'proof', 'certificate'])('keeps %s failures explicit and rechecks without claiming', async reason => {
+  fetchMock.mockResolvedValue(response({ url: null, state: 'failed', source: 'managed', reason }));
+  await render();
+  expect(host.textContent).toContain(`Reason: ${reason}`);
+  expect(host.textContent).not.toContain('fallback');
+  expect(host.querySelector('a')).toBeNull();
+  await act(async () => vi.advanceTimersByTimeAsync(10000));
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+  await act(async () => host.querySelector('button')!.click());
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  expect(fetchMock.mock.calls.every(([url, init]) => url === '/api/setup/address' && !init.method)).toBe(true);
+});
