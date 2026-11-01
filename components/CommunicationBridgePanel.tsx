@@ -178,7 +178,9 @@ export function CommunicationBridgePanel({ onClose }: CommunicationBridgePanelPr
   };
 
   useEffect(() => {
-    pollWhatsApp();
+    // This refresh updates state after the bridge HTTP request completes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void pollWhatsApp();
     wasPollRef.current = setInterval(pollWhatsApp, 30000);
     return () => { if (wasPollRef.current) clearInterval(wasPollRef.current); };
   }, []);
@@ -226,7 +228,9 @@ export function CommunicationBridgePanel({ onClose }: CommunicationBridgePanelPr
   };
 
   useEffect(() => {
-    pollSlack();
+    // This refresh updates state after the bridge HTTP request completes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void pollSlack();
     slackPollRef.current = setInterval(pollSlack, 30000);
     return () => { if (slackPollRef.current) clearInterval(slackPollRef.current); };
   }, []);
@@ -249,7 +253,9 @@ export function CommunicationBridgePanel({ onClose }: CommunicationBridgePanelPr
   };
 
   useEffect(() => {
-    pollTeams();
+    // This refresh updates state after the bridge HTTP request completes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void pollTeams();
     teamsPollRef.current = setInterval(pollTeams, 30000);
     return () => { if (teamsPollRef.current) clearInterval(teamsPollRef.current); };
   }, []);
@@ -292,10 +298,17 @@ export function CommunicationBridgePanel({ onClose }: CommunicationBridgePanelPr
         </div>
 
         {/* Body */}
-        <div className="flex flex-1 min-h-0">
+        <div className="flex flex-col sm:flex-row flex-1 min-h-0">
+          <label className="sm:hidden px-4 py-3 text-sm border-b border-white/10">
+            Platform
+            <select aria-label="Platform" className="glass-input mt-2 w-full" value={selectedBridge ?? ''} onChange={event => setSelectedBridge((event.target.value || null) as BridgeId | null)}>
+              <option value="">Choose a platform</option>
+              {BRIDGES.map(bridge => <option key={bridge.id} value={bridge.id}>{bridge.label}</option>)}
+            </select>
+          </label>
 
           {/* Sidebar */}
-          <div className="w-60 flex-shrink-0 border-r border-white/8 py-3 overflow-y-auto">
+          <div className="hidden sm:block w-60 flex-shrink-0 border-r border-white/8 py-3 overflow-y-auto">
             <div className="px-4 pb-2">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-white/30">
                 Available
@@ -361,7 +374,7 @@ export function CommunicationBridgePanel({ onClose }: CommunicationBridgePanelPr
           </div>
 
           {/* Right content */}
-          <div className="flex-1 flex flex-col min-h-0 relative">
+          <div className="flex-1 flex flex-col min-w-0 min-h-0 relative">
 
             {/* Empty state */}
             {selectedBridge === null && (
@@ -418,7 +431,7 @@ export function CommunicationBridgePanel({ onClose }: CommunicationBridgePanelPr
                 </div>
 
                 {showWizard && (
-                  <div className="absolute inset-0 bg-black/85 flex items-center justify-center z-10 rounded-r-2xl">
+                  <div className="absolute inset-0 bg-black/85 flex items-start justify-center overflow-y-auto p-3 sm:p-4 z-10 rounded-r-2xl">
                     <WhatsAppSetupWizard
                       onComplete={() => { setShowWizard(false); pollWhatsApp(); }}
                       onCancel={() => setShowWizard(false)}
@@ -447,7 +460,7 @@ export function CommunicationBridgePanel({ onClose }: CommunicationBridgePanelPr
                   )}
                 </div>
                 {showSlackWizard && (
-                  <div className="absolute inset-0 bg-black/85 flex items-center justify-center z-10 rounded-r-2xl">
+                  <div className="absolute inset-0 bg-black/85 flex items-start justify-center overflow-y-auto p-3 sm:p-4 z-10 rounded-r-2xl">
                     <SlackSetupWizard
                       onComplete={() => { setShowSlackWizard(false); pollSlack(); }}
                       onCancel={() => setShowSlackWizard(false)}
@@ -466,7 +479,7 @@ export function CommunicationBridgePanel({ onClose }: CommunicationBridgePanelPr
                   />
                 </div>
                 {showTeamsWizard && (
-                  <div className="absolute inset-0 bg-black/85 flex items-center justify-center z-10 rounded-r-2xl">
+                  <div className="absolute inset-0 bg-black/85 flex items-start justify-center overflow-y-auto p-3 sm:p-4 z-10 rounded-r-2xl">
                     <TeamsSetupWizard
                       onComplete={() => { setShowTeamsWizard(false); pollTeams(); }}
                       onCancel={() => setShowTeamsWizard(false)}

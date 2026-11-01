@@ -41,7 +41,7 @@ export function SettingsDropdown({ isOpen, onClose, anchorRef, onAddProject }: S
   const [showSupabaseConfigPanel, setShowSupabaseConfigPanel] = useState(false);
   const [showAlignmentRulesPanel, setShowAlignmentRulesPanel] = useState(false);
   const [showRileyVoiceInstall, setShowRileyVoiceInstall] = useState(false);
-  const [selectedModelForConfig, setSelectedModelForConfig] = useState<any>(null);
+  const [selectedModelForConfig, setSelectedModelForConfig] = useState<React.ComponentProps<typeof ModelConfigModal>['model'] | null>(null);
   
   const [computerUseEnabled, setComputerUseEnabled] = useState(false);
   const [computerUseBackend, setComputerUseBackend] = useState<'api' | 'max'>('api');
@@ -60,7 +60,7 @@ export function SettingsDropdown({ isOpen, onClose, anchorRef, onAddProject }: S
     if (isOpen) {
       fetch('/api/settings')
         .then(r => r.ok ? r.json() : null)
-        .then((data: any) => {
+        .then((data: { settings?: { computerUse?: { enabled?: boolean; backend?: 'api' | 'max' } } } | null) => {
           if (data?.settings?.computerUse) {
             setComputerUseEnabled(!!data.settings.computerUse.enabled);
             if (data.settings.computerUse.backend) setComputerUseBackend(data.settings.computerUse.backend);
@@ -71,7 +71,7 @@ export function SettingsDropdown({ isOpen, onClose, anchorRef, onAddProject }: S
       // Fetch alpha version info
       fetch('/api/settings/alpha-clone')
         .then(r => r.ok ? r.json() : null)
-        .then((data: any) => {
+        .then((data: { latestVersion?: number } | null) => {
           if (data?.latestVersion !== undefined) {
             setAlphaLatestVersion(data.latestVersion);
           }
@@ -131,9 +131,13 @@ export function SettingsDropdown({ isOpen, onClose, anchorRef, onAddProject }: S
   };
 
   if (!isOpen) return null;
+  const panelOpen = showApiTokensModal || showLocalProxyModal || showModelConfigPanel ||
+    !!selectedModelForConfig || showMessagingBridgesPanel || showWSLResourcesModal ||
+    showSetupWizard || showSupabaseConfigPanel || showAlignmentRulesPanel || showRileyVoiceInstall;
 
   return (
     <>
+      {!panelOpen && <>
       <div className="fixed inset-0 z-[100]" onClick={onClose} />
       <div
         className="absolute right-0 top-full mt-3 w-[320px] backdrop-blur-3xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] overflow-hidden z-[101] animate-in fade-in slide-in-from-top-2 duration-200"
@@ -390,7 +394,8 @@ export function SettingsDropdown({ isOpen, onClose, anchorRef, onAddProject }: S
         </div>
       </div>
 
-      {/* Modals */}
+      </>}
+      {/* Hide the menu and its higher backdrop while a child panel owns input. */}
       {showApiTokensModal && <ApiTokensModal onClose={() => setShowApiTokensModal(false)} />}
       {showLocalProxyModal && <LocalProxyModal onClose={() => setShowLocalProxyModal(false)} />}
       {showModelConfigPanel && (

@@ -49,6 +49,8 @@ interface WizardSummary {
 
 interface WizardResponse {
   success: boolean;
+  supported?: boolean;
+  unsupportedReason?: string;
   backend: 'api' | 'max';
   groups: WizardGroup[];
   allPassed: boolean;
@@ -289,13 +291,12 @@ export function SetupWizardModal({ initialBackend, onClose }: SetupWizardModalPr
         {/* Intro — orients first-run users on what this wizard does. */}
         <div className="px-5 py-3 border-b border-white/[0.06] flex-shrink-0">
           <p className="text-xs text-white/60 leading-relaxed">
-            Computer Use needs Python on both Linux (WSL) and Windows, plus a running bridge between them.
-            This wizard checks each piece and offers one-click fixes where it can.
+            This wizard checks whether this computer can provide desktop control and which parts it needs.
           </p>
         </div>
 
         {/* Summary bar */}
-        {summary && !loading && (
+        {summary && !loading && result?.supported !== false && (
           <div className="flex items-center gap-4 px-5 py-3 border-b border-white/[0.06] bg-black/20 flex-shrink-0">
             {allPassed ? (
               <div className="flex items-center gap-2 text-green-400">
@@ -330,7 +331,7 @@ export function SetupWizardModal({ initialBackend, onClose }: SetupWizardModalPr
           {loading && (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
               <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
-              <p className="text-sm text-white/60">Checking WSL, Windows, and bridge…</p>
+              <p className="text-sm text-white/60">Checking this computer…</p>
               <p className="text-xs text-white/40">Up to 30 seconds. Each check times out individually.</p>
             </div>
           )}
@@ -351,6 +352,7 @@ export function SetupWizardModal({ initialBackend, onClose }: SetupWizardModalPr
             </div>
           )}
 
+          {result?.supported === false && !loading && <div role="status" className="p-4 rounded-xl border border-white/10"><h3 className="text-sm font-medium text-white mb-2">Desktop setup is not available on this server</h3><p className="text-sm text-white/70">{result.unsupportedReason}</p></div>}
           {result && !loading && result.groups.map(group => (
             <GroupCard key={group.id} group={group} onAutoFixed={runChecks} />
           ))}
