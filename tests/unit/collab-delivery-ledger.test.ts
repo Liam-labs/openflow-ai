@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { promises as fs } from 'fs';
 import os from 'os';
 import path from 'path';
@@ -198,31 +198,39 @@ describe('durable collab delivery ledger', () => {
   });
 
   it('reclaims a submitted delivery after its lease expires', async () => {
-    const { channel, message } = fixture();
-    await enqueueDurableDeliveries(message.from.id, message, channel);
-    const first = await claimDelivery({
-      channelId: channel.id,
-      participantId: 'roster-architect',
-      ownerId: 'wrapper-a',
-      leaseMs: 100,
-    });
-    await transitionDelivery({
-      recordId: first!.id,
-      leaseId: first!.lease!.id,
-      ownerId: 'wrapper-a',
-      state: 'submitted',
-    });
-    await new Promise(resolve => setTimeout(resolve, 110));
+    // Only Date is controlled: filesystem operations and lock timers remain real.
+    const start = new Date('2026-07-19T00:00:02.000Z');
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(start);
+    try {
+      const { channel, message } = fixture();
+      await enqueueDurableDeliveries(message.from.id, message, channel);
+      const first = await claimDelivery({
+        channelId: channel.id,
+        participantId: 'roster-architect',
+        ownerId: 'wrapper-a',
+        leaseMs: 100,
+      });
+      await transitionDelivery({
+        recordId: first!.id,
+        leaseId: first!.lease!.id,
+        ownerId: 'wrapper-a',
+        state: 'submitted',
+      });
+      vi.setSystemTime(new Date(start.getTime() + 110));
 
-    const reclaimed = await claimDelivery({
-      channelId: channel.id,
-      participantId: 'roster-architect',
-      ownerId: 'wrapper-b',
-    });
+      const reclaimed = await claimDelivery({
+        channelId: channel.id,
+        participantId: 'roster-architect',
+        ownerId: 'wrapper-b',
+      });
 
-    expect(reclaimed?.state).toBe('leased');
-    expect(reclaimed?.lease?.ownerId).toBe('wrapper-b');
-    expect(reclaimed?.attempts).toBe(2);
+      expect(reclaimed?.state).toBe('leased');
+      expect(reclaimed?.lease?.ownerId).toBe('wrapper-b');
+      expect(reclaimed?.attempts).toBe(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('renews a submitted lease while a delayed Codex turn awaits transcript ingestion', async () => {
