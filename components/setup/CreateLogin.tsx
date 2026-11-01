@@ -4,7 +4,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import { Loader2, LockKeyhole } from 'lucide-react';
 
 export interface CreateLoginProps {
-  createLogin: (code: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  createLogin: (code: string, password: string) => Promise<{ ok: boolean; error?: string; signInRequired?: boolean }>;
   onCreated: () => void;
 }
 
@@ -15,6 +15,7 @@ export function CreateLogin({ createLogin, onCreated }: CreateLoginProps) {
   const [confirmation, setConfirmation] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [signInRequired, setSignInRequired] = useState(false);
   const busy = useRef(false);
   const errorRef = useRef<HTMLParagraphElement>(null);
 
@@ -35,6 +36,7 @@ export function CreateLogin({ createLogin, onCreated }: CreateLoginProps) {
     try {
       const result = await createLogin(code.trim(), password);
       if (!result.ok) {
+        setSignInRequired(result.signInRequired === true);
         fail(result.error || 'We could not create your login. Try again.');
         return;
       }
@@ -73,6 +75,7 @@ export function CreateLogin({ createLogin, onCreated }: CreateLoginProps) {
           <input id="setup-password-confirm" name="confirmPassword" type="password" autoComplete="new-password" className="glass-input w-full min-w-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400" value={confirmation} onChange={(e) => setConfirmation(e.target.value)} required minLength={12} maxLength={256} disabled={saving} />
         </div>
         {error && <p ref={errorRef} tabIndex={-1} role="alert" className="text-sm text-red-300 break-words">{error}</p>}
+        {signInRequired && <a href="/login?next=%2Fsetup" className="text-blue-300 underline">Sign in to continue setup</a>}
         <button type="submit" disabled={saving} className="glass-button flex items-center justify-center gap-2 px-5 py-3 text-white disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400">
           {saving && <Loader2 className="w-4 h-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />}
           {saving ? 'Creating your login…' : 'Create login and continue'}
