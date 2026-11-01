@@ -1,0 +1,17 @@
+#!/bin/sh
+# Complete Docker VPS install: no hostname or DNS action is required from the owner.
+set -eu
+cd "$(dirname "$0")/.."
+if [ "$(id -u)" != 0 ]; then
+    exec sudo "$PWD/scripts/setup-server" "$@"
+fi
+if ! command -v caddy >/dev/null 2>&1 || ! /usr/bin/python3 -c 'import cryptography' 2>/dev/null; then
+    if command -v apt-get >/dev/null 2>&1; then
+        apt-get update
+        apt-get install -y caddy python3-cryptography
+    else
+        echo 'Install Caddy and Python cryptography with your system package manager first.' >&2
+        exit 1
+    fi
+fi
+exec /usr/bin/python3 scripts/setup-server.py "$@"

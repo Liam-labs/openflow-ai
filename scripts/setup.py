@@ -342,6 +342,21 @@ def main(argv: list[str] | None = None) -> int:
     if args.check:
         print("\nThis machine is ready.")
         return 0
+    if args.server and not args.host:
+        # Server installs get their address before the settings/UI are exposed.
+        app_data = args.repo / '.AppData'
+        if (args.repo / '.env').exists():
+            configured = parse_env((args.repo / '.env').read_text()).get('DEVFLOW_APP_DATA_DIR', '.AppData')
+            app_data = Path(configured) if Path(configured).is_absolute() else args.repo / configured
+        app_data.mkdir(parents=True, exist_ok=True)
+        network = ["sudo", str(args.repo / 'scripts/server-address'),
+                   '--state-dir', '/var/lib/openflow-install-name', '--public-state', str(app_data / 'install-address.json'),
+                   '--port', str(args.port or 3000)]
+        run_step('claim server address and obtain HTTPS', network, args.repo)
+        address_state = json.loads((app_data / 'install-address.json').read_text())
+        if address_state.get('state') != 'ready':
+            raise SystemExit('setup: server address is not ready; see the persisted address status')
+        args.host = address_state['url'].removeprefix('https://').rstrip('/')
     print("\nSettings:")
     result = configure(args.repo, args.port, args.reset_token_store, args.server, args.host)
     for line in result["changes"] or ["nothing to change: settings and token were already in place"]:

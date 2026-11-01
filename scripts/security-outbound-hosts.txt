@@ -32,3 +32,6 @@ your-devflow-url.ngrok.io  # placeholder shown in the UI
 antigravity.google       # an install command shown to the user in the first-team setup help; the app never fetches it
 login.botframework.com   # only when you configure it: Teams bot sign-in
 fonts.googleapis.com     # only in scripts/fetch-fonts.py, a developer script that downloads font files; the app does not run it
+names.openflow-ai.com  # OpenFlow-operated install-name registry; installer sends public key, server IP and signed proof, never account credentials.
+claim.openflow.invalid  # Non-resolving Host header for inbound port-80 install proof; not an outbound DNS destination.
+api.ipify.org  # Public IPv4 discovery only when no global IPv4 is assigned to a local interface; sends no app state or credentials.
