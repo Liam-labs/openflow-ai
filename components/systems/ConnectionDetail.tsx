@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link, CheckCircle2, AlertCircle, Clock, Tag, Globe, FileText, RefreshCw, FlaskConical } from 'lucide-react';
 import { StatusBadge } from './DataTable';
+import { ProviderKeyForm } from './connections/ProviderKeyForm';
+import { keyProvider, PROVIDER_PREFIX } from './connections/provider-link';
 import type { Connection, McpServerEntry, ConnectionsData, ConnectionHealthResult } from '@/lib/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -175,7 +177,7 @@ function HealthTab({ conn, onTest }: {
 
       {!result && !isLoading && (
         <div className="conn-detail__health-empty">
-          Click "Run Health Check" to test this connection live.
+          Click &quot;Run Health Check&quot; to test this connection live.
         </div>
       )}
     </div>
@@ -184,7 +186,19 @@ function HealthTab({ conn, onTest }: {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function ConnectionDetail({ connectionId, isMcp = false }: ConnectionDetailProps) {
+export function ConnectionDetail(props: ConnectionDetailProps) {
+  const provider = !props.isMcp && props.connectionId.startsWith(PROVIDER_PREFIX)
+    ? keyProvider(props.connectionId.slice(PROVIDER_PREFIX.length)) : undefined;
+  if (provider) return (
+    <div className="conn-detail">
+      <div className="conn-detail__header"><h2 className="conn-detail__name">{provider.label}</h2></div>
+      <ProviderKeyForm key={provider.id} providerId={provider.id} />
+    </div>
+  );
+  return <CatalogConnectionDetail {...props} />;
+}
+
+function CatalogConnectionDetail({ connectionId, isMcp = false }: ConnectionDetailProps) {
   const [conn, setConn] = useState<Connection | McpServerEntry | null>(null);
   const [envStatus, setEnvStatus] = useState<Record<string, boolean> | null>(null);
   const [isLoading, setIsLoading] = useState(true);

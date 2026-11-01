@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { keyProvider, PROVIDER_PREFIX } from './connections/provider-link';
 import { Link, RefreshCw, Server, Search, FlaskConical, ChevronDown, ChevronRight as ChevronRightIcon } from 'lucide-react';
 import { DataTable, StatusBadge } from './DataTable';
 import type { ColumnDef } from './DataTable';
@@ -203,6 +204,15 @@ export function ConnectionsSection({ onNavigate }: ConnectionsSectionProps) {
   const [search, setSearch] = useState('');
   const [testing, setTesting] = useState<Set<string>>(new Set());
   const [testResults, setTestResults] = useState<Map<string, ConnectionHealthResult>>(new Map());
+
+  useEffect(() => {
+    const provider = keyProvider(new URLSearchParams(window.location.search).get('provider'));
+    const opened = window.history.state?.connectionsProviderLink;
+    if (provider && onNavigate && opened !== window.location.search) {
+      window.history.replaceState({ ...window.history.state, connectionsProviderLink: window.location.search }, '');
+      onNavigate({ section: 'connections', entityId: PROVIDER_PREFIX + provider.id, entityType: 'connection' });
+    }
+  }, [onNavigate]);
 
   const fetchData = useCallback(async () => {
     try {
