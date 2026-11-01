@@ -118,11 +118,11 @@ export function BridgesStatusWidget({ onNavigate }: BridgesStatusWidgetProps) {
 
     // Slack
     try {
-      const res = await fetch('/api/bridges/slack');
+      const res = await fetch('/api/bridges/slack/status');
       if (res.ok) {
         const data = await res.json();
-        const status: BridgeStatus = data.config?.enabled ? (data.status?.connected ? 'connected' : 'disconnected') : 'not_configured';
-        results.push({ id: 'slack', label: 'Slack', status, enabled: data.config?.enabled ?? false });
+        const status: BridgeStatus = data.configured ? (data.connected ? 'connected' : 'disconnected') : 'not_configured';
+        results.push({ id: 'slack', label: 'Slack', status, enabled: data.configured ?? false });
       } else {
         results.push({ id: 'slack', label: 'Slack', status: 'not_configured', enabled: false });
       }
@@ -132,11 +132,11 @@ export function BridgesStatusWidget({ onNavigate }: BridgesStatusWidgetProps) {
 
     // Teams
     try {
-      const res = await fetch('/api/bridges/teams');
+      const res = await fetch('/api/bridges/teams/status');
       if (res.ok) {
         const data = await res.json();
-        const status: BridgeStatus = data.config?.enabled ? (data.status?.connected ? 'connected' : 'disconnected') : 'not_configured';
-        results.push({ id: 'teams', label: 'Microsoft Teams', status, enabled: data.config?.enabled ?? false });
+        const status: BridgeStatus = data.configured ? (data.connected ? 'connected' : 'disconnected') : 'not_configured';
+        results.push({ id: 'teams', label: 'Microsoft Teams', status, enabled: data.configured ?? false });
       } else {
         results.push({ id: 'teams', label: 'Microsoft Teams', status: 'not_configured', enabled: false });
       }

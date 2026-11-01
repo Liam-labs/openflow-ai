@@ -11,6 +11,7 @@ type BridgeId = 'whatsapp' | 'slack' | 'teams';
 type BridgeTab = 'status' | 'config';
 
 interface BridgeStatus {
+  configured?: boolean;
   status?: string;
   phone?: string;
   phoneName?: string;
@@ -48,7 +49,7 @@ const BRIDGE_LABELS: Record<string, string> = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function deriveStatus(data: BridgeData | null, bridge: string): string {
-  if (!data || !(data.config?.enabled ?? data.config?.syncEnabled)) return 'not_configured';
+  if (!data || !(bridge === 'whatsapp' ? data.config?.enabled : (data.status?.configured ?? data.config?.syncEnabled))) return 'not_configured';
   const s = bridge === 'whatsapp' ? data.status?.status : (data.status?.connected ? 'connected' : 'disconnected');
   if (s === 'connected') return 'connected';
   if (s === 'pairing' || s === 'connecting') return 'pairing';
