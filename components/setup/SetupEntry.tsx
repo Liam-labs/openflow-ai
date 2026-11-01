@@ -35,6 +35,7 @@ const createLogin: CreateLoginProps['createLogin'] = async (code, newPassword) =
 export function SetupEntry() {
   const [state, setState] = useState<EntryState>('loading');
   const [attempt, setAttempt] = useState(0);
+  const [serverMode, setServerMode] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -44,6 +45,7 @@ export function SetupEntry() {
         if (!response.ok) throw new Error('Setup status unavailable');
         const status = await response.json();
         if (typeof status.serverMode !== 'boolean' || typeof status.needsSetup !== 'boolean') throw new Error('Invalid setup status');
+        setServerMode(status.serverMode);
         if (!status.serverMode) { setState('wizard'); return; }
         if (status.needsSetup) { setState('create'); return; }
         const session = await fetch('/api/auth/session', { cache: 'no-store', signal: controller.signal });
@@ -58,7 +60,7 @@ export function SetupEntry() {
     return () => controller.abort();
   }, [attempt]);
 
-  if (state === 'wizard') return <SetupWizard />;
+  if (state === 'wizard') return <SetupWizard showInstallAddress={serverMode} />;
   if (state === 'create') return <CreateLogin createLogin={createLogin} onCreated={() => setState('wizard')} />;
   return <section className="glass-card p-5 sm:p-8 text-white" aria-live="polite">
     {state === 'loading' && <p role="status">Checking your setup…</p>}
