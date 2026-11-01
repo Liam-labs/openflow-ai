@@ -3134,6 +3134,15 @@ def deploy_runtime_location(dry_run: bool = False, only_dir: str | None = None,
     stats = {"created": 0, "updated": 0, "ok": 0, "errors": 0}
     try:
         registry = json.loads(RUNTIME_REGISTRY.read_text())
+        # The permanent note is location-neutral. An explicit workspace needs
+        # only this installation's registry, not a channel API lookup (which
+        # can be unavailable or require authentication during first spawn).
+        if only_dir:
+            content = render_runtime_location(presence_location({}), registry)
+            action = _copy_skill_file(content, Path(only_dir) / RUNTIME_NOTE, dry_run)
+            key = {"CREATE": "created", "UPDATE": "updated", "OK": "ok"}.get(action, "errors")
+            stats[key] += 1
+            return stats
         data = load_channels_data()
         if data is None:
             raise OSError("channel list unavailable")
