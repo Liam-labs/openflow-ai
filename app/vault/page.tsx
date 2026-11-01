@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { PRODUCT_NAME } from '@/lib/brand';
 import Link from 'next/link';
 import { Shield, Loader2, ArrowLeft } from 'lucide-react';
 import { VaultProvider, useVault } from '@/components/vault/VaultProvider';
@@ -90,7 +91,7 @@ export default function VaultPage() {
             <div className="flex items-center gap-3">
               <Shield className="w-8 h-8 text-accent" />
               <div>
-                <h1 className="text-xl font-bold">DevFlow Vault</h1>
+                <h1 className="text-xl font-bold">{PRODUCT_NAME} Vault</h1>
                 <p className="text-xs text-muted">Secure Secrets Management</p>
               </div>
             </div>

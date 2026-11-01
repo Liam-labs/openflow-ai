@@ -148,7 +148,9 @@ export function BridgesStatusWidget({ onNavigate }: BridgesStatusWidgetProps) {
   }, []);
 
   useEffect(() => {
-    fetchAll();
+    // The callback updates state after the bridge HTTP requests complete.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchAll();
     const id = setInterval(fetchAll, 30_000);
     return () => clearInterval(id);
   }, [fetchAll]);
