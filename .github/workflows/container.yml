@@ -16,3 +16,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker/smoke-test.sh
+      - name: Fresh server-mode install
+        run: docker/vps-verify.sh openflow-ai:local "$GITHUB_SHA" server-install-result.json
+      - name: Save server-mode result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-install-${{ matrix.runner }}
+          path: server-install-result.json
+          if-no-files-found: ignore
