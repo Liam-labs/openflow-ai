@@ -109,6 +109,10 @@ describe('returnToFor', () => {
   it('keeps other query parts', () => {
     expect(returnToFor({ pathname: '/p', search: '?tab=2&resume=a' })).toBe('/p?tab=2');
   });
+  it('keeps the section hash after removing return-trip parameters', () => {
+    expect(returnToFor({ pathname: '/operations', search: '?tab=kb&resume=a&provider=deepseek&returnTo=%2Fx', hash: '#systems/memory' })).toBe('/operations?tab=kb#systems/memory');
+    expect(returnToFor({ pathname: '/operations', search: '', hash: '#systems/memory' })).toBe('/operations#systems/memory');
+  });
   it('works with no query', () => {
     expect(returnToFor({ pathname: '/p', search: '' })).toBe('/p');
   });
