@@ -20,6 +20,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { release } from 'os';
 import { readSettings } from '@/lib/computer-use-settings';
 import { DataPaths } from '@/lib/data-paths';
 import { writeJsonFile, withFileLock } from '@/lib/data-io';
@@ -31,6 +32,8 @@ import { validateBodySize } from '@/lib/fetch-utils';
 
 import { getDevflowHome } from '@/lib/home-dir';
 const execAsync = promisify(exec);
+const desktopSetupSupported = () => process.platform === 'linux' && /microsoft/i.test(release());
+const unsupportedReason = 'This wizard configures a Windows desktop through WSL. It cannot install desktop control on this server. You can continue using OpenFlow without it.';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -371,6 +374,9 @@ export const GET = tracked('/api/computer-use/wizard', async (request: NextReque
 
   const settings = await readSettings();
   const backend: 'api' | 'max' = settings.computerUse.backend ?? 'api';
+  if (!desktopSetupSupported()) {
+    return NextResponse.json({ success: true, supported: false, unsupportedReason, backend, groups: [], allPassed: false, summary: { total: 0, passed: 0, failed: 0, warnings: 0 } });
+  }
 
   // Run the 3 groups in parallel
   const [wslItems, windowsItems, bridgeItems] = await Promise.all([
@@ -415,6 +421,7 @@ export const GET = tracked('/api/computer-use/wizard', async (request: NextReque
 export const POST = tracked('/api/computer-use/wizard', async (request: NextRequest) => {
   const authDenied = await requireAuthOrLocal(request, 'write');
   if (authDenied) return authDenied;
+  if (!desktopSetupSupported()) return NextResponse.json({ success: false, code: 'UNSUPPORTED_PLATFORM', error: unsupportedReason }, { status: 409 });
   const sizeError = validateBodySize(request);
   if (sizeError) return sizeError;
 

@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { MessageCircle, Settings, Phone, Clock, CheckCircle2, WifiOff, Wifi, AlertCircle } from 'lucide-react';
+import { SlackSetupWizard } from '@/components/SlackSetupWizard';
+import { TeamsSetupWizard } from '@/components/TeamsSetupWizard';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -18,7 +20,8 @@ interface BridgeStatus {
 }
 
 interface BridgeConfig {
-  enabled: boolean;
+  enabled?: boolean;
+  syncEnabled?: boolean;
   port?: number;
   allowedNumbers?: string[];
   commanderName?: string;
@@ -45,7 +48,7 @@ const BRIDGE_LABELS: Record<string, string> = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function deriveStatus(data: BridgeData | null, bridge: string): string {
-  if (!data || !data.config?.enabled) return 'not_configured';
+  if (!data || !(data.config?.enabled ?? data.config?.syncEnabled)) return 'not_configured';
   const s = bridge === 'whatsapp' ? data.status?.status : (data.status?.connected ? 'connected' : 'disconnected');
   if (s === 'connected') return 'connected';
   if (s === 'pairing' || s === 'connecting') return 'pairing';
@@ -129,7 +132,7 @@ function ConfigTab({ data, bridge }: { data: BridgeData | null; bridge: string }
   if (!cfg) return <div className="bridge-detail__empty">No configuration found.</div>;
 
   const entries: { label: string; value: string }[] = [
-    cfg.enabled !== undefined && { label: 'Enabled', value: cfg.enabled ? 'Yes' : 'No' },
+    (cfg.enabled ?? cfg.syncEnabled) !== undefined && { label: 'Enabled', value: (cfg.enabled ?? cfg.syncEnabled) ? 'Yes' : 'No' },
     cfg.port !== undefined && { label: 'Port', value: String(cfg.port) },
     cfg.commanderName && { label: 'Commander Name', value: cfg.commanderName as string },
     cfg.channelName && { label: 'Channel Name', value: cfg.channelName as string },
@@ -162,7 +165,7 @@ function ConfigTab({ data, bridge }: { data: BridgeData | null; bridge: string }
 
       <div className="bridge-detail__config-note">
         <Settings size={12} />
-        Configuration changes are made via the Bridges panel or CLI.
+        {bridge === 'whatsapp' ? 'Configure WhatsApp in the Messaging Bridges panel.' : 'Use Set up above to configure this connection.'}
       </div>
     </div>
   );
@@ -174,16 +177,28 @@ export function BridgeDetail({ bridgeId }: BridgeDetailProps) {
   const [data, setData] = useState<BridgeData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<BridgeTab>('status');
+  const [error, setError] = useState('');
+  const [showSetup, setShowSetup] = useState(false);
 
   const fetch_ = useCallback(async () => {
+    setIsLoading(true);
+    setError('');
     try {
-      const res = await fetch(`/api/bridges/${bridgeId}`);
-      if (res.ok) {
-        const json = await res.json() as BridgeData;
-        setData(json);
+      if (bridgeId === 'slack' || bridgeId === 'teams') {
+        const [config, status] = await Promise.all([
+          fetch(`/api/bridges/${bridgeId}/configure`),
+          fetch(`/api/bridges/${bridgeId}/status`),
+        ]);
+        if (!config.ok || !status.ok) throw new Error('Bridge request failed');
+        const [configuration, state] = await Promise.all([config.json(), status.json()]);
+        setData({ config: configuration.config, status: state });
+      } else {
+        const res = await fetch(`/api/bridges/${bridgeId}`);
+        if (!res.ok) throw new Error('Bridge request failed');
+        setData(await res.json() as BridgeData);
       }
     } catch {
-      // silently fail
+      setError('We could not load this bridge. Check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -199,6 +214,11 @@ export function BridgeDetail({ bridgeId }: BridgeDetailProps) {
   ];
 
   if (isLoading) return <div className="systems-section__loading">Loading bridge…</div>;
+  if (error) return <div className="bridge-detail__content"><p role="alert">{error}</p><button type="button" className="bridge-detail__action-btn" onClick={fetch_}>Try again</button></div>;
+  if (showSetup && (bridgeId === 'slack' || bridgeId === 'teams')) {
+    const Wizard = bridgeId === 'slack' ? SlackSetupWizard : TeamsSetupWizard;
+    return <Wizard onCancel={() => setShowSetup(false)} onComplete={() => { setShowSetup(false); void fetch_(); }} />;
+  }
 
   return (
     <div className="bridge-detail">
@@ -224,6 +244,7 @@ export function BridgeDetail({ bridgeId }: BridgeDetailProps) {
       </div>
 
       {/* Content */}
+      {(bridgeId === 'slack' || bridgeId === 'teams') && <div className="bridge-detail__actions"><button type="button" className="bridge-detail__action-btn" onClick={() => setShowSetup(true)}>Set up {label}</button></div>}
       {activeTab === 'status' && <StatusTab data={data} bridge={bridgeId} onRefresh={fetch_} />}
       {activeTab === 'config' && <ConfigTab data={data} bridge={bridgeId} />}
     </div>
