@@ -431,7 +431,7 @@ export function CommunicationBridgePanel({ onClose }: CommunicationBridgePanelPr
                 </div>
 
                 {showWizard && (
-                  <div className="absolute inset-0 bg-black/85 flex items-center justify-center z-10 rounded-r-2xl">
+                  <div className="absolute inset-0 bg-black/85 flex items-start justify-center overflow-y-auto p-3 sm:p-4 z-10 rounded-r-2xl">
                     <WhatsAppSetupWizard
                       onComplete={() => { setShowWizard(false); pollWhatsApp(); }}
                       onCancel={() => setShowWizard(false)}
@@ -460,7 +460,7 @@ export function CommunicationBridgePanel({ onClose }: CommunicationBridgePanelPr
                   )}
                 </div>
                 {showSlackWizard && (
-                  <div className="absolute inset-0 bg-black/85 flex items-center justify-center z-10 rounded-r-2xl">
+                  <div className="absolute inset-0 bg-black/85 flex items-start justify-center overflow-y-auto p-3 sm:p-4 z-10 rounded-r-2xl">
                     <SlackSetupWizard
                       onComplete={() => { setShowSlackWizard(false); pollSlack(); }}
                       onCancel={() => setShowSlackWizard(false)}
@@ -479,7 +479,7 @@ export function CommunicationBridgePanel({ onClose }: CommunicationBridgePanelPr
                   />
                 </div>
                 {showTeamsWizard && (
-                  <div className="absolute inset-0 bg-black/85 flex items-center justify-center z-10 rounded-r-2xl">
+                  <div className="absolute inset-0 bg-black/85 flex items-start justify-center overflow-y-auto p-3 sm:p-4 z-10 rounded-r-2xl">
                     <TeamsSetupWizard
                       onComplete={() => { setShowTeamsWizard(false); pollTeams(); }}
                       onCancel={() => setShowTeamsWizard(false)}
