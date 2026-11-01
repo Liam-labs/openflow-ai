@@ -29,3 +29,6 @@ raw.githubusercontent.com  # the nvm install command the setup script prints; it
 www.python.org           # link
 n8n.yourdomain.com       # placeholder shown in the UI
 your-devflow-url.ngrok.io  # placeholder shown in the UI
+antigravity.google       # an install command shown to the user in the first-team setup help; the app never fetches it
+login.botframework.com   # only when you configure it: Teams bot sign-in
+fonts.googleapis.com     # only in scripts/fetch-fonts.py, a developer script that downloads font files; the app does not run it
