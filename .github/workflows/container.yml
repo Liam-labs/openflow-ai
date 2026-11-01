@@ -20,7 +20,7 @@ jobs:
         run: docker/vps-verify.sh openflow-ai:local "$GITHUB_SHA" server-install-result.json
       - name: Save server-mode result
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: server-install-${{ matrix.runner }}
           path: server-install-result.json
