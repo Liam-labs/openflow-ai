@@ -1,6 +1,7 @@
 """./scripts/setup --server writes the two settings that make every request need the access token (a proxy on this machine must not be trusted as the owner)."""
 import importlib.util
 import tempfile
+from unittest.mock import patch
 from pathlib import Path
 
 SPEC = importlib.util.spec_from_file_location("openflow_setup", Path(__file__).resolve().parent.parent / "scripts" / "setup.py")
@@ -53,3 +54,16 @@ def test_public_host_is_written_and_unsafe_hosts_are_rejected_before_writes():
                 raise AssertionError('accepted unsafe host')
             except SystemExit:
                 assert (repo / '.env').read_bytes() == before
+
+
+def test_container_initialization_does_not_attempt_host_network_configuration():
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = make_repo(Path(tmp))
+        calls = []
+        with patch.object(setup.os, 'geteuid', return_value=1000), \
+             patch.object(setup, 'check_prerequisites', return_value=[]), \
+             patch.object(setup, 'run_step', side_effect=lambda label, command, cwd: calls.append(command)):
+            assert setup.main(['--repo', str(repo), '--server', '--container-init', '--no-install', '--no-build']) == 0
+        assert len(calls) == 1
+        assert 'scripts/setup-code.py' in calls[0]
+        assert setup.parse_env((repo / '.env').read_text())['DEVFLOW_SERVER_MODE'] == '1'

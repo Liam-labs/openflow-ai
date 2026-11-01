@@ -317,6 +317,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--port", type=int)
     ap.add_argument("--server", action="store_true", help="run this if anything sits in front of the app (a proxy, a tunnel, a VPS web address) or the app is reachable from the internet: every request then needs the access token, even one that looks like it comes from this machine")
     ap.add_argument("--host", help="public HTTPS hostname for --server, without a scheme or path")
+    ap.add_argument("--container-init", action="store_true", help=argparse.SUPPRESS)
     ap.add_argument("--reset-token-store", action="store_true", help="if the token file is damaged, keep a copy and start a new one")
     ap.add_argument("--repo", type=Path, default=REPO, help=argparse.SUPPRESS)
     args = ap.parse_args(argv)
@@ -342,7 +343,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.check:
         print("\nThis machine is ready.")
         return 0
-    if args.server and not args.host:
+    if args.server and not args.host and not args.container_init:
         # Server installs get their address before the settings/UI are exposed.
         app_data = args.repo / '.AppData'
         address_port = args.port or 3000

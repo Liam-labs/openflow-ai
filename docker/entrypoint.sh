@@ -9,7 +9,8 @@ chmod 700 /data/home .AppData
 if [ -f /data/openflow.env ]; then
   install -m 600 /data/openflow.env .env
 else
-  args=(--no-install --no-build)
+  # Naming and Caddy belong to the host installer, never the container namespace.
+  args=(--no-install --no-build --container-init)
   if [ "${DEVFLOW_SERVER_MODE:-0}" = 1 ]; then
     args+=(--server)
     if [ -n "${OPENFLOW_HOST:-}" ]; then args+=(--host "$OPENFLOW_HOST"); fi
