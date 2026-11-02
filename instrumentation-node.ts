@@ -17,6 +17,13 @@ export async function startSubsystems() {
     }
 
     try {
+      const { ensureBrowserAtStartup } = await import('./lib/wizards/browser-core');
+      await ensureBrowserAtStartup();
+    } catch {
+      console.error('[browser] Could not restore the saved browser; open Connections to retry.');
+    }
+
+    try {
       const { restoreManagedMemory } = await import('./lib/wizards/memory-runtime');
       await restoreManagedMemory();
     } catch {
