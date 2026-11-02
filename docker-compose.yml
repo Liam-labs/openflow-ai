@@ -5,6 +5,10 @@ services:
     build: .
     image: openflow-ai:local
     container_name: openflow
+    # Chromium keeps its sandbox; permit its unprivileged user namespaces.
+    security_opt:
+      - seccomp=./docker/chromium-seccomp.json
+    shm_size: 256mb
     init: true
     restart: unless-stopped
     ports:

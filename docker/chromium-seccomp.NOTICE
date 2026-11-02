@@ -1,0 +1,5 @@
+Chromium seccomp profile copied unmodified from Microsoft Playwright:
+https://github.com/microsoft/playwright/blob/main/utils/docker/seccomp_profile.json
+Retrieved 2026-11-02. Copyright Microsoft Corporation. Apache License 2.0;
+see chromium-seccomp.LICENSE. The profile retains default-deny syscall filtering
+and permits the unprivileged namespace operations needed by Chromium's sandbox.

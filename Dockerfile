@@ -1,10 +1,11 @@
 # OpenFlow in one container: the dashboard, the agent runner (tmux + python) and the Claude Code and Codex programs.
 # For Mac (Docker Desktop, OrbStack, Colima) and for anyone who prefers a container on Linux. Native install: see the README.
 # The build needs no secrets. Your logins and data live in the /data volume, never in the image.
+FROM qdrant/qdrant@sha256:12364fe851b9f17356fc88189fc06d1b521262e04659ec7345975b00c9246a10 AS memory-database
 FROM node:22-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        tmux python3 python3-pexpect git curl socat ca-certificates build-essential \
+        tmux python3 python3-venv python3-pexpect chromium chromium-sandbox libunwind8 git curl socat ca-certificates build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Official signed package repositories; connectors run unprivileged with app-owned state.
@@ -14,6 +15,9 @@ RUN curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.noarmor.gpg -o 
     && echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared bookworm main' > /etc/apt/sources.list.d/cloudflared.list \
     && apt-get update && apt-get install -y --no-install-recommends tailscale cloudflared \
     && rm -rf /var/lib/apt/lists/*
+
+COPY --from=memory-database /qdrant/qdrant /usr/local/bin/openflow-qdrant
+ENV OPENFLOW_MANAGED_QDRANT=1
 
 # The agent programs. Signing in happens later, inside the dashboard.
 RUN npm install -g @anthropic-ai/claude-code @openai/codex && npm cache clean --force

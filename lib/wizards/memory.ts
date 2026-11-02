@@ -117,6 +117,7 @@ export const realExec = (root: string): Exec => (file, args, timeoutMs) => new P
 // ─── Facts and choices ───────────────────────────────────────────────────────────────────────────────
 
 export interface MemoryFacts {
+  managedDatabase?: boolean;
   docker: { installed: boolean; running: boolean };
   python: { ok: boolean; version: string | null };
   uv: boolean;                       // uv can make the Python environment even when python3-venv is missing
@@ -140,8 +141,8 @@ export function planMemory(f: MemoryFacts, wanted?: ModelId): Plan {
   const model = wanted && f.availableMB >= MODELS[wanted].needMB ? wanted : chooseModel(f.availableMB);
   if (!model) return { ok: false, reason: `Only about ${Math.round(f.availableMB / 100) / 10} GB of memory is free and the smallest model needs ${MODELS.light.needMB / 1000} GB. You can skip memory for now and set it up later.`, fix: 'memory' };
   if (f.diskFreeMB < MIN_DISK_MB) return { ok: false, reason: `About ${Math.round(f.diskFreeMB / 100) / 10} GB of disk is free and memory needs about ${MIN_DISK_MB / 1000} GB (database image, Python packages, model).`, fix: 'disk' };
-  const adopt = f.qdrantUp && !f.container.exists;
-  if (!adopt) {
+  const adopt = f.qdrantUp && !f.container.exists && !f.managedDatabase;
+  if (!adopt && !f.managedDatabase) {
     if (!f.docker.installed) return { ok: false, reason: 'Docker is not installed. Qdrant runs in Docker.', fix: 'docker' };
     if (!f.docker.running) return { ok: false, reason: 'Docker is installed but not running.', fix: 'docker-start' };
   }
@@ -151,6 +152,7 @@ export function planMemory(f: MemoryFacts, wanted?: ModelId): Plan {
 // ─── Dependencies ────────────────────────────────────────────────────────────────────────────────────
 
 export interface Deps {
+  database?: { start: () => Promise<void>; stop: () => Promise<void> };
   env: Env;
   now: () => string;
   sleep: (ms: number) => Promise<void>;
@@ -189,6 +191,7 @@ export async function gatherFacts(d: Deps): Promise<MemoryFacts> {
   const line = ps.stdout.split('\n').find((l) => l.startsWith(`${CONTAINER}|`));
   const [maj, min] = py.stdout.trim().split(' ').map(Number);
   return {
+    managedDatabase: !!d.database,
     docker: { installed, running: info.code === 0 },
     python: { ok: py.code === 0 && maj === 3 && min >= 9 && min <= 13, version: py.code === 0 ? `${maj}.${min}` : null },
     uv: uv.code === 0,
@@ -213,7 +216,9 @@ export async function enableMemory(d: Deps, wanted?: ModelId): Promise<StepResul
   // 1. Qdrant.
   if (!plan.adopt && !(facts.container.running && (await d.healthz()))) {
     await d.mkdir(storageDir(d));
-    if (facts.container.exists) {
+    if (d.database) {
+      try { await d.database.start(); } catch (error) { return { ok: false, error: `The database could not start: ${String(error).slice(0, 200)}` }; }
+    } else if (facts.container.exists) {
       const r = await d.exec('docker', ['start', CONTAINER], 30000);
       if (r.code !== 0) return { ok: false, error: `Docker could not start the database: ${first(r.stderr)}` };
     } else {
@@ -227,6 +232,7 @@ export async function enableMemory(d: Deps, wanted?: ModelId): Promise<StepResul
     for (let i = 0; i < 40 && !up; i++) { up = await d.healthz(); if (!up) await d.sleep(1000); }
     if (!up) {
       // Do not leave a container behind that restarts forever: keep its last words for the message, then remove it.
+      if (d.database) { await d.database.stop(); return { ok: false, error: 'The database did not answer in 40 seconds. It was stopped; retry setup.' }; }
       const logs = await d.exec('docker', ['logs', '--tail', '20', CONTAINER], 15000);
       const why = `${logs.stdout}\n${logs.stderr}`.split('\n').map((l) => l.trim()).filter((l) => /error|panic|denied/i.test(l)).pop();
       await d.exec('docker', ['stop', CONTAINER], 60000);
@@ -277,7 +283,8 @@ export async function proveMemory(d: Deps, nonce: string): Promise<{ ok: boolean
   const exposed = open.length > 0;
   if (exposed) {
     if (!rec.adopted) {
-      await d.exec('docker', ['stop', CONTAINER], 30000);
+      if (d.database) await d.database.stop();
+      else await d.exec('docker', ['stop', CONTAINER], 30000);
       steps.push({ name: 'Only this computer can reach the database', ok: false, detail: `${open.join(', ')} could connect to port ${QDRANT_PORT}. The database was stopped.` });
       return { ok: false, exposed: true, steps };
     }
@@ -336,7 +343,8 @@ export async function disableMemory(d: Deps, opts: { deleteData?: boolean } = {}
   }
   if (!rec.adopted) {
     const facts = await gatherFacts(d);
-    if (facts.container.exists) {
+    if (d.database) await d.database.stop();
+    else if (facts.container.exists) {
       await d.exec('docker', ['stop', CONTAINER], 60000);
       const rm = await d.exec('docker', ['rm', CONTAINER], 30000);
       if (rm.code !== 0) return { ok: false, error: `Docker could not remove the database container: ${first(rm.stderr)}` };
@@ -417,6 +425,7 @@ export async function realMcp(): Promise<Deps['mcp']> {
 export async function realDeps(env: Env = process.env): Promise<Deps> {
   const root = path.resolve(path.dirname(DataPaths.memoryWizard));
   return {
+    database: env.OPENFLOW_MANAGED_QDRANT === '1' ? (await import('./memory-runtime')).managedDatabase(root) : undefined,
     env, now: () => new Date().toISOString(), sleep: (ms) => new Promise((r) => setTimeout(r, ms)), root, exec: realExec(root),
     readRecord: async () => readJsonFileStrict<MemoryRecord>(DataPaths.memoryWizard, { enabled: false }).catch(() => ({ enabled: false } as MemoryRecord)),
     writeRecord: (r) => writeJsonFile(DataPaths.memoryWizard, r),
