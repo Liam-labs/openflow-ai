@@ -291,13 +291,13 @@ export function ModelsSection({ onNavigate }: ModelsSectionProps) {
         .ms-title { display: flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 600; margin: 4px 0 6px; color: var(--df-text, #fafafa); letter-spacing: -0.3px; }
         .ms-sub { font-size: 13px; color: var(--df-text-secondary, #a1a1aa); line-height: 1.55; margin: 0; }
 
-        .ms-btn-primary { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; min-height: 38px; background: var(--df-accent-10, rgba(59,130,246,0.1)); border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.25)); border-radius: 8px; color: var(--df-text, #fafafa); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 140ms ease; flex-shrink: 0; }
-        .ms-btn-primary:hover:not(:disabled) { background: var(--df-accent-20, rgba(59,130,246,0.2)); border-color: var(--df-accent, #3b82f6); }
+        .ms-btn-primary { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; min-height: 38px; background: var(--df-accent-10, rgba(var(--glow-ch), 0.1)); border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.25)); border-radius: 8px; color: var(--df-text, #fafafa); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 140ms ease; flex-shrink: 0; }
+        .ms-btn-primary:hover:not(:disabled) { background: var(--df-accent-20, rgba(var(--glow-ch), 0.2)); border-color: var(--df-accent, #3b82f6); }
         .ms-btn-primary:focus-visible { outline: 2px solid var(--df-accent, #3b82f6); outline-offset: 2px; }
         .ms-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .ms-stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 16px 0 20px; }
-        .ms-stat { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; background: var(--df-bg-glass, rgba(15,25,50,0.4)); border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.1)); border-radius: 10px; min-width: 0; }
+        .ms-stat { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; background: var(--df-bg-glass, rgba(var(--deep-ch), 0.4)); border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.1)); border-radius: 10px; min-width: 0; }
         .ms-stat-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--df-text-muted, #71717a); font-weight: 600; }
         .ms-stat-value { font-size: 22px; font-weight: 600; color: var(--df-text, #fafafa); font-family: var(--font-mono, ui-monospace, monospace); line-height: 1; }
         .ms-stat--full { border-left: 2px solid #22c55e; }
@@ -305,26 +305,26 @@ export function ModelsSection({ onNavigate }: ModelsSectionProps) {
         .ms-stat--none { border-left: 2px solid #ef4444; }
         .ms-stat--unknown { border-left: 2px solid #71717a; }
 
-        .ms-notice { display: flex; align-items: center; gap: 8px; padding: 10px 14px; margin-bottom: 14px; background: var(--df-accent-8, rgba(59,130,246,0.08)); border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.18)); border-radius: 8px; color: var(--df-text-secondary, #a1a1aa); font-size: 12px; }
-        .ms-notice--err { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.3); color: #f87171; }
+        .ms-notice { display: flex; align-items: center; gap: 8px; padding: 10px 14px; margin-bottom: 14px; background: var(--df-accent-8, rgba(var(--glow-ch), 0.08)); border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.18)); border-radius: 8px; color: var(--df-text-secondary, #a1a1aa); font-size: 12px; }
+        .ms-notice--err { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.3); color: var(--tx-f87171); }
 
-        .ms-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 16px; padding: 14px 16px; background: var(--df-bg-glass, rgba(15,25,50,0.3)); border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.1)); border-radius: 10px; margin-bottom: 18px; }
+        .ms-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 16px; padding: 14px 16px; background: var(--df-bg-glass, rgba(var(--deep-ch), 0.3)); border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.1)); border-radius: 10px; margin-bottom: 18px; }
         .ms-filter { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
         .ms-filter-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--df-text-muted, #71717a); font-weight: 600; }
-        .ms-select { padding: 7px 10px; min-height: 32px; background: rgba(0,0,0,0.3); border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.18)); border-radius: 6px; color: var(--df-text, #fafafa); font-size: 12px; cursor: pointer; min-width: 130px; }
+        .ms-select { padding: 7px 10px; min-height: 32px; background: rgba(var(--shade-ch), 0.3); border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.18)); border-radius: 6px; color: var(--df-text, #fafafa); font-size: 12px; cursor: pointer; min-width: 130px; }
         .ms-select:focus-visible { outline: 2px solid var(--df-accent, #3b82f6); outline-offset: 1px; border-color: var(--df-accent, #3b82f6); }
         .ms-filter-count { margin-left: auto; align-self: center; font-size: 11px; color: var(--df-text-muted, #71717a); font-family: var(--font-mono, ui-monospace, monospace); }
 
         .ms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
-        .ms-loading, .ms-empty { padding: 32px; text-align: center; color: var(--df-text-muted, #71717a); font-size: 13px; background: var(--df-bg-glass, rgba(15,25,50,0.3)); border: 1px dashed var(--df-border-subtle, rgba(59,130,246,0.15)); border-radius: 10px; }
+        .ms-loading, .ms-empty { padding: 32px; text-align: center; color: var(--df-text-muted, #71717a); font-size: 13px; background: var(--df-bg-glass, rgba(var(--deep-ch), 0.3)); border: 1px dashed var(--df-border-subtle, rgba(var(--glow-ch), 0.15)); border-radius: 10px; }
 
         .ms-spin { animation: ms-spin 1s linear infinite; }
         @keyframes ms-spin { to { transform: rotate(360deg); } }
 
         :global(.ms-cap) { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0; }
-        :global(.ms-cap--full) { background: rgba(34,197,94,0.15); color: #22c55e; }
-        :global(.ms-cap--partial) { background: rgba(234,179,8,0.18); color: #eab308; }
-        :global(.ms-cap--none) { background: rgba(239,68,68,0.15); color: #ef4444; }
+        :global(.ms-cap--full) { background: rgba(34,197,94,0.15); color: var(--tx-22c55e); }
+        :global(.ms-cap--partial) { background: rgba(234,179,8,0.18); color: var(--tx-eab308); }
+        :global(.ms-cap--none) { background: rgba(239,68,68,0.15); color: var(--tx-ef4444); }
 
         :global(.ms-dot) { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
         :global(.ms-dot--full) { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.5); }
@@ -379,8 +379,8 @@ function ModelCard({ model, onOpen }: { model: UIModelEntry; onOpen: () => void 
       </ul>
 
       <style jsx>{`
-        .ms-card { text-align: left; display: flex; flex-direction: column; padding: 14px 14px 10px; background: var(--df-bg-glass, rgba(15,25,50,0.45)); border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.12)); border-radius: 10px; cursor: pointer; transition: border-color 140ms ease, transform 140ms ease, background 140ms ease; min-width: 0; font-family: inherit; }
-        .ms-card:hover { border-color: var(--df-accent, #3b82f6); background: var(--df-bg-glass-hover, rgba(15,25,50,0.6)); transform: translateY(-1px); }
+        .ms-card { text-align: left; display: flex; flex-direction: column; padding: 14px 14px 10px; background: var(--df-bg-glass, rgba(var(--deep-ch), 0.45)); border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.12)); border-radius: 10px; cursor: pointer; transition: border-color 140ms ease, transform 140ms ease, background 140ms ease; min-width: 0; font-family: inherit; }
+        .ms-card:hover { border-color: var(--df-accent, #3b82f6); background: var(--df-bg-glass-hover, rgba(var(--deep-ch), 0.6)); transform: translateY(-1px); }
         .ms-card:focus-visible { outline: 2px solid var(--df-accent, #3b82f6); outline-offset: 2px; }
 
         .ms-card-top { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
@@ -394,7 +394,7 @@ function ModelCard({ model, onOpen }: { model: UIModelEntry; onOpen: () => void 
         .ms-card-dot-sep { color: var(--df-text-muted, #71717a); flex-shrink: 0; }
         .ms-card-interface { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10.5px; color: var(--df-text-muted, #71717a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 
-        .ms-card-divider { height: 1px; background: var(--df-border-subtle, rgba(59,130,246,0.1)); margin: 10px 0 10px; }
+        .ms-card-divider { height: 1px; background: var(--df-border-subtle, rgba(var(--glow-ch), 0.1)); margin: 10px 0 10px; }
 
         .ms-card-caps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; }
         .ms-card-cap-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 11px; color: var(--df-text-secondary, #a1a1aa); min-width: 0; }

@@ -64,6 +64,7 @@ class JsonSupabaseInstanceStore implements SupabaseInstanceStore {
           connection: input.connection,
           linkedProjects: input.linkedProjects ?? existing.linkedProjects,
           notes: input.notes ?? existing.notes,
+          host: input.host ?? existing.host,
           containerRef: input.containerRef ?? existing.containerRef,
           portMap: input.portMap ?? existing.portMap,
           projectDirectory: input.projectDirectory ?? existing.projectDirectory,
@@ -88,6 +89,7 @@ class JsonSupabaseInstanceStore implements SupabaseInstanceStore {
         createdAt: now,
         updatedAt: now,
         notes: input.notes,
+        host: input.host,
         containerRef: input.containerRef,
         portMap: input.portMap,
         projectDirectory: input.projectDirectory,
@@ -120,7 +122,7 @@ class JsonSupabaseInstanceStore implements SupabaseInstanceStore {
     });
   }
 
-  async updateStatus(id: string, status: SupabaseInstanceStatus): Promise<void> {
+  async updateStatus(id: string, status: SupabaseInstanceStatus, detail?: string): Promise<void> {
     return withFileLock(INSTANCES_PATH, async () => {
       const data = await readStore();
       const instance = data.instances.find((i) => i.id === id);
@@ -128,6 +130,7 @@ class JsonSupabaseInstanceStore implements SupabaseInstanceStore {
         throw Object.assign(new Error(`Instance not found: ${id}`), { statusCode: 404 });
       }
       instance.status = status;
+      instance.statusDetail = detail;
       instance.lastCheckedAt = new Date().toISOString();
       instance.updatedAt = new Date().toISOString();
       await writeStore(data);

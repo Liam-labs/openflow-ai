@@ -440,7 +440,7 @@ export function LocalAIModelSettings({
       <style jsx>{`
         .laims-backdrop {
           position: fixed; inset: 0;
-          background: radial-gradient(ellipse at center, rgba(5, 10, 25, 0.55) 0%, rgba(0, 0, 0, 0.78) 100%);
+          background: radial-gradient(ellipse at center, rgba(var(--deep-ch), 0.55) 0%, rgba(var(--shade-ch), 0.78) 100%);
           backdrop-filter: blur(6px);
           -webkit-backdrop-filter: blur(6px);
           z-index: 9999;
@@ -449,10 +449,10 @@ export function LocalAIModelSettings({
           animation: laims-fade-in 180ms ease-out;
         }
         .laims-shell {
-          background: linear-gradient(180deg, rgba(15, 25, 50, 0.92) 0%, rgba(8, 12, 28, 0.94) 100%);
+          background: linear-gradient(180deg, rgba(var(--deep-ch), 0.92) 0%, rgba(var(--deep-ch), 0.94) 100%);
           backdrop-filter: blur(20px) saturate(140%);
           -webkit-backdrop-filter: blur(20px) saturate(140%);
-          border: 1px solid var(--df-border, rgba(59, 130, 246, 0.2));
+          border: 1px solid var(--df-border, rgba(var(--glow-ch), 0.2));
           border-radius: 16px;
           width: min(760px, 100%);
           max-height: 88vh;
@@ -460,8 +460,8 @@ export function LocalAIModelSettings({
           flex-direction: column;
           box-shadow:
             0 24px 64px rgba(0, 0, 0, 0.55),
-            0 0 0 1px rgba(255, 255, 255, 0.03) inset,
-            0 1px 0 rgba(255, 255, 255, 0.06) inset;
+            0 0 0 1px rgba(var(--ink-ch), 0.03) inset,
+            0 1px 0 rgba(var(--ink-ch), 0.06) inset;
           color: var(--df-text, #e4e4e7);
           font-family: var(--font-sans, system-ui), sans-serif;
           animation: laims-pop-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -470,9 +470,9 @@ export function LocalAIModelSettings({
         .laims-header {
           position: relative;
           padding: 18px 22px 16px;
-          border-bottom: 1px solid var(--df-border-subtle, rgba(59, 130, 246, 0.1));
+          border-bottom: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.1));
           flex-shrink: 0;
-          background: linear-gradient(180deg, var(--df-accent-8, rgba(59, 130, 246, 0.08)) 0%, transparent 100%);
+          background: linear-gradient(180deg, var(--df-accent-8, rgba(var(--glow-ch), 0.08)) 0%, transparent 100%);
         }
         .laims-header-glow {
           position: absolute; top: 0; left: 0; right: 0; height: 1px;
@@ -481,7 +481,7 @@ export function LocalAIModelSettings({
         }
         .laims-close {
           background: transparent;
-          border: 1px solid var(--df-border-subtle, rgba(59, 130, 246, 0.1));
+          border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.1));
           border-radius: 8px;
           width: 30px; height: 30px;
           display: flex; align-items: center; justify-content: center;
@@ -491,8 +491,8 @@ export function LocalAIModelSettings({
           flex-shrink: 0;
         }
         .laims-close:hover {
-          background: var(--df-accent-10, rgba(59, 130, 246, 0.1));
-          border-color: var(--df-border-hover, rgba(59, 130, 246, 0.4));
+          background: var(--df-accent-10, rgba(var(--glow-ch), 0.1));
+          border-color: var(--df-border-hover, rgba(var(--glow-ch), 0.4));
           color: var(--df-text, #e4e4e7);
         }
         .laims-body {
@@ -506,16 +506,16 @@ export function LocalAIModelSettings({
         .laims-body::-webkit-scrollbar { width: 8px; }
         .laims-body::-webkit-scrollbar-track { background: transparent; }
         .laims-body::-webkit-scrollbar-thumb {
-          background: var(--df-accent-20, rgba(59, 130, 246, 0.2));
+          background: var(--df-accent-20, rgba(var(--glow-ch), 0.2));
           border-radius: 4px;
         }
         .laims-body::-webkit-scrollbar-thumb:hover {
-          background: var(--df-accent-40, rgba(59, 130, 246, 0.4));
+          background: var(--df-accent-40, rgba(var(--glow-ch), 0.4));
         }
         .laims-footer {
           padding: 14px 22px;
-          border-top: 1px solid var(--df-border-subtle, rgba(59, 130, 246, 0.1));
-          background: linear-gradient(0deg, var(--df-accent-4, rgba(59, 130, 246, 0.04)) 0%, transparent 100%);
+          border-top: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.1));
+          background: linear-gradient(0deg, var(--df-accent-4, rgba(var(--glow-ch), 0.04)) 0%, transparent 100%);
           display: flex;
           gap: 8px;
           justify-content: space-between;
@@ -528,15 +528,15 @@ export function LocalAIModelSettings({
           font-size: 12px;
           border-radius: 6px;
           cursor: pointer;
-          background: var(--df-surface-input, rgba(10, 20, 40, 0.4));
-          border: 1px solid var(--df-border-subtle, rgba(59, 130, 246, 0.1));
+          background: var(--df-surface-input, rgba(var(--deep-ch), 0.4));
+          border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.1));
           color: var(--df-text-secondary, #a1a1aa);
           transition: all 140ms ease;
           font-family: inherit;
           letter-spacing: 0.2px;
         }
         .laims-pill:hover:not(:disabled) {
-          border-color: var(--df-border-hover, rgba(59, 130, 246, 0.4));
+          border-color: var(--df-border-hover, rgba(var(--glow-ch), 0.4));
           color: var(--df-text, #e4e4e7);
           transform: translateY(-1px);
         }
@@ -549,7 +549,7 @@ export function LocalAIModelSettings({
           border-color: var(--df-accent, #3b82f6);
           color: white;
           font-weight: 600;
-          box-shadow: 0 2px 8px var(--df-accent-30, rgba(59, 130, 246, 0.3));
+          box-shadow: 0 2px 8px var(--df-accent-30, rgba(var(--glow-ch), 0.3));
         }
         .laims-pill.is-current {
           font-weight: 600;
@@ -558,8 +558,8 @@ export function LocalAIModelSettings({
           font-size: 10px;
           padding: 3px 8px;
           border-radius: 999px;
-          background: var(--df-accent-8, rgba(59, 130, 246, 0.08));
-          border: 1px solid var(--df-accent-20, rgba(59, 130, 246, 0.2));
+          background: var(--df-accent-8, rgba(var(--glow-ch), 0.08));
+          border: 1px solid var(--df-accent-20, rgba(var(--glow-ch), 0.2));
           color: var(--df-accent, #3b82f6);
           letter-spacing: 0.4px;
           text-transform: uppercase;
@@ -588,8 +588,8 @@ export function LocalAIModelSettings({
         }
         .laims-info-box {
           padding: 12px;
-          background: var(--df-accent-4, rgba(59, 130, 246, 0.04));
-          border: 1px solid var(--df-border-subtle, rgba(59, 130, 246, 0.1));
+          background: var(--df-accent-4, rgba(var(--glow-ch), 0.04));
+          border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.1));
           border-radius: 8px;
           font-size: 11.5px;
           line-height: 1.6;
@@ -597,7 +597,7 @@ export function LocalAIModelSettings({
         }
         .laims-info-box code {
           padding: 1px 5px;
-          background: var(--df-accent-10, rgba(59, 130, 246, 0.1));
+          background: var(--df-accent-10, rgba(var(--glow-ch), 0.1));
           border-radius: 3px;
           font-size: 11px;
           color: var(--df-text, #e4e4e7);
@@ -623,7 +623,7 @@ export function LocalAIModelSettings({
           gap: 6px;
           padding: 7px 12px;
           background: transparent;
-          border: 1px solid var(--df-border-subtle, rgba(59, 130, 246, 0.1));
+          border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.1));
           border-radius: 6px;
           cursor: pointer;
           color: var(--df-text-secondary, #a1a1aa);
@@ -632,8 +632,8 @@ export function LocalAIModelSettings({
           transition: all 140ms ease;
         }
         .laims-btn-ghost:hover:not(:disabled) {
-          background: var(--df-accent-8, rgba(59, 130, 246, 0.08));
-          border-color: var(--df-border-hover, rgba(59, 130, 246, 0.4));
+          background: var(--df-accent-8, rgba(var(--glow-ch), 0.08));
+          border-color: var(--df-border-hover, rgba(var(--glow-ch), 0.4));
           color: var(--df-text, #e4e4e7);
         }
         .laims-btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -648,12 +648,12 @@ export function LocalAIModelSettings({
           font-weight: 600;
           font-family: inherit;
           transition: all 140ms ease;
-          box-shadow: 0 2px 8px var(--df-accent-25, rgba(59, 130, 246, 0.25));
+          box-shadow: 0 2px 8px var(--df-accent-25, rgba(var(--glow-ch), 0.25));
           letter-spacing: 0.2px;
         }
         .laims-btn-primary:hover:not(:disabled) {
           transform: translateY(-1px);
-          box-shadow: 0 4px 14px var(--df-accent-40, rgba(59, 130, 246, 0.4));
+          box-shadow: 0 4px 14px var(--df-accent-40, rgba(var(--glow-ch), 0.4));
         }
         .laims-btn-primary:active:not(:disabled) { transform: translateY(0); }
         .laims-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -679,10 +679,10 @@ export function LocalAIModelSettings({
           height: 6px;
           -webkit-appearance: none;
           appearance: none;
-          background: var(--df-surface-input, rgba(10, 20, 40, 0.4));
+          background: var(--df-surface-input, rgba(var(--deep-ch), 0.4));
           border-radius: 3px;
           outline: none;
-          border: 1px solid var(--df-border-subtle, rgba(59, 130, 246, 0.1));
+          border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.1));
         }
         .laims-slider::-webkit-slider-thumb {
           -webkit-appearance: none;
@@ -692,7 +692,7 @@ export function LocalAIModelSettings({
           border: 2px solid white;
           border-radius: 50%;
           cursor: pointer;
-          box-shadow: 0 2px 6px var(--df-accent-40, rgba(59, 130, 246, 0.4));
+          box-shadow: 0 2px 6px var(--df-accent-40, rgba(var(--glow-ch), 0.4));
           transition: transform 140ms ease;
         }
         .laims-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
@@ -702,7 +702,7 @@ export function LocalAIModelSettings({
           border: 2px solid white;
           border-radius: 50%;
           cursor: pointer;
-          box-shadow: 0 2px 6px var(--df-accent-40, rgba(59, 130, 246, 0.4));
+          box-shadow: 0 2px 6px var(--df-accent-40, rgba(var(--glow-ch), 0.4));
         }
         .laims-spin { animation: laims-spin 1s linear infinite; }
         @keyframes laims-spin { to { transform: rotate(360deg); } }
@@ -779,16 +779,16 @@ function VramBar({ weightsMb, kvMb, overheadMb, totalGpuMb }: { weightsMb: numbe
       position: 'relative',
       height: 26,
       borderRadius: 6,
-      background: 'rgba(255,255,255,0.03)',
-      border: '1px solid var(--df-border-subtle, rgba(59, 130, 246, 0.1))',
+      background: 'rgba(var(--ink-ch), 0.03)',
+      border: '1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.1))',
       overflow: 'hidden',
       display: 'flex',
-      boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)',
+      boxShadow: 'inset 0 1px 3px rgba(var(--shade-ch), 0.3)',
     }}>
       <div style={{
         width: w(weightsMb),
         background: 'linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%)',
-        boxShadow: '0 0 10px rgba(59, 130, 246, 0.4)',
+        boxShadow: '0 0 10px rgba(var(--glow-ch), 0.4)',
       }} title={`Weights ${formatMb(weightsMb)}`} />
       <div style={{
         width: w(kvMb),
@@ -808,7 +808,7 @@ function VramBar({ weightsMb, kvMb, overheadMb, totalGpuMb }: { weightsMb: numbe
             left: `${gpuLineLeft}%`,
             width: 2,
             background: '#ef4444',
-            boxShadow: '0 0 8px rgba(239, 68, 68, 0.9), 0 0 2px rgba(255, 255, 255, 0.4)',
+            boxShadow: '0 0 8px rgba(239, 68, 68, 0.9), 0 0 2px rgba(var(--ink-ch), 0.4)',
           }}
         />
       )}

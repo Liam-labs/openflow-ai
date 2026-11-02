@@ -221,7 +221,7 @@ export function ModelConfigPanel({ onClose, onModelSelect }: ModelConfigPanelPro
       className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="max-w-4xl w-full mx-4 h-[85vh] glass-card rounded-2xl flex flex-col overflow-hidden" style={{ background: 'rgba(8, 14, 28, 0.97)', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
+      <div className="max-w-4xl w-full mx-4 h-[85vh] glass-card rounded-2xl flex flex-col overflow-hidden" style={{ background: 'rgba(var(--deep-ch), 0.97)', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
 
         {/* Header */}
         <div className="flex items-start justify-between px-6 py-5 border-b border-white/8 flex-shrink-0">

@@ -8,6 +8,9 @@
 /** Instance type — local (CLI) or hosted (Supabase cloud) */
 export type SupabaseInstanceType = 'local' | 'hosted';
 
+/** The machine a local stack runs on. `server` is the DevFlow server, `desktop` is the owner's PC. */
+export type SupabaseStackHost = 'server' | 'desktop';
+
 /** Instance health status */
 export type SupabaseInstanceStatus = 'online' | 'offline' | 'unknown' | 'error';
 
@@ -57,6 +60,10 @@ export interface SupabaseInstance {
   notes?: string;
 
   // ── Local instance enrichment fields ──────────────────────────────────
+  /** Which machine the local stack runs on. Docker on that machine is asked who owns the registered port (lib/supabase-identity.ts). */
+  host?: SupabaseStackHost;
+  /** Why the last check gave this status, in plain words (set by every check, e.g. "Port 54321 on the server is the portal-app stack, not qqtn..."). */
+  statusDetail?: string;
   /** SUPABASE_PROJECT_ID value / Docker container name suffix (local only) */
   containerRef?: string;
   /** Port assignments for local Supabase services */
@@ -91,6 +98,7 @@ export interface UpsertSupabaseInstanceInput {
   connection: SupabaseConnectionDetails;
   linkedProjects?: string[];
   notes?: string;
+  host?: SupabaseStackHost;
   containerRef?: string;
   portMap?: { api: number; db: number; studio: number };
   projectDirectory?: string;
@@ -106,7 +114,7 @@ export interface SupabaseInstanceStore {
   getInstance(id: string): Promise<SupabaseInstance | null>;
   upsertInstance(input: UpsertSupabaseInstanceInput): Promise<SupabaseInstance>;
   deleteInstance(id: string): Promise<void>;
-  updateStatus(id: string, status: SupabaseInstanceStatus): Promise<void>;
+  updateStatus(id: string, status: SupabaseInstanceStatus, detail?: string): Promise<void>;
   linkProject(instanceId: string, projectId: string): Promise<void>;
   unlinkProject(instanceId: string, projectId: string): Promise<void>;
 }

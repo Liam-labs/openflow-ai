@@ -36,6 +36,7 @@ import {
   cleanupStaleParticipants,
   migrateMessagesToSeparateFiles,
   getCachedUnreadCounts,
+  getCachedMentionCounts,
   getCachedLastMessageAt,
   getCachedLastMessagePreview,
   setCachedUnreadCounts,
@@ -365,8 +366,10 @@ async function handleGet(request: NextRequest) {
     for (const channel of visibleChannels) {
       const cached = getCachedUnreadCounts(channel.id);
       if (cached) {
+        const cachedMentions = getCachedMentionCounts(channel.id);
         for (const participant of channel.participants) {
           participant.unreadCount = cached.get(participant.id) ?? 0;
+          participant.mentionCount = cachedMentions?.get(participant.id) ?? 0;
         }
         channel.lastMessageAt = getCachedLastMessageAt(channel.id);
         channel.lastMessagePreview = getCachedLastMessagePreview(channel.id);
@@ -376,10 +379,12 @@ async function handleGet(request: NextRequest) {
         channel.lastMessageAt = getLatestVisibleMessageTimestamp(msgData.messages);
         channel.lastMessagePreview = getLatestVisibleMessagePreview(msgData.messages);
         const counts = new Map<string, number>();
+        const mentionCounts = new Map<string, number>();
         for (const participant of channel.participants) {
           counts.set(participant.id, participant.unreadCount ?? 0);
+          mentionCounts.set(participant.id, participant.mentionCount ?? 0);
         }
-        setCachedUnreadCounts(channel.id, counts, channel.lastMessageAt, channel.lastMessagePreview);
+        setCachedUnreadCounts(channel.id, counts, channel.lastMessageAt, channel.lastMessagePreview, mentionCounts);
       }
       computePresenceStatus(channel);
       channel.messages = [];

@@ -108,6 +108,12 @@ export async function markAnswered(
   });
 }
 
+/** Every recorded question (pending and answered), optionally scoped to a channel — for the Agent API listing. */
+export async function listQuestions(channelId?: string): Promise<StructuredQuestion[]> {
+  const store = await readJsonFile<AskOwnerStore>(getAskOwnerStorePath(), emptyStore());
+  return Object.values(store.questions).filter((q) => !channelId || q.channelId === channelId);
+}
+
 /** Pending (unanswered) questions, optionally scoped to a channel — for badges/audits. */
 export async function listPending(channelId?: string): Promise<StructuredQuestion[]> {
   const store = await readJsonFile<AskOwnerStore>(getAskOwnerStorePath(), emptyStore());

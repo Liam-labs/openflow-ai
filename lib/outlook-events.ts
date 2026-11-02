@@ -25,7 +25,7 @@
  */
 
 import { createHash } from 'crypto';
-import { selfOrigin } from '@/lib/self-origin';
+import { selfOrigin } from './self-origin.js';
 
 // ---------- Schema ----------
 

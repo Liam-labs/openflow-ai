@@ -1121,6 +1121,19 @@ class TestRequiredRecipient(unittest.TestCase):
         self.assertIsNone(error)
         self.assertEqual(message, "@Owner @Builder update")
 
+    def test_to_refuses_a_name_that_cannot_be_routed(self):
+        # "the owner" has a space, so @mention routing would see only "the" — refuse instead of mis-sending (BUG-56).
+        message, error = collab_helper.resolve_recipients("I'm the researcher.", ["the owner"], False)
+        self.assertIsNotNone(error)
+        self.assertIn("the owner", error)
+        self.assertIn("--to", error)
+        self.assertEqual(message, "I'm the researcher.")   # message is not prefixed with a broken @mention
+
+    def test_to_allows_hyphen_and_underscore_names(self):
+        message, error = collab_helper.resolve_recipients("hi", ["browser-user_1"], False)
+        self.assertIsNone(error)
+        self.assertEqual(message, "@browser-user_1 hi")
+
     def test_to_adds_only_recipients_missing_from_the_body(self):
         message, error = collab_helper.resolve_recipients(
             "@Owner update",

@@ -20,7 +20,7 @@ const SEV_COLORS: Record<LogSeverity, string> = {
   high:     '#f97316',
   medium:   '#eab308',
   low:      '#3b82f6',
-  info:     'rgba(255,255,255,0.14)',
+  info:     'rgba(var(--ink-ch), 0.14)',
   debug:    'rgba(100,116,139,0.5)',
 };
 
@@ -100,7 +100,7 @@ export function LogsTimeline({
       axisTick: { show: false },
       splitLine: { show: false },
       axisLabel: {
-        color: 'rgba(255,255,255,0.3)',
+        color: 'rgba(var(--ink-ch), 0.3)',
         fontSize: 9,
         hideOverlap: true,
         formatter: (val: number) => {
@@ -167,7 +167,7 @@ export function LogsTimeline({
               key={i}
               className="logs-timeline__dot"
               style={{
-                background: dominant ? SEV_COLORS[dominant] : 'rgba(255,255,255,0.07)',
+                background: dominant ? SEV_COLORS[dominant] : 'rgba(var(--ink-ch), 0.07)',
                 opacity: b.total > 0 ? 1 : 0.3,
               }}
               title={`${new Date(b.bucket).toLocaleTimeString()} — ${b.total} events`}

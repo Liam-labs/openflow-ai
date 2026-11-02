@@ -1,8 +1,8 @@
 .cb-progress {
   margin: 8px 0;
   padding: 10px 14px;
-  background: rgba(10, 20, 40, 0.5);
-  border: 1px solid rgba(59, 130, 246, 0.15);
+  background: rgba(var(--deep-ch), 0.5);
+  border: 1px solid rgba(var(--glow-ch), 0.15);
   border-radius: 8px;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
@@ -16,7 +16,7 @@
 
 .cb-progress__label {
   font-size: 0.8em;
-  color: #a1a1aa;
+  color: var(--tx-a1a1aa);
   font-weight: 500;
   letter-spacing: 0.01em;
 }
@@ -24,12 +24,12 @@
 .cb-progress__pct {
   font-size: 0.8em;
   font-weight: 700;
-  color: #e4e4e7;
+  color: var(--tx-e4e4e7);
 }
 
 .cb-progress__track {
   height: 6px;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(var(--ink-ch), 0.07);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -47,7 +47,7 @@
 
 /* Error state */
 .cb-progress--error {
-  color: rgba(248, 113, 113, 0.8);
+  color: rgba(var(--txc-248-113-113), 0.8);
   font-size: 0.8em;
   font-style: italic;
 }

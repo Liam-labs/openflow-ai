@@ -15,7 +15,7 @@ export interface WinRule {
   action: number; profiles: number; interfaceTypes: string;
   /** Names of the network cards the rule is limited to; empty for all. */
   interfaces: string[];
-  /** The package family of a rule with no program that belongs to one Store app ("MSTeams_8wekyb3d8bbwe"); empty for other rules. Such a rule admits only that app. */
+  /** The package family of a rule with no program that belongs to one Store app ("ExampleApp_8wekyb3d8bbwe"); empty for other rules. Such a rule admits only that app. */
   package: string;
   /** Non-zero when the rule only admits IPsec-authenticated connections. */
   secure: number;
@@ -358,7 +358,7 @@ function interfaceTypeState(ruleTypes: string, card: CardType): Tri {
   return card === 'RemoteAccess' ? 'm' : 'n';   // how Windows classifies a given VPN adapter is not visible from here
 }
 
-/** "C:\\Program Files\\WindowsApps\\MSTeams_26260.1717.5229.7049_x64__8wekyb3d8bbwe\\ms-teams.exe" belongs to the package family "MSTeams_8wekyb3d8bbwe". */
+/** "C:\\Program Files\\WindowsApps\\ExampleApp_26260.1717.5229.7049_x64__8wekyb3d8bbwe\\example-app.exe" belongs to the package family "ExampleApp_8wekyb3d8bbwe". */
 export function packageFamilyOf(path: string): string {
   const dir = /\\windowsapps\\([^\\]+)\\/i.exec(path)?.[1];
   if (!dir) return '';

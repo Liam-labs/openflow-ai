@@ -50,7 +50,7 @@ function getSprintColor(status: string): string {
     case 'active': return '#22c55e';
     case 'planned': return '#60a5fa';
     case 'completed': return '#10b981';
-    default: return 'rgba(255,255,255,0.3)';
+    default: return 'rgba(var(--ink-ch), 0.3)';
   }
 }
 
@@ -167,7 +167,7 @@ export function SprintProgressWidget() {
             disabled={refreshing}
             aria-label="Refresh sprint data"
           >
-            <RefreshCw size={13} color="rgba(255,255,255,0.4)" className={refreshing ? 'spw-spin' : ''} />
+            <RefreshCw size={13} color="rgba(var(--ink-ch), 0.4)" className={refreshing ? 'spw-spin' : ''} />
           </button>
         </div>
       </div>
@@ -177,7 +177,7 @@ export function SprintProgressWidget() {
         {channels.slice(0, showAll ? undefined : 5).map((ch) => {
 
           const stats = calcStats(ch.tasks, ch.activeSprint?.id ?? null);
-          const color = ch.activeSprint ? getSprintColor(ch.activeSprint.status) : 'rgba(255,255,255,0.3)';
+          const color = ch.activeSprint ? getSprintColor(ch.activeSprint.status) : 'rgba(var(--ink-ch), 0.3)';
           const barColor = getBarColor(stats.percent);
           const completedSprints = ch.allSprints.filter((s) => s.status === 'completed').length;
 

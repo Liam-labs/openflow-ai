@@ -1,9 +1,11 @@
 /**
  * GET /api/system/laptop-agents: is the laptop (the DevFlow server) ready to run agents, and what can they reach from there?
- * { ready, mode: 'files-only' | 'files-and-commands', checks: [{ id, label, ok, detail }] }. The roster UI enables "Run remote" only when ready.
+ * { ready, mode: 'files-only' | 'files-and-commands', checks: [{ id, label, ok, detail }], serverHost }. The roster UI enables "Run remote" only when ready.
+ * serverHost is this server's own host name (what a session on the laptop reports as its host), so the Config page can say where a running agent really is.
  * Capability flags (fileShare, desktopCommands) live in data/scaffolding/service-locations.json under "remote"; they are flipped only when the
  * ability truly works. Design: platform/remote-agents-design.md.
  */
+import os from 'os';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthOrLocal } from '@/lib/api-auth';
 import { laptopReadiness } from '@/lib/laptop-readiness';
@@ -14,7 +16,7 @@ export async function GET(request: NextRequest) {
   const denied = await requireAuthOrLocal(request, 'read');
   if (denied) return denied;
   try {
-    return NextResponse.json(await laptopReadiness());
+    return NextResponse.json({ ...(await laptopReadiness()), serverHost: process.env.DEVFLOW_HOST_ID || os.hostname() });
   } catch {
     return NextResponse.json({ error: 'Could not check the Remote server', code: 'INTERNAL' }, { status: 500 });
   }

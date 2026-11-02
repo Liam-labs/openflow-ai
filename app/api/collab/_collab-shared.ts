@@ -48,6 +48,8 @@ export { ONLINE_THRESHOLD_MS } from '@/lib/collab-presence';
 interface UnreadCacheEntry {
   /** participantId → unread count */
   counts: Map<string, number>;
+  /** participantId → unread messages from an agent that @mention them */
+  mentionCounts?: Map<string, number>;
   /** Latest visible human/agent message, used for sidebar ordering. */
   lastMessageAt?: string;
   /** One-line "Sender: text" of that message, for the sidebar. */
@@ -71,6 +73,10 @@ export function getCachedUnreadCounts(channelId: string): Map<string, number> | 
   return getValidUnreadCacheEntry(channelId)?.counts ?? null;
 }
 
+export function getCachedMentionCounts(channelId: string): Map<string, number> | null {
+  return getValidUnreadCacheEntry(channelId)?.mentionCounts ?? null;
+}
+
 export function getCachedLastMessageAt(channelId: string): string | undefined {
   return getValidUnreadCacheEntry(channelId)?.lastMessageAt;
 }
@@ -84,8 +90,9 @@ export function setCachedUnreadCounts(
   counts: Map<string, number>,
   lastMessageAt?: string,
   lastMessagePreview?: string,
+  mentionCounts?: Map<string, number>,
 ): void {
-  unreadCache.set(channelId, { counts, lastMessageAt, lastMessagePreview, computedAt: Date.now() });
+  unreadCache.set(channelId, { counts, mentionCounts, lastMessageAt, lastMessagePreview, computedAt: Date.now() });
 }
 
 /** Call this whenever a new message is posted to invalidate stale counts. */
@@ -575,14 +582,14 @@ export function computeUnreadCounts(channel: CollabChannel, messages?: CollabMes
     });
 
     const baseline = participant.lastRead || participant.joinedAt;
-    if (baseline) {
-      const baselineTime = new Date(baseline).getTime();
-      participant.unreadCount = messagesForParticipant.filter(
-        m => new Date(m.timestamp).getTime() > baselineTime
-      ).length;
-    } else {
-      participant.unreadCount = messagesForParticipant.length;
-    }
+    const unread = baseline
+      ? messagesForParticipant.filter(m => new Date(m.timestamp).getTime() > new Date(baseline).getTime())
+      : messagesForParticipant;
+    participant.unreadCount = unread.length;
+    // Needs you: an agent @mentioned this person. A system message (reminders, notices) or another person never counts.
+    participant.mentionCount = unread.filter(
+      m => m.from.id !== 'system' && m.from.type !== 'user' && m.mentions?.includes(participant.id)
+    ).length;
   }
 }
 

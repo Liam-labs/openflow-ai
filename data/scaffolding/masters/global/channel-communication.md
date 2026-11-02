@@ -85,6 +85,35 @@ Do not mechanically answer all three or add stock `Nothing changed`/`You do not
 need to do anything` lines. When approval is genuinely needed, state the exact
 change, scope, main risk, rollback, and decision requested.
 
+### Sentence habits
+
+These apply to every message, plan and handoff. Chat keeps its voice and has no
+word count: be as clear and concise as possible without withholding important
+context. Contractions and a little humour are fine.
+
+- One topic in each sentence. Split a sentence that carries two facts.
+- One name for one thing, kept the same. Not token, key and secret for one item.
+- Name who acts: "The wizard stores the password", not "The password is stored".
+- No semicolons. Split the sentence.
+- Say what "this" and "it" point to. A forwarded message often loses the sentence before it.
+
+For setup steps, wizard text, error messages, README and public docs, load
+`/plain-writing`. If a habit makes a message less clear, drop the habit.
+
+## Text {{OWNER_NAME}} will copy
+
+Put an email draft, WhatsApp message, command or snippet that {{OWNER_NAME}} will copy
+inside a fenced code block (three backticks), as plain text. Never write it as a
+Markdown quote with `>` at the start of each line, because the `>` marks are
+copied too. The chat shows a fenced block in a box with a Copy button, and the
+button copies exactly the text inside.
+
+Use a copy box only for text that {{OWNER_NAME}} pastes into another place. Never put
+web addresses, page links or file paths that he will open in a copy box. Write
+them as plain clickable Markdown links with the full address, for example
+`[Page name](https://host/path)`. A list of pages to review is a list of
+clickable full links, because a bare path cannot be clicked.
+
 ## Questions for {{OWNER_NAME}}
 
 When {{OWNER_NAME}} must choose between material product, business, client, budget,

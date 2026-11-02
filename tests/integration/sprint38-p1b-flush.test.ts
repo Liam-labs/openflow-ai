@@ -34,6 +34,8 @@ import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 
 const REPO = fileURLToPath(new URL('../..', import.meta.url)).replace(/\/$/, '');
+// The hook scripts find each other through DEVFLOW_HOME, else $HOME/DevFlow: point them at this copy of the repo.
+process.env.DEVFLOW_HOME = REPO;
 
 const HOOKS_DIR = join(REPO, 'scripts', 'hooks');
 const INIT_SCRIPT = `${HOOKS_DIR}/session-scratch-init.sh`;

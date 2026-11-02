@@ -41,6 +41,16 @@ except ImportError:  # ships next to this script; a stray copy without it only l
         return ""
 
 try:
+    from skill_router_hint import SkillHintClient
+except ImportError:  # ships next to this script; a stray copy without it only loses the skill hint
+    class SkillHintClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def hint_for(self, message_id):
+            return ""
+
+try:
     from openai import OpenAI
 except ImportError:
     print("Error: openai not installed. Run: pip install openai", file=sys.stderr)
@@ -67,22 +77,6 @@ except ImportError:
     is_progress_only_response = None
     preload_rag_models = None
     build_xai_kwargs = None
-
-# Optional TokenPulse integration — record xAI API calls to the Pulse SQLite DB
-_PULSE_ADAPTER_AVAILABLE = False
-_record_xai_response = None
-_PULSE_DB_PATH = None
-_pulse_sqlite3 = None
-try:
-    import sqlite3 as _pulse_sqlite3
-    _PULSE_COLLECTOR_PATH = os.path.join(os.path.expanduser("~"), "Pulse/src/collector")
-    if _PULSE_COLLECTOR_PATH not in sys.path:
-        sys.path.insert(0, _PULSE_COLLECTOR_PATH)
-    from adapters import record_xai_response as _record_xai_response
-    from schema import DB_PATH as _PULSE_DB_PATH
-    _PULSE_ADAPTER_AVAILABLE = True
-except (ImportError, Exception):
-    pass
 
 # ─── Configuration ────────────────────────────────────────────────────────────
 DEVFLOW_URL = __import__("os").environ.get("DEVFLOW_URL", "http://localhost:3000").rstrip("/")
@@ -272,9 +266,6 @@ class CollabGrokWrapper:
         self.participant_id: str | None = None
         self.channel_name = ""  # Set after successful join_channel()
 
-        # Pulse DB metadata (derived from CWD at startup)
-        self._pulse_project = self._detect_project()
-
         # Message tracking
         self.last_poll_time = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         self.injected_message_ids: set[str] = set()
@@ -410,92 +401,6 @@ class CollabGrokWrapper:
     # ── Scaffolding loader ─────────────────────────────────────────────────────
 
     @staticmethod
-    def _detect_project() -> str:
-        """Extract project name from CWD. ~/Pulse/Team/X → 'Pulse'."""
-        cwd = os.getcwd()
-        parts = [p for p in cwd.split("/") if p]
-        try:
-            team_idx = parts.index("Team")
-            if team_idx > 0:
-                return parts[team_idx - 1]
-        except ValueError:
-            pass
-        return parts[-1] if parts else "unknown"
-
-    def _record_to_pulse(self, usage, duration_ms: int = 0) -> None:
-        """Persist one xAI API call's token usage to the TokenPulse database."""
-        if not _PULSE_ADAPTER_AVAILABLE or not usage:
-            return
-        try:
-            details = getattr(usage, "prompt_tokens_details", None)
-            cached = (getattr(details, "cached_tokens", 0) or 0) if details else 0
-            response_dict = {
-                "model": self.model,
-                "usage": {
-                    "prompt_tokens": getattr(usage, "prompt_tokens", 0) or 0,
-                    "completion_tokens": getattr(usage, "completion_tokens", 0) or 0,
-                    "total_tokens": getattr(usage, "total_tokens", 0) or 0,
-                    "prompt_tokens_details": {"cached_tokens": cached},
-                },
-            }
-            conn = _pulse_sqlite3.connect(_PULSE_DB_PATH, timeout=5)
-            try:
-                _record_xai_response(
-                    conn,
-                    response_dict,
-                    agent_name=self.participant_name,
-                    project=self._pulse_project,
-                    collab_channel=self.channel_name,
-                    duration_ms=duration_ms,
-                )
-            finally:
-                conn.close()
-            debug(
-                f"Pulse: recorded {response_dict['usage']['prompt_tokens']}in/"
-                f"{response_dict['usage']['completion_tokens']}out for {self.model}"
-            )
-        except Exception as e:
-            debug(f"Pulse record error: {e}")
-
-    def _report_to_tokenpulse(
-        self,
-        input_tokens: int,
-        output_tokens: int,
-        cache_read_tokens: int,
-    ) -> None:
-        """POST per-request token usage to TokenPulse ingest endpoint (fire-and-forget).
-
-        Runs in a daemon thread so it never blocks the main processing flow.
-        All exceptions are caught silently — TokenPulse being down must not affect Grok.
-        """
-        def _post() -> None:
-            try:
-                payload = json.dumps({
-                    "provider": "xai",
-                    "model": self.model,
-                    "agent_name": self.participant_name,
-                    "project": self._pulse_project,
-                    "collab_channel": self.channel_name or self.channel_id,
-                    "input_tokens": input_tokens,
-                    "output_tokens": output_tokens,
-                    "cache_read_tokens": cache_read_tokens,
-                    "duration_ms": 0,
-                }).encode("utf-8")
-                req = urllib.request.Request(
-                    "http://localhost:8420/api/ingest",
-                    data=payload,
-                    headers={"Content-Type": "application/json"},
-                    method="POST",
-                )
-                with urllib.request.urlopen(req, timeout=5) as _resp:
-                    pass
-            except Exception as e:
-                debug(f"TokenPulse ingest error (non-critical): {e}")
-
-        t = threading.Thread(target=_post, daemon=True)
-        t.start()
-
-    @staticmethod
     def _load_file_safe(path: str, max_lines: int = 0) -> str:
         """Return file contents, or empty string if missing/unreadable."""
         try:
@@ -519,7 +424,7 @@ class CollabGrokWrapper:
           2. ~/.claude/CLAUDE.md (global user instructions)
           3. CLAUDE.md files walking up from CWD to home dir (project-level instructions)
           4. {CWD}/.claude/rules/*.md (personality, directives, workspace, expertise,
-             skill-index.md — S2.6 SG-1 skill catalog for on-demand skill loading)
+             skill-index.md — S2.6 the main project skill catalog for on-demand skill loading)
           5. {CWD}/alignment-grok.md (runtime-specific adjustments)
           6. ~/.claude/projects/{encoded}/memory/MEMORY.md (persistent memory, max 200 lines)
           7. Explicit system prompt (from --system-prompt-file), if provided
@@ -594,8 +499,8 @@ class CollabGrokWrapper:
         # 6. Memory file — derive project key from CWD (same computation as Claude Code:
         #    replace every "/" in the absolute path with "-", leading "-" preserved).
         #    Previous approach walked up to package.json which fails for non-Node projects
-        #    (e.g. SG-1 agents have no package.json in their working tree).
-        encoded = cwd.replace("/", "-")  # e.g. '-home-<user>-SG-1-Team-an agent'
+        #    (e.g. the main project agents have no package.json in their working tree).
+        encoded = cwd.replace("/", "-")  # e.g. '-home-<user>-the main project-Team-an agent'
         memory_path = os.path.join(home, ".claude", "projects", encoded, "memory", "MEMORY.md")
         memory = self._load_file_safe(memory_path, max_lines=200)
         if memory:
@@ -625,12 +530,6 @@ class CollabGrokWrapper:
         self.token_usage["output_tokens"] += output_tokens
         self.token_usage["total_tokens"] += getattr(usage, "total_tokens", 0) or 0
         self._write_usage_file()
-        # Persist to TokenPulse DB (each API call recorded individually)
-        self._record_to_pulse(usage)
-        # Report per-request usage to TokenPulse ingest endpoint (fire-and-forget)
-        details = getattr(usage, "prompt_tokens_details", None)
-        cache_read_tokens = (getattr(details, "cached_tokens", 0) or 0) if details else 0
-        self._report_to_tokenpulse(input_tokens, output_tokens, cache_read_tokens)
 
     def _write_usage_file(self) -> None:
         """Write running token totals to /tmp/grok-usage-{pid}.json for the usage API."""
@@ -815,7 +714,7 @@ class CollabGrokWrapper:
 
         channel_data = result.get("channel") or {}
         channel_name = channel_data.get("name", "")
-        self.channel_name = channel_name  # Stored for Pulse DB recording
+        self.channel_name = channel_name
 
         print(f"[Grok] Joined '{channel_name or self.channel_id[:8]}' as {self.participant_name}", file=sys.stderr)
         debug(f"Joined: participantId={self.participant_id}")
@@ -835,7 +734,14 @@ class CollabGrokWrapper:
 
     # ── xAI API call ──────────────────────────────────────────────────────────
 
-    def _call_xai(self, sender: str, content: str, reply_line: str = "") -> str:
+    def _skill_hint(self, msg_id):
+        """The skill-router hint line for this message, or ''. Shared by every runtime: scripts/skill_router_hint.py."""
+        client = getattr(self, '_skill_hint_client', None)
+        if client is None:
+            client = self._skill_hint_client = SkillHintClient(DEVFLOW_URL, getattr(self, 'participant_id', '') or '', log=debug)
+        return client.hint_for(msg_id)
+
+    def _call_xai(self, sender: str, content: str, reply_line: str = "", skill_hint: str = "") -> str:
         """Call the xAI API and return the response text.
 
         `reply_line` is the shared reply context (names the full id of the message being answered); it goes into the
@@ -857,6 +763,8 @@ class CollabGrokWrapper:
         messages.extend(history_slice)
 
         user_content = f"[Channel message from {sender}]{' ' + reply_line if reply_line else ''}: {content}"
+        if skill_hint:  # the skill router's one-line hint, in the prompt only (scripts/skill_router_hint.py)
+            user_content += f"\n\n{skill_hint}"
         messages.append({"role": "user", "content": user_content})
 
         try:
@@ -1023,7 +931,7 @@ class CollabGrokWrapper:
             try:
                 # Run xAI call in a thread pool with timeout enforcement
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                    future = executor.submit(self._call_xai, sender, content, format_reply_context(msg.get("replyTo")))
+                    future = executor.submit(self._call_xai, sender, content, format_reply_context(msg.get("replyTo")), self._skill_hint(msg_id))
                     try:
                         reply = future.result(timeout=XAI_TURN_TIMEOUT)
                         if reply:

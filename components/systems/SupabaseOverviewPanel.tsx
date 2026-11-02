@@ -265,9 +265,9 @@ export function SupabaseOverviewPanel({ instanceId }: Props) {
     setError(null);
     try {
       const res = await fetch(`/api/supabase/overview?instanceId=${encodeURIComponent(instanceId)}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const d = await res.json();
-      if (!d.success) throw new Error(d.error ?? 'Failed to load overview');
+      // Read the body even on an error status: the route sends a plain-English reason with it.
+      const d = await res.json().catch(() => null);
+      if (!res.ok || !d?.success) throw new Error(d?.error ?? (res.ok ? 'Failed to load overview' : `HTTP ${res.status}`));
       setData(d.data as OverviewData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load instance stats');

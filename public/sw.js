@@ -32,3 +32,37 @@ self.addEventListener('fetch', (e) => {
     fetch(e.request).catch(() => caches.match(OFFLINE_URL))
   );
 });
+
+// Phone notifications (Web Push). The payload is { title, body, url, tag }.
+self.addEventListener('push', (e) => {
+  let data = {};
+  if (e.data) {
+    try { data = e.data.json(); } catch (err) { data = { body: e.data.text() }; }
+  }
+  if (!data || typeof data !== 'object') data = { body: String(data) };
+  const options = {
+    body: data.body || '',
+    data: { url: data.url || '/' },
+    icon: '/icons/pwa-192.png',
+    badge: '/icons/pwa-192.png',
+  };
+  if (data.tag) options.tag = data.tag;
+  e.waitUntil(self.registration.showNotification(data.title || 'OpenFlow', options));
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  let target = new URL('/', self.location.origin);
+  try {
+    const wanted = new URL((e.notification.data && e.notification.data.url) || '/', self.location.origin);
+    if (wanted.origin === self.location.origin) target = wanted;
+  } catch (err) { /* keep the home page */ }
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const client of list) {
+        if (new URL(client.url).pathname === target.pathname && 'focus' in client) return client.focus();
+      }
+      return self.clients.openWindow(target.href);
+    })
+  );
+});

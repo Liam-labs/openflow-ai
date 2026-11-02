@@ -30,7 +30,8 @@ export type SystemsSection =
   | 'local-ai'
   | 'disk'
   | 'directory-sync'
-  | 'android-studio';
+  | 'android-studio'
+  ;
 
 export type EntityType =
   | 'service'

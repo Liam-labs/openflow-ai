@@ -479,7 +479,7 @@ def _is_write_allowed(path: str) -> bool:
     # Grant write access to the agent's own CWD — equivalent to Claude's
     # --dangerously-skip-permissions, scoped to a single directory instead of
     # full filesystem. Required for Model-Switch-Handoff.md writes when grok
-    # agents are spawned under non-DevFlow project trees (e.g. ~/SG-1/).
+    # agents are spawned under non-DevFlow project trees (e.g. ~/the main project/).
     cwd = os.getcwd()
     if resolved.startswith(cwd):
         return True

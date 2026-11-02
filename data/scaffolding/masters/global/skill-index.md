@@ -47,18 +47,3 @@ For any request to make a video, explainer, promo, motion graphic or captioned c
 any role, read `~/DevFlow/data/skills/video-toolkit/SKILL.md` first. It chooses between
 HyperFrames and Remotion (or a mix) and sends you to that tool's skill and workflow.
 Editing or grading {{OWNER_NAME}}'s own footage is the `davinci-resolve` skill instead.
-
-**Jev is the decision model, not a writer.** When your work, a feature you are
-building, or an n8n workflow has to make a judgement that is too fuzzy for a
-rule but has a fixed set of answers (which owner or route, critical or low,
-needs a reply or not, does this passage support the claim, is this safe to
-pass), ask TypeSafe Jev instead of prompting a general LLM and parsing its
-text. It returns a typed answer plus a confidence you can branch on, in well
-under a second and for a tiny fraction of an LLM call. Use it as a smart
-If/Switch: act on high confidence, send low confidence to a person or an LLM.
-DevFlow's gateway holds the key, so no account or setup is needed: MCP
-`typesafe_system_one`, CLI `~/DevFlow/scripts/devflow-gateway typesafe-ask
-<caller>`, or HTTP `POST http://127.0.0.1:7007/api/call` (local n8n can call
-this with an HTTP Request node). Load the `typesafe-ai` skill to design the
-questions. Keep maths, dates, counting and exact lookups in code, and use an
-LLM when you need words out.

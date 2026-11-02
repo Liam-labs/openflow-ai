@@ -13,7 +13,22 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     // The tests were written with this owner name and Windows profile; step 3 of the open-source cleanup moves them to the constant.
-    env: { NEXT_PUBLIC_DEVFLOW_OWNER_NAME: 'Owner', DEVFLOW_WINDOWS_HOME: '/mnt/c/Users/winuser' },
+    env: {
+      NEXT_PUBLIC_DEVFLOW_OWNER_NAME: 'Owner',
+      DEVFLOW_WINDOWS_HOME: '/mnt/c/Users/winuser',
+      // A test run must never reach a real PC or write the real bridge token: no agent host unless a test sets one, and a fixed token.
+      DEVFLOW_AGENT_HOST: '',
+      DEVFLOW_AGENT_USER_FILE: '/nonexistent/devflow-agent-user.json',   // never the real list of agents that run as devflow-agent
+      COMPUTER_USE_BRIDGE_TOKEN: 'vitest-bridge-token-0123456789abcdefghij',
+      DEVFLOW_HOME: __dirname,
+      // An agent's shell sets the team's real names; empty values give the code's own defaults ("Builder", "the Team Lead"...).
+      DEVFLOW_BUILDER_NAME: '',
+      DEVFLOW_LEAD_NAME: '',
+      DEVFLOW_ARCHITECT_NAME: '',
+      DEVFLOW_DESKTOP_NAME: '',
+    },
+    // Forget the live tmux socket so no test can reach running agents (the mass drops of 22 to 25 Oct 2026).
+    setupFiles: ['tests/setup-tmux-isolation.ts'],
     include: ['tests/unit/**/*.test.ts', 'tests/integration/**/*.test.ts', 'tests/computer-use/**/*.test.ts'],
     coverage: {
       provider: 'v8',

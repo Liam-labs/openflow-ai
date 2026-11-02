@@ -423,7 +423,7 @@ export function AndroidStudioSection() {
         /* Buttons */
         .as-btn-primary {
           display: inline-flex; align-items: center; gap: 6px;
-          padding: 7px 14px; background: var(--df-accent); color: #fff;
+          padding: 7px 14px; background: var(--df-accent); color: var(--tx-ffffff);
           border: none; border-radius: 6px; font-size: 12px; font-weight: 600;
           cursor: pointer; transition: all 140ms ease;
         }
@@ -440,7 +440,7 @@ export function AndroidStudioSection() {
         .as-btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
         .as-btn-accent {
           display: inline-flex; align-items: center; gap: 6px;
-          padding: 7px 14px; background: rgba(34,197,94,0.15); color: #4ade80;
+          padding: 7px 14px; background: rgba(34,197,94,0.15); color: var(--tx-4ade80);
           border: 1px solid rgba(34,197,94,0.3); border-radius: 6px;
           font-size: 12px; font-weight: 600; cursor: pointer; transition: all 140ms ease;
         }
@@ -448,7 +448,7 @@ export function AndroidStudioSection() {
         .as-btn-accent:disabled { opacity: 0.5; cursor: not-allowed; }
         .as-btn-danger-soft {
           display: inline-flex; align-items: center; gap: 6px;
-          padding: 7px 14px; background: rgba(239,68,68,0.12); color: #f87171;
+          padding: 7px 14px; background: rgba(239,68,68,0.12); color: var(--tx-f87171);
           border: 1px solid rgba(239,68,68,0.25); border-radius: 6px;
           font-size: 12px; font-weight: 600; cursor: pointer; transition: all 140ms ease;
         }
@@ -458,11 +458,11 @@ export function AndroidStudioSection() {
           display: inline-flex; align-items: center; gap: 6px;
           padding: 7px 14px; background: rgba(239,68,68,0.15);
           border: 1px solid rgba(239,68,68,0.3); border-radius: 6px;
-          color: #f87171; font-size: 12px; font-weight: 600; cursor: pointer;
+          color: var(--tx-f87171); font-size: 12px; font-weight: 600; cursor: pointer;
         }
         .as-btn-danger:hover { background: rgba(239,68,68,0.25); }
 
-        .as-error { padding: 12px 16px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; color: #f87171; font-size: 12px; margin-bottom: 16px; }
+        .as-error { padding: 12px 16px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; color: var(--tx-f87171); font-size: 12px; margin-bottom: 16px; }
 
         /* Icon button */
         .as-icon-btn {
@@ -472,7 +472,7 @@ export function AndroidStudioSection() {
           color: var(--df-text-secondary); cursor: pointer; transition: all 140ms ease;
         }
         .as-icon-btn:hover { background: var(--df-accent-10); color: var(--df-text); border-color: var(--df-accent); }
-        .as-icon-btn--danger:hover { background: rgba(239,68,68,0.1); color: #f87171; border-color: rgba(239,68,68,0.4); }
+        .as-icon-btn--danger:hover { background: rgba(239,68,68,0.1); color: var(--tx-f87171); border-color: rgba(239,68,68,0.4); }
 
         /* Empty state */
         .as-empty { text-align: center; padding: 64px 24px; }
@@ -483,7 +483,7 @@ export function AndroidStudioSection() {
         /* Cards */
         .as-cards { display: flex; flex-direction: column; gap: 8px; }
         .as-card {
-          background: rgba(15,25,50,0.3); border: 1px solid var(--df-border-subtle);
+          background: rgba(var(--deep-ch), 0.3); border: 1px solid var(--df-border-subtle);
           border-radius: 8px; overflow: hidden; transition: border-color 150ms ease;
         }
         .as-card:hover { border-color: var(--df-border-hover); }
@@ -513,11 +513,11 @@ export function AndroidStudioSection() {
         .as-live-badge {
           display: inline-flex; align-items: center; gap: 4px;
           padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 600;
-          background: rgba(34,197,94,0.18); color: #4ade80;
+          background: rgba(34,197,94,0.18); color: var(--tx-4ade80);
         }
 
         /* Detail */
-        .as-detail { padding: 16px 18px; background: rgba(0,0,0,0.25); border-top: 1px solid var(--df-border-subtle); }
+        .as-detail { padding: 16px 18px; background: rgba(var(--shade-ch), 0.25); border-top: 1px solid var(--df-border-subtle); }
 
         /* Pipeline */
         .as-pipeline { margin-bottom: 20px; }
@@ -525,11 +525,11 @@ export function AndroidStudioSection() {
         .as-pipeline-steps { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .as-step-btn {
           display: flex; align-items: center; gap: 10px;
-          padding: 10px 14px; background: rgba(15,25,50,0.5);
+          padding: 10px 14px; background: rgba(var(--deep-ch), 0.5);
           border: 1px solid var(--df-border-subtle); border-radius: 8px;
           color: var(--df-text); cursor: pointer; transition: all 140ms ease; text-align: left;
         }
-        .as-step-btn:hover { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); }
+        .as-step-btn:hover { background: rgba(var(--glow-ch), 0.1); border-color: rgba(var(--glow-ch), 0.3); }
         .as-step-btn:disabled { opacity: 0.5; cursor: wait; }
         .as-step-title { font-size: 12px; font-weight: 600; }
         .as-step-desc { font-size: 10px; color: var(--df-text-muted); font-family: var(--font-mono, monospace); margin-top: 1px; }
@@ -541,12 +541,12 @@ export function AndroidStudioSection() {
 
         /* Output */
         .as-output {
-          margin-top: 4px; background: rgba(0,0,0,0.4); border: 1px solid var(--df-border-subtle);
+          margin-top: 4px; background: rgba(var(--shade-ch), 0.4); border: 1px solid var(--df-border-subtle);
           border-radius: 6px; overflow: hidden;
         }
         .as-output-header {
           display: flex; align-items: center; gap: 6px; padding: 6px 10px;
-          background: rgba(0,0,0,0.3); font-size: 10px; font-weight: 600;
+          background: rgba(var(--shade-ch), 0.3); font-size: 10px; font-weight: 600;
           color: var(--df-text-muted); text-transform: uppercase; letter-spacing: 0.5px;
           border-bottom: 1px solid var(--df-border-subtle);
         }
@@ -564,7 +564,7 @@ export function AndroidStudioSection() {
         .as-field--wide { grid-column: span 2; }
         .as-label { font-size: 11px; font-weight: 500; color: var(--df-text-secondary); }
         .as-input {
-          height: 32px; padding: 0 10px; background: rgba(10,20,40,0.4);
+          height: 32px; padding: 0 10px; background: rgba(var(--deep-ch), 0.4);
           border: 1px solid var(--df-border-subtle); border-radius: 6px;
           color: var(--df-text); font-size: 12px; font-family: var(--font-mono, monospace);
           transition: border-color 150ms ease;
@@ -576,11 +576,11 @@ export function AndroidStudioSection() {
         /* Modal */
         .as-modal-backdrop {
           position: fixed; inset: 0; z-index: 100;
-          background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+          background: rgba(var(--shade-ch), 0.6); backdrop-filter: blur(4px);
           display: flex; align-items: center; justify-content: center;
         }
         .as-modal {
-          background: #18181d; border: 1px solid var(--df-border);
+          background: var(--bg-18181d); border: 1px solid var(--df-border);
           border-radius: 10px; padding: 24px; max-width: 400px; width: 90%;
           box-shadow: 0 16px 48px rgba(0,0,0,0.6);
         }

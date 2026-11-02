@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { projectFolderExists, readProjectDoc, type ProjectDocDeps } from '@/lib/project-doc';
+import { projectFolderExists, readProjectDoc, writeProjectDoc, type ProjectDocDeps } from '@/lib/project-doc';
 
 const SG1 = '/home/user/SG-1';
 const hostError = (message: string, code?: string) => Object.assign(new Error(message), code ? { code } : {});
@@ -9,6 +9,8 @@ function deps(overrides: Partial<ProjectDocDeps> = {}): ProjectDocDeps {
   return {
     hostCall: vi.fn(async () => { throw new Error('hostCall not expected'); }) as unknown as ProjectDocDeps['hostCall'],
     readFile: vi.fn(async () => { throw Object.assign(new Error('missing'), { code: 'ENOENT' }); }),
+    writeFile: vi.fn(async () => undefined),
+    mtimeSeconds: vi.fn(async () => null),
     isDirectory: vi.fn(async () => false),
     ...overrides,
   };
@@ -35,10 +37,10 @@ describe('the Project Docs panel reads PROJECT.md from the machine where the pro
     expect(d.readFile).toHaveBeenCalledWith('/home/user/SG-1/PROJECT.md');
   }));
 
-  it('reads from disk for an agent that runs on the server itself', onServer('desktophost-wsl', async () => {
-    const d = deps({ readFile: vi.fn(async () => '# server project') });
+  it('still reads through the desktop host for an agent that runs on the server, because its folders stay on the desktop', onServer('desktophost-wsl', async () => {
+    const d = deps({ hostCall: vi.fn(async () => ({ exists: true, folderExists: true, content: '# server project' })) as unknown as ProjectDocDeps['hostCall'] });
     expect(await readProjectDoc('/home/user/DevFlow', { runLocation: 'server' }, d)).toMatchObject({ exists: true, status: 'ok' });
-    expect(d.hostCall).not.toHaveBeenCalled();
+    expect(d.readFile).not.toHaveBeenCalled();
   }));
 
   it('tells a missing document from a missing folder', onServer('desktophost-wsl', async () => {
@@ -71,5 +73,39 @@ describe('the Project Docs panel reads PROJECT.md from the machine where the pro
   it('checks the local disk for the folder when the projects are here', onServer(undefined, async () => {
     expect(await projectFolderExists(SG1, null, deps({ isDirectory: vi.fn(async () => true) }))).toEqual({ ok: true, exists: true });
     expect(await projectFolderExists(SG1, null, deps({ isDirectory: vi.fn(async () => { throw new Error('ENOENT'); }) }))).toEqual({ ok: true, exists: false });
+  }));
+});
+
+describe('saving PROJECT.md from the Project Docs panel', () => {
+  const OLD = process.env.DEVFLOW_AGENT_HOST;
+  const onServer = (host: string | undefined, run: () => Promise<void>) => async () => {
+    if (host === undefined) delete process.env.DEVFLOW_AGENT_HOST; else process.env.DEVFLOW_AGENT_HOST = host;
+    try { await run(); } finally { if (OLD === undefined) delete process.env.DEVFLOW_AGENT_HOST; else process.env.DEVFLOW_AGENT_HOST = OLD; }
+  };
+
+  it('sends the text and the modified time it read to the desktop host', onServer('desktophost-wsl', async () => {
+    const d = deps({ hostCall: vi.fn(async () => ({ saved: true, conflict: false, mtime: 200 })) as unknown as ProjectDocDeps['hostCall'] });
+    expect(await writeProjectDoc(SG1, '# New\n', 100, null, d)).toEqual({ ok: true, mtime: 200 });
+    expect(d.hostCall).toHaveBeenCalledWith('desktophost-wsl', 'project-doc-write', { dir: SG1, content: '# New\n', expectedMtime: 100 }, expect.any(Number));
+  }));
+
+  it('returns the current text, and writes nothing, when an agent changed the file meanwhile', onServer('desktophost-wsl', async () => {
+    const d = deps({ hostCall: vi.fn(async () => ({ saved: false, conflict: true, content: '# Theirs\n', mtime: 300 })) as unknown as ProjectDocDeps['hostCall'] });
+    expect(await writeProjectDoc(SG1, '# Mine\n', 100, null, d)).toEqual({ ok: false, conflict: true, content: '# Theirs\n', mtime: 300 });
+  }));
+
+  it('says the helper needs a restart when it does not know the save op yet', onServer('desktophost-wsl', async () => {
+    const d = deps({ hostCall: vi.fn(async () => { throw hostError('unknown op'); }) as unknown as ProjectDocDeps['hostCall'] });
+    const result = await writeProjectDoc(SG1, 'x', null, null, d);
+    expect(result).toMatchObject({ ok: false, status: 'host-outdated' });
+  }));
+
+  it('writes on this machine when it holds the project, and refuses to overwrite a newer file', onServer(undefined, async () => {
+    const ok = deps({ mtimeSeconds: vi.fn(async () => 100) });
+    expect(await writeProjectDoc(SG1, 'a', 100, null, ok)).toEqual({ ok: true, mtime: 100 });
+    expect(ok.writeFile).toHaveBeenCalledWith(`${SG1}/PROJECT.md`, 'a');
+    const stale = deps({ mtimeSeconds: vi.fn(async () => 150), readFile: vi.fn(async () => 'theirs') });
+    expect(await writeProjectDoc(SG1, 'a', 100, null, stale)).toEqual({ ok: false, conflict: true, content: 'theirs', mtime: 150 });
+    expect(stale.writeFile).not.toHaveBeenCalled();
   }));
 });

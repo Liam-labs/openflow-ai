@@ -63,7 +63,7 @@ def verify_message_ingested(jsonl_path: str, search_text: str, after_byte: int =
         if file_size <= after_byte:
             return False
 
-        with open(jsonl_path, 'r') as f:
+        with open(jsonl_path, 'r', errors='replace') as f:
             if after_byte > 0:
                 # Check if we're at a line boundary to avoid discarding a valid entry
                 f.seek(after_byte - 1)
@@ -185,7 +185,7 @@ def check_jsonl_state(jsonl_path: str) -> JsonlState | None:
         if file_size == 0:
             return None
 
-        with open(jsonl_path, 'r') as f:
+        with open(jsonl_path, 'r', errors='replace') as f:
             # Tail: seek to last TAIL_BYTES
             if file_size > TAIL_BYTES:
                 f.seek(file_size - TAIL_BYTES)

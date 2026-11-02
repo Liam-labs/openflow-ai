@@ -52,6 +52,13 @@ from agent_stream_writer import safe_append_stream_message
 
 # ─── Configuration ────────────────────────────────────────────────────────────
 DEVFLOW_URL = __import__("os").environ.get("DEVFLOW_URL", "http://localhost:3000").rstrip("/")
+
+# The skill router's one-line hint, asked for just before the message is sent (scripts/skill_router_hint.py).
+try:
+    from skill_router_hint import fetch_hint
+except ImportError:  # ships next to this script; a stray copy without it only loses the skill hint
+    def fetch_hint(participant_id, message_id, base_url=None, log=None):
+        return None
 DEVFLOW_API_BASE = f"{DEVFLOW_URL}/api/collab"
 GROK_BINARY = shutil.which("grok") or os.path.expanduser("~/.local/bin/grok")
 GROK_CONFIG_DIR = os.path.expanduser("~/.grok")
@@ -911,6 +918,9 @@ class CollabGrokACPWrapper:
 
         # Build the user message with channel context
         user_content = f"[Channel message from {sender}]: {content}"
+        skill_hint = fetch_hint(self.participant_id or "", msg_id, DEVFLOW_URL, debug)
+        if skill_hint:  # in the prompt only; the stream log below keeps the plain content
+            user_content += f"\n\n{skill_hint}"
         safe_append_stream_message(
             self.cwd,
             ".grok-stream.jsonl",

@@ -67,7 +67,7 @@ export interface AgentBusyCheckResult {
  * key used under `$HOME/.claude/projects/<key>/`. Matches flush.sh's
  * convention exactly: every `/` becomes `-`.
  *
- * Example: `~/SG-1/Team/an agent` → `-home-<user>-SG-1-Team-an agent`.
+ * Example: `~/the main project/Team/an agent` → `-home-<user>-the main project-Team-an agent`.
  */
 export function deriveAgentProjectKey(agentDir: string): string {
   // Claude Code replaces both '/' and ' ' with '-' when creating project dirs.

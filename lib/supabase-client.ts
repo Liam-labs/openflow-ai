@@ -148,6 +148,8 @@ export async function testConnection(url: string, serviceRoleKey: string): Promi
 export async function testHostedInstance(projectRef: string, accessToken: string): Promise<{
   ok: boolean;
   status: string;
+  /** The project id the Management API returned (compared with the registered one). */
+  projectId?: string;
   error?: string;
 }> {
   try {
@@ -158,10 +160,13 @@ export async function testHostedInstance(projectRef: string, accessToken: string
     );
 
     if (!resp.ok) {
-      return { ok: false, status: 'error', error: `Management API ${resp.status}: ${resp.statusText}` };
+      const hidden = resp.status === 404 || resp.status === 403
+        ? ' (this project is not visible to the access token on this server; it may belong to another Supabase account)'
+        : '';
+      return { ok: false, status: 'error', error: `Management API ${resp.status}: ${resp.statusText}${hidden}` };
     }
 
-    const project = await resp.json() as { status: string; name?: string };
+    const project = await resp.json() as { id?: string; ref?: string; status: string; name?: string };
     const apiStatus = project.status || 'UNKNOWN';
 
     // Map Management API status to our status
@@ -169,6 +174,7 @@ export async function testHostedInstance(projectRef: string, accessToken: string
     return {
       ok: isOnline,
       status: apiStatus,
+      projectId: project.id ?? project.ref,
       error: isOnline ? undefined : `Project status: ${apiStatus}`,
     };
   } catch (err) {
