@@ -298,3 +298,12 @@ describe('/api/wizards/sign-in', () => {
     expect(await m.auth.hasPassword()).toBe(false);
   });
 });
+
+it('keeps a server owner password behind a loopback proxy, even with the desktop override', async () => {
+  const { wizard, auth } = await mods();
+  await auth.setPassword(PW);
+  const env = { DEVFLOW_SERVER_MODE: '1', DEVFLOW_BIND_HOST: '127.0.0.1', DEVFLOW_ALLOW_OPEN_REMOTE: '1' };
+  expect((await wizard.signInCheck(env)).exposures).toContain('this is a server installation');
+  expect(await wizard.removePassword(env)).toMatchObject({ ok: false });
+  expect(await auth.hasPassword()).toBe(true);
+});
