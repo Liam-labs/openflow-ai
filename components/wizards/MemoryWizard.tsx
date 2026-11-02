@@ -8,7 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Check, Copy, Loader2 } from 'lucide-react';
 import { ProofList, StatusPill, WizardFrame, type ProofLine } from '@/components/wizards/WizardFrame';
 
-interface Facts { docker: { installed: boolean; running: boolean }; python: { ok: boolean; version: string | null }; uv: boolean; availableMB: number; diskFreeMB: number; qdrantUp: boolean; container: { exists: boolean; running: boolean } }
+interface Facts { managedDatabase?: boolean; docker: { installed: boolean; running: boolean }; python: { ok: boolean; version: string | null }; uv: boolean; availableMB: number; diskFreeMB: number; qdrantUp: boolean; container: { exists: boolean; running: boolean } }
 type Plan = { ok: true; model: 'light' | 'better'; adopt: boolean } | { ok: false; reason: string; fix?: string };
 interface State { facts: Facts; plan: Plan; record: { enabled: boolean; skipped: boolean; stage: string; adopted: boolean; model: string | null; mcp: boolean }; models: Record<string, { id: string; label: string; needMB: number; downloadMB: number }> }
 
@@ -92,7 +92,7 @@ export function MemoryWizard() {
   const ready = !!rec?.enabled && rec.stage === 'ready';
   const partial = !!rec?.enabled && !ready;
   const plan = state?.plan;
-  const fix = plan && !plan.ok && plan.fix ? FIXES[plan.fix] : undefined;
+  const fix = plan && !plan.ok && plan.fix && !f?.managedDatabase ? FIXES[plan.fix] : undefined;
   return (
     <WizardFrame
       message={message ?? (loadError ? { ok: false, text: loadError } : null)}
@@ -101,14 +101,14 @@ export function MemoryWizard() {
       status={state ? <StatusPill tone={ready ? 'good' : partial ? 'warn' : 'idle'}>{ready ? 'On' : partial ? 'Partly set up' : rec?.skipped ? 'Skipped' : 'Off'}</StatusPill> : <Loader2 className="w-3.5 h-3.5 animate-spin text-white/40" />}
       check={loadError ? <p className="text-xs text-yellow-300">{loadError}</p> : state && f ? (
         <ul className="text-xs text-white/70 flex flex-col gap-1">
-          <li>{f.docker.running ? 'Docker is running.' : f.docker.installed ? 'Docker is installed but not running.' : f.qdrantUp ? 'Docker was not found, but a Qdrant database is already running here and will be used.' : 'Docker is not installed.'}</li>
+          <li>{f.managedDatabase ? (f.qdrantUp ? 'The private memory database inside OpenFlow is running.' : 'OpenFlow manages its own private memory database. No Docker installation is needed.') : f.docker.running ? 'Docker is running.' : f.docker.installed ? 'Docker is installed but not running.' : f.qdrantUp ? 'Docker was not found, but a Qdrant database is already running here and will be used.' : 'Docker is not installed.'}</li>
           <li>{f.uv ? 'uv is installed (it makes the Python environment).' : f.python.ok ? `Python ${f.python.version} is ready.` : 'Neither uv nor Python 3.9 to 3.13 with venv was found.'}</li>
           <li>About {gb(f.availableMB)} of memory and {gb(f.diskFreeMB)} of disk are free.{plan?.ok ? ` The ${plan.model === 'better' ? 'better' : 'light'} model fits.` : ''}</li>
-          {f.qdrantUp && !f.container.exists && <li>A Qdrant database is already answering on port 6333; the wizard will use it and leave it running when you undo.</li>}
+          {!f.managedDatabase && f.qdrantUp && !f.container.exists && <li>A Qdrant database is already answering on port 6333; the wizard will use it and leave it running when you undo.</li>}
           {rec?.skipped && <li>You skipped this. Nothing is installed and nothing will complain; you can set it up any time.</li>}
         </ul>
       ) : <p className="text-xs text-white/40">Reading…</p>}
-      explain={<p className="text-xs text-white/60 leading-relaxed">Gives your agents a shared memory: they can store what they learn and search it later (tools <code>qdrant-store</code> and <code>qdrant-find</code>). It runs the Qdrant database in Docker, offered to this computer only, and a small language model that runs on this computer to turn text into searchable form (downloaded once, {state?.models.light.downloadMB ?? 90}–{state?.models.better.downloadMB ?? 440} MB). Nothing is sent to anyone. Skipping is fine: everything else works without it.</p>}
+      explain={<p className="text-xs text-white/60 leading-relaxed">Gives your agents a shared memory: they can store what they learn and search it later (tools <code>qdrant-store</code> and <code>qdrant-find</code>). {f?.managedDatabase ? 'The database runs inside OpenFlow with persistent storage and is accessible only within this installation. No host Docker access is needed. It uses a small local language model to turn text into searchable form' : 'It runs the Qdrant database in Docker, offered to this computer only, and a small language model that runs on this computer to turn text into searchable form'} (downloaded once, {state?.models.light.downloadMB ?? 90}–{state?.models.better.downloadMB ?? 440} MB). Nothing is sent to anyone. Skipping is fine: everything else works without it.</p>}
       doIt={
         <div className="flex flex-col gap-2">
           {fix && <div className="flex flex-col gap-2 rounded-lg border border-yellow-400/20 bg-yellow-400/5 p-3"><p className="text-xs text-yellow-200">{fix.text}</p>{fix.command && <CopyLine text={fix.command} />}{fix.link && <a className="text-xs text-blue-300 underline" href={fix.link.href} target="_blank" rel="noreferrer">{fix.link.label}</a>}</div>}

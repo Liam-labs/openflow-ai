@@ -22,3 +22,14 @@ it('reports memory read failure without an unhandled rejection and permits retry
  const retry=Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Check again')!;
  await act(async()=>retry.click());expect(request).toHaveBeenCalledTimes(2);
 });
+it.each([true,false])('describes the actual memory backend (managed=%s)',async(managedDatabase)=>{
+ request.mockResolvedValue({json:async()=>({success:true,
+  facts:{managedDatabase,docker:{installed:false,running:false},python:{ok:true,version:'3.11'},uv:false,availableMB:1024,diskFreeMB:4096,qdrantUp:false,container:{exists:false,running:false}},
+  plan:{ok:false,reason:'Memory backend needs repair.',fix:'docker'},record:{enabled:false,skipped:false,stage:'none',adopted:false,model:null,mcp:false},
+  models:{light:{label:'Light',needMB:1000,downloadMB:90},better:{label:'Better',needMB:2000,downloadMB:440}}
+ })});
+ await act(async()=>root.render(createElement(MemoryWizard)));
+ if(managedDatabase){expect(host.textContent).toContain('database runs inside OpenFlow');expect(host.textContent).not.toContain('Install Docker');expect(host.textContent).toContain('Memory backend needs repair.');}
+ else {expect(host.textContent).toContain('database in Docker');expect(host.textContent).toContain('Install Docker');}
+ expect(host.textContent).toContain('qdrant-find');expect(host.textContent).toContain('Skip for now');
+});
