@@ -38,7 +38,7 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
 RUN npm ci --include=dev && npm run build:local && npm cache clean --force \
     && rm -rf .AppData .UserData logs && mkdir .AppData .UserData logs
 
-ENV HOME=/data/home
+ENV HOME=/data/home OPENFLOW_CONTAINER=1
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
   CMD python3 /opt/openflow/docker/healthcheck.py
