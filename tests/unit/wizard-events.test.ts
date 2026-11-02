@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 const mocks = vi.hoisted(() => ({ emit: vi.fn(), denied: false, enable: vi.fn(), save: vi.fn() }));
 vi.mock('@/lib/event-bus', () => ({ eventBus: { emitEvent: mocks.emit } }));
 vi.mock('@/lib/api-auth', () => ({ requireTokenOrLocal: async () => mocks.denied ? Response.json({ error: 'Authentication required' }, { status: 401 }) : null }));
-vi.mock('@/lib/dashboard-auth', () => ({ hasPassword: async () => true }));
+vi.mock('@/lib/dashboard-auth', () => ({ hasPassword: async () => true, requestHasSession: async () => false }));
 vi.mock('@/lib/wizards/tailscale', () => ({
  gatherFacts: async () => ({ ips: [], serve: [], inContainer: false }), readRecord: async () => ({}),
  planServe: () => ({ ok: false }), recordMatches: () => false, judgeSecondDevice: () => null,

@@ -8,11 +8,11 @@
  *       { action: 'disable' }                            remove what the wizard made
  *       { action: 'forget-token' }                       delete the saved token (after switching off)
  *
- * Only this machine or an admin token: a browser signed in from elsewhere cannot publish or unpublish the dashboard.
+ * Owner password session (same-origin writes), local owner, or an admin API token.
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { emitWizardChanged } from '@/lib/wizards/events';
-import { requireTokenOrLocal } from '@/lib/api-auth';
+import { requireWizardAccess } from '@/lib/wizards/auth';
 import { CloudflareApi } from '@/lib/wizards/cloudflare-api';
 import { disableWebgate, enableWebgate, proveWebgate, realIo } from '@/lib/wizards/cloudflare';
 import { forgetToken, readApiToken, saveToken, wizardState } from '@/lib/wizards/cloudflare-service';
@@ -23,13 +23,13 @@ export const dynamic = 'force-dynamic';
 const json = (body: Record<string, unknown>, status = 200) => NextResponse.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 
 export async function GET(request: NextRequest) {
-  const denied = await requireTokenOrLocal(request, 'admin');
+  const denied = await requireWizardAccess(request);
   if (denied) return denied;
   return json({ success: true, ...(await wizardState()) });
 }
 
 export async function POST(request: NextRequest) {
-  const denied = await requireTokenOrLocal(request, 'admin');
+  const denied = await requireWizardAccess(request);
   if (denied) return denied;
 
   let body: Record<string, unknown>;
@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
   } catch {
     return json({ success: false, error: 'Send JSON.' }, 400);
   }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return json({ success: false, error: 'Send a JSON object.' }, 400);
   const io = realIo(realRunner);
   const reply = async (status: number, extra: Record<string, unknown>) => {
     const state = await wizardState(io);

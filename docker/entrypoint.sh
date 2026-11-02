@@ -24,5 +24,17 @@ if [ "${DEVFLOW_SERVER_MODE:-0}" = 1 ]; then
   python3 scripts/setup-code.py
 fi
 
+# A distinct unprivileged node, with no TUN device, host socket, host routes or DNS changes.
+# The wizard starts sign-in only when the owner requests it; existing node state survives recreation.
+export OPENFLOW_TAILSCALE_SOCKET=/data/home/.openflow-tailscale/tailscaled.sock
+mkdir -p /data/home/.openflow-tailscale
+chmod 700 /data/home/.openflow-tailscale
+umask 077
+tailscaled --tun=userspace-networking --outbound-http-proxy-listen=127.0.0.1:1055 \
+  --socket="$OPENFLOW_TAILSCALE_SOCKET" \
+  --statedir=/data/home/.openflow-tailscale \
+  --state=/data/home/.openflow-tailscale/tailscaled.state \
+  > /data/home/.openflow-tailscale/daemon.log 2>&1 &
+
 socat TCP-LISTEN:"${OPENFLOW_PUBLIC_PORT}",fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:"${PORT}" &
 exec npm start
