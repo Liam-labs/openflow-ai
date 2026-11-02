@@ -49,3 +49,23 @@ astral.sh                  # the memory wizard shows the official uv install com
 docs.docker.com            # a documentation link in the memory wizard
 www.google.com             # a Download Google Chrome link in the browser wizard
 other-site.example         # a fake origin the sign-in wizard sends to prove cross-site logins are refused; the address does not exist
+api-docs.deepseek.com      # docs link in the connector catalogue; the user opens it, the app never calls it
+cli.github.com             # docs link in the connector catalogue (GitHub CLI manual)
+console.x.ai               # link the user opens to create an xAI key
+docs.claude.com            # docs link in the connector catalogue
+docs.fal.ai                # docs link in the connector catalogue
+docs.n8n.io                # docs link in the connector catalogue
+docs.netlify.com           # docs link in the connector catalogue
+docs.typesafe.ai           # docs link in the connector catalogue
+docs.x.ai                  # docs link in the connector catalogue
+fal.ai                     # link the user opens to create a fal key
+higgsfield.ai              # docs link in the connector catalogue
+mcp.higgsfield.ai          # remote MCP address written into the agent configuration when the user installs the Higgsfield connector; the agent program connects to it, the app does not
+openflow-ai.com            # docs link in the connector catalogue (this project)
+platform.deepseek.com      # link the user opens to create a DeepSeek key
+platform.openai.com        # docs link and the page where the user creates an OpenAI key
+replicate.com              # docs link and the page where the user creates a Replicate token
+resend.com                 # docs link and the page where the user creates a Resend key
+typesafe.ai                # link the user opens to create a TypeSafe key
+vercel.com                 # docs link in the connector catalogue
+www.pexels.com             # docs link and the page where the user creates a Pexels key
