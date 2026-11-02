@@ -2300,7 +2300,18 @@ export interface Connection {
   mcp_server?: boolean;
   service_account?: string;
   project_id?: string;
+  // v2 (22 Oct 2026): how it signs in, where it runs, what the status means and when it was last checked
+  kind?: string;
+  auth?: ConnectionAuth;
+  runs_on?: string;
+  status_note?: string;
+  verified?: { on: string; how: string };
+  mcp?: string[];
+  /** A DevFlow page for this connection, for example /whatsapp. The detail view shows a link to it. */
+  page?: string;
 }
+
+export interface ConnectionAuth { method?: string; stored_in?: string }
 
 export interface McpServerEntry {
   id: string;
@@ -2311,6 +2322,12 @@ export interface McpServerEntry {
   purpose: string;
   status: ConnectionStatus;
   pm2_process?: string;
+  scope?: string;
+  auth?: ConnectionAuth;
+  status_note?: string;
+  used_in?: string[];
+  serves?: string;
+  verified?: { on: string; how: string };
 }
 
 export interface ConnectionsData {
