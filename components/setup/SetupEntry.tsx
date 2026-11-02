@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { SetupWizard } from '@/components/SetupWizard';
 import { CreateLogin, type CreateLoginProps } from './CreateLogin';
 
@@ -32,7 +32,7 @@ const createLogin: CreateLoginProps['createLogin'] = async (code, newPassword) =
   return { ok: true };
 };
 
-export function SetupEntry() {
+export function SetupEntry({ children, nextPath = '/setup' }: { children?: ReactNode; nextPath?: '/setup' | '/setup/connections' } = {}) {
   const [state, setState] = useState<EntryState>('loading');
   const [attempt, setAttempt] = useState(0);
   const [serverMode, setServerMode] = useState(false);
@@ -60,11 +60,11 @@ export function SetupEntry() {
     return () => controller.abort();
   }, [attempt]);
 
-  if (state === 'wizard') return <SetupWizard showInstallAddress={serverMode} />;
+  if (state === 'wizard') return children ?? <SetupWizard showInstallAddress={serverMode} />;
   if (state === 'create') return <CreateLogin createLogin={createLogin} onCreated={() => setState('wizard')} />;
   return <section className="glass-card p-5 sm:p-8 text-white" aria-live="polite">
     {state === 'loading' && <p role="status">Checking your setup…</p>}
-    {state === 'signin' && <><h1 className="text-xl font-semibold mb-4">Sign in to continue setup</h1><p className="text-white/70 mb-5">This server already has a login.</p><a href="/login?next=%2Fsetup" className="glass-button inline-block px-5 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400">Sign in</a></>}
+    {state === 'signin' && <><h1 className="text-xl font-semibold mb-4">Sign in to continue setup</h1><p className="text-white/70 mb-5">This server already has a login.</p><a href={`/login?next=${encodeURIComponent(nextPath)}`} className="glass-button inline-block px-5 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400">Sign in</a></>}
     {state === 'error' && <><p role="alert" className="mb-5">We could not check your setup. Check your connection, then try again.</p><button type="button" className="glass-button px-5 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400" onClick={() => { setState('loading'); setAttempt((value) => value + 1); }}>Try again</button></>}
   </section>;
 }

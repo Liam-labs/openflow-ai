@@ -11859,7 +11859,8 @@ ol.collab-md-list { list-style: decimal; }
 /* Small mobile (480px): full-width, minimal chrome */
 @media (max-width: 480px) {
   .systems-page {
-    grid-template-columns: 0px 1fr !important;
+    /* The hidden sidebar leaves no grid item: main must occupy the full column. */
+    grid-template-columns: minmax(0, 1fr) !important;
   }
   .systems-sidebar {
     display: none !important;

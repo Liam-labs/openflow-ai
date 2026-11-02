@@ -18,6 +18,8 @@ interface Props {
   /** Setup wizard use: own title, no machine name, no "restart agents" step, and the sign-in starts by itself. */
   title?: string;
   simple?: boolean;
+  /** Connections uses action/focus events instead of periodic status reads. */
+  eventDriven?: boolean;
 }
 
 async function post(path: string, body: Record<string, unknown>): Promise<{ ok: boolean; status: number; data: Record<string, unknown> }> {
@@ -31,8 +33,8 @@ async function post(path: string, body: Record<string, unknown>): Promise<{ ok: 
   }
 }
 
-export function HarnessSignInModal({ credentialId, onClose, onChanged, title, simple = false }: Props) {
-  const { credentials, available, loaded, refresh } = useHarnessAuth(true);
+export function HarnessSignInModal({ credentialId, onClose, onChanged, title, simple = false, eventDriven = false }: Props) {
+  const { credentials, available, loaded, refresh } = useHarnessAuth(true, eventDriven ? 0 : 10_000);
   const credential = credentials?.find(item => item.id === credentialId) ?? null;
   const [localSignIn, setLocalSignIn] = useState<SignInSession | null>(null);
   const [busy, setBusy] = useState(false);

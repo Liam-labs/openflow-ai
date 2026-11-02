@@ -271,6 +271,7 @@ export function SetupWizard({ showInstallAddress = false }: { showInstallAddress
       </div>
 
       {showInstallAddress && <InstallAddress />}
+      <p className="mb-6 text-sm text-white/60">You can connect messaging, network services and other AI providers in <a className="text-blue-300 underline underline-offset-4" href="/setup/connections">Connections</a>.</p>
 
       {/* Step indicator — hidden on complete screen */}
       {!isComplete && (

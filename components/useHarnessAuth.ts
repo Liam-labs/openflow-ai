@@ -29,8 +29,8 @@ export function useHarnessAuth(enabled: boolean, intervalMs = 10_000) {
     if (!enabled) return;
     cancelled.current = false;
     void refresh();
-    const timer = setInterval(() => { void refresh(); }, intervalMs);
-    return () => { cancelled.current = true; clearInterval(timer); };
+    const timer = intervalMs > 0 ? setInterval(() => { void refresh(); }, intervalMs) : undefined;
+    return () => { cancelled.current = true; if (timer) clearInterval(timer); };
   }, [enabled, intervalMs, refresh]);
 
   // Refresh at once after a sign-in and when the person comes back to this tab, instead of waiting for the next poll.
