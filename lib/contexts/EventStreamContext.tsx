@@ -12,6 +12,7 @@ export type EventStreamType =
   | 'collab:message'       // New message in a channel
   | 'collab:participant'   // Participant joined/left/status changed
   | 'collab:typing'        // Typing/working indicator update
+  | 'wizard:changed'       // A connection wizard's state may have changed ({ wizard: 'tailscale' | 'cloudflare' }); read it again
   | 'collab:task'          // Task board change
   | 'loops:status'         // Ralph loop status change
   | 'ports:change'         // Listening ports changed
@@ -33,6 +34,7 @@ const ALL_EVENT_TYPES: EventStreamType[] = [
   'pm2:status', 'health:status',
   'collab:message', 'collab:participant', 'collab:typing',
   'collab:task',
+  'wizard:changed',
   'loops:status', 'ports:change', 'sessions:change', 'terminal:status', 'cron:status',
   'watchdog:event',
   'network:wsl-status',

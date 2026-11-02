@@ -26,7 +26,7 @@ const COLOURS = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#ffffff', '#111827
 function labelBackground(hex: string): string {
   const n = parseInt(hex.slice(1), 16);
   const lum = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
-  return lum < 0.45 ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.78)';
+  return lum < 0.45 ? 'rgba(var(--ink-ch), 0.88)' : 'rgba(0,0,0,0.78)';
 }
 
 function drawMark(ctx: CanvasRenderingContext2D, mark: Mark) {

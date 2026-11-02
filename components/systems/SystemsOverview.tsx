@@ -396,6 +396,7 @@ export function SystemsOverview({ onNavigate }: SystemsOverviewProps) {
       {/* Alerts sit right under the header so a failing job is seen first (renders nothing when all is well) */}
       <ServiceAlertsPanel onNavigate={onNavigate} />
 
+
       {/* Row 1: build and uptime, one slim strip */}
       {buildInfo && (
         <motion.div
@@ -507,7 +508,7 @@ export function SystemsOverview({ onNavigate }: SystemsOverviewProps) {
 const DOT_OK = '#22c55e';
 const DOT_ERR = '#ef4444';
 const DOT_INFO = '#3b82f6';
-const DOT_MUTED = 'rgba(255,255,255,0.22)';
+const DOT_MUTED = 'rgba(var(--ink-ch), 0.22)';
 const DOT_WARN = '#eab308';
 
 function MetricsStrip({
@@ -776,7 +777,7 @@ function SparklineChart({ data }: { data: number[] }) {
         smooth: 0.5,
         symbol: 'none',
         lineStyle: {
-          color: '#3b82f6',
+          color: 'var(--tx-3b82f6)',
           width: 1.5,
           shadowBlur: 6,
           shadowColor: 'rgba(59,130,246,0.6)',
@@ -985,7 +986,7 @@ function BuildStatsBar({ buildInfo, devflowTick }: { buildInfo: BuildInfo; devfl
       <div className="bsb-sep" />
       <div className="bsb-item">
         <span className="bsb-label">Restarts</span>
-        <span className="bsb-value bsb-value--mono" style={typeof restartCount === 'number' && restartCount > 0 ? { color: '#fbbf24' } : undefined}>{restartCount}</span>
+        <span className="bsb-value bsb-value--mono" style={typeof restartCount === 'number' && restartCount > 0 ? { color: 'var(--tx-fbbf24)' } : undefined}>{restartCount}</span>
       </div>
       <div className="bsb-sep" />
       <div className="bsb-item">

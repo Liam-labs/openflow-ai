@@ -10,6 +10,7 @@ POST /api/auth/login             # the way in: checks the owner password itself,
 POST /api/auth/logout            # only ever ends the session named by the caller's own cookie
 GET /api/auth/session            # booleans about the caller's own request (password set, signed in, on this machine)
 GET /api/auth/gate               # one boolean about the caller's own request, asked by middleware for page requests
+POST /api/connectors            # the scope needed depends on the body's action, so the body is read first; the guard then refuses before any work
 GET /api/gateway                # a stand-in in this edition: answers a fixed 501 and reads nothing
 POST /api/gateway               # same stand-in
 POST /api/auth/password         # first-password exception for the tailnet owner: needs loopback peer stamp, owner login, tailnet address, no password yet; closes after the first password

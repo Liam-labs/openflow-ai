@@ -181,8 +181,8 @@ async function detectClaudeProcesses(): Promise<DetectedProcess[]> {
 
   // 0.5. Detect PowerShell agents via bridge directory (ready-*.json files)
   try {
-    const { stdout: psFiles } = await execAsync(`find ${PS_BRIDGE_PATH} -maxdepth 1 -name 'ready-*.json' -type f 2>/dev/null || true`);
-    for (const file of psFiles.trim().split('\n').filter(Boolean)) {
+    const psNames = (await fs.readdir(PS_BRIDGE_PATH).catch(() => [] as string[])).filter((n) => /^ready-.*\.json$/.test(n));
+    for (const file of psNames.map((n) => path.join(PS_BRIDGE_PATH, n))) {
       try {
         const content = await fs.readFile(file, 'utf-8');
         const data = JSON.parse(content);

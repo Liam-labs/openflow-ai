@@ -120,7 +120,7 @@ export function SetupSelect({
           role="listbox"
           className="absolute z-30 left-0 right-0 mt-1.5 py-1 rounded-xl overflow-hidden"
           style={{
-            background: '#101a33',
+            background: 'var(--bg-101a33)',
             border: '1px solid rgba(96, 165, 250, 0.3)',
             boxShadow: '0 12px 32px rgba(0, 0, 0, 0.55)',
           }}

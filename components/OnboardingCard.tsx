@@ -171,7 +171,7 @@ export function OnboardingCard({
                   >
                     <Check className="w-4 h-4 text-green-400" />
                   </div>
-                  <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                  <span className="text-sm font-medium" style={{ color: 'rgba(var(--ink-ch), 0.75)' }}>
                     You&apos;re all set — enjoy {PRODUCT_NAME}.
                   </span>
                 </div>
@@ -198,7 +198,7 @@ export function OnboardingCard({
                       <span aria-hidden="true">👋</span>
                       Welcome to {PRODUCT_NAME}{userName ? `, ${userName}` : ''}!
                     </h2>
-                    <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                    <p className="text-sm mt-0.5" style={{ color: 'rgba(var(--ink-ch), 0.45)' }}>
                       {teamName ? `Your ${teamName} team is ready.` : 'Your team is ready.'}{' '}
                       Here&apos;s how to get started.
                     </p>
@@ -223,8 +223,8 @@ export function OnboardingCard({
                         style={{
                           background: done
                             ? 'rgba(34,197,94,0.06)'
-                            : 'rgba(255,255,255,0.04)',
-                          border: `1px solid ${done ? 'rgba(34,197,94,0.22)' : 'rgba(255,255,255,0.08)'}`,
+                            : 'rgba(var(--ink-ch), 0.04)',
+                          border: `1px solid ${done ? 'rgba(34,197,94,0.22)' : 'rgba(var(--ink-ch), 0.08)'}`,
                           opacity: done ? 0.65 : 1,
                         }}
                       >
@@ -255,7 +255,7 @@ export function OnboardingCard({
                         </div>
 
                         <p className="text-sm font-medium text-white/90 mb-1 pr-5">{title}</p>
-                        <p className="text-xs mb-3" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                        <p className="text-xs mb-3" style={{ color: 'rgba(var(--ink-ch), 0.4)' }}>
                           {description}
                         </p>
 
@@ -286,17 +286,17 @@ export function OnboardingCard({
                 {/* Footer: dismiss link + progress */}
                 <div
                   className="flex items-center justify-between pt-3"
-                  style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+                  style={{ borderTop: '1px solid rgba(var(--ink-ch), 0.06)' }}
                 >
                   <button
                     onClick={handleDismiss}
                     className="text-xs transition-colors hover:text-white/50"
-                    style={{ color: 'rgba(255,255,255,0.28)' }}
+                    style={{ color: 'rgba(var(--ink-ch), 0.28)' }}
                   >
                     Dismiss — I&apos;ll explore on my own
                   </button>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                    <span className="text-xs" style={{ color: 'rgba(var(--ink-ch), 0.28)' }}>
                       {doneCount}/{items.length}
                     </span>
                     <div className="flex gap-1" role="progressbar" aria-valuenow={doneCount} aria-valuemax={items.length}>
@@ -307,7 +307,7 @@ export function OnboardingCard({
                           style={{
                             background: completed.includes(item.id)
                               ? '#22c55e'
-                              : 'rgba(255,255,255,0.18)',
+                              : 'rgba(var(--ink-ch), 0.18)',
                           }}
                         />
                       ))}

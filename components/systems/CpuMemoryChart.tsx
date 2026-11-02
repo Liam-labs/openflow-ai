@@ -34,16 +34,16 @@ export function CpuMemoryChart({ buffer, height = 200 }: CpuMemoryChartProps) {
       },
       tooltip: {
         trigger: 'axis',
-        backgroundColor: 'rgba(8,16,36,0.92)',
+        backgroundColor: 'rgba(var(--deep-ch), 0.92)',
         borderColor: 'rgba(59,130,246,0.3)',
         borderWidth: 1,
-        textStyle: { color: 'rgba(255,255,255,0.88)', fontSize: 11 },
+        textStyle: { color: 'rgba(var(--ink-ch), 0.88)', fontSize: 11 },
         formatter: (params: { name: string; seriesName: string; value: number }[]) => {
           const time = params[0]?.name ?? '';
           return params.map((p) => {
             const unit = p.seriesName === 'CPU' ? '%' : ' MB';
             return `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.seriesName === 'CPU' ? '#3b82f6' : '#8b5cf6'};margin-right:6px;"></span>${p.seriesName}: <b>${p.value}${unit}</b>`;
-          }).join('<br/>') + `<div style="margin-top:4px;color:rgba(255,255,255,0.4);font-size:10px;">${time}</div>`;
+          }).join('<br/>') + `<div style="margin-top:4px;color:rgba(var(--ink-ch), 0.4);font-size:10px;">${time}</div>`;
         },
         axisPointer: { lineStyle: { color: 'rgba(59,130,246,0.3)', width: 1 } },
       },
@@ -51,10 +51,10 @@ export function CpuMemoryChart({ buffer, height = 200 }: CpuMemoryChartProps) {
         type: 'category',
         data: times,
         boundaryGap: false,
-        axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
+        axisLine: { lineStyle: { color: 'rgba(var(--ink-ch), 0.08)' } },
         axisTick: { show: false },
         axisLabel: {
-          color: 'rgba(255,255,255,0.35)',
+          color: 'rgba(var(--ink-ch), 0.35)',
           fontSize: 10,
           interval: Math.max(0, Math.floor(buffer.length / 5) - 1),
         },
@@ -70,7 +70,7 @@ export function CpuMemoryChart({ buffer, height = 200 }: CpuMemoryChartProps) {
           interval: 25,
           axisLine: { show: false },
           axisTick: { show: false },
-          axisLabel: { color: 'rgba(255,255,255,0.35)', fontSize: 10, formatter: '{value}%' },
+          axisLabel: { color: 'rgba(var(--ink-ch), 0.35)', fontSize: 10, formatter: '{value}%' },
           splitLine: { lineStyle: { color: 'rgba(59,130,246,0.07)', type: 'dashed' } },
         },
         {
@@ -79,7 +79,7 @@ export function CpuMemoryChart({ buffer, height = 200 }: CpuMemoryChartProps) {
           nameTextStyle: { color: 'rgba(139,92,246,0.7)', fontSize: 10 },
           axisLine: { show: false },
           axisTick: { show: false },
-          axisLabel: { color: 'rgba(255,255,255,0.35)', fontSize: 10 },
+          axisLabel: { color: 'rgba(var(--ink-ch), 0.35)', fontSize: 10 },
           splitLine: { show: false },
         },
       ],
@@ -91,7 +91,7 @@ export function CpuMemoryChart({ buffer, height = 200 }: CpuMemoryChartProps) {
           data: cpuData,
           smooth: 0.4,
           symbol: 'none',
-          lineStyle: { color: '#3b82f6', width: 1.5 },
+          lineStyle: { color: 'var(--tx-3b82f6)', width: 1.5 },
           areaStyle: {
             color: {
               type: 'linear',
@@ -110,7 +110,7 @@ export function CpuMemoryChart({ buffer, height = 200 }: CpuMemoryChartProps) {
           data: memData,
           smooth: 0.4,
           symbol: 'none',
-          lineStyle: { color: '#8b5cf6', width: 1.5 },
+          lineStyle: { color: 'var(--tx-8b5cf6)', width: 1.5 },
           areaStyle: {
             color: {
               type: 'linear',

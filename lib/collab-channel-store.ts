@@ -38,6 +38,8 @@ interface LiveTransaction {
   caller: string;
   seats: SeatTable;
   open: boolean;
+  /** Called once, when the transaction ends (its lock is released). */
+  closers?: Array<() => void>;
 }
 
 interface StoreState {
@@ -122,6 +124,8 @@ export function seatTable(data: CollabChannelsData): SeatTable {
           awayInChannelId: text(a.awayInChannelId),
           pid: text(a.pid),
           participantId: text(a.participantId),
+          // Where the agent is set to run ('server' = the laptop; cleared = the desktop). Added 23 Oct 2026 so any writer's change shows in the log.
+          runLocation: text(a.runLocation),
         },
       });
     }
@@ -247,7 +251,10 @@ export async function mutateChannels<T>(
         return await state.context.run(live, () => fn(copy));
       } finally {
         clearTimeout(holding);
-        if (transaction) transaction.open = false;
+        if (transaction) {
+          transaction.open = false;
+          for (const done of transaction.closers ?? []) done();
+        }
         if (data) state.live.delete(data);
         state.holder = null;
       }
@@ -255,6 +262,17 @@ export async function mutateChannels<T>(
   } finally {
     clearTimeout(waiting);
   }
+}
+
+/**
+ * Resolves when the `mutateChannels` transaction the calling code runs inside has ended (at once when there is none).
+ * Work that starts from inside a transaction (a message delivered from the send handler) and itself needs `mutateChannels`
+ * waits here, outside the lock, instead of being refused as a nested call or starting before the send is saved.
+ */
+export function whenChannelsTransactionEnds(): Promise<void> {
+  const live = state.context.getStore();
+  if (!live?.open) return Promise.resolve();
+  return new Promise<void>(resolve => { (live.closers ??= []).push(resolve); });
 }
 
 /**

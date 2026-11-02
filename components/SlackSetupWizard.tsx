@@ -261,7 +261,7 @@ function Step3Tokens({
   };
 
   const inputStyle = {
-    background: 'rgba(10,20,40,0.5)',
+    background: 'rgba(var(--deep-ch), 0.5)',
     border: '1px solid rgba(139,92,246,0.2)',
     outline: 'none',
   };
@@ -403,7 +403,7 @@ export function SlackSetupWizard({ onComplete, onCancel }: SlackSetupWizardProps
       <StepIndicator current={step} />
       <div
         className="glass-card p-8"
-        style={{ background: 'rgba(8,14,28,0.97)', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}
+        style={{ background: 'rgba(var(--deep-ch), 0.97)', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}
       >
         {step === 1 && <Step1CreateApp onNext={() => setStep(2)} onCancel={onCancel} />}
         {step === 2 && <Step2Scopes onBack={() => setStep(1)} onNext={() => setStep(3)} />}

@@ -3,11 +3,11 @@
 
 An agent that runs on this machine but works on desktop files needs those files at the SAME absolute paths it would see on the desktop
 (Claude derives its project key and memory folder from the working directory, and notes and scripts name absolute paths). This machine's
-own folders of the same name (for example the scaffold copy in ~/SG-1, or the live DevFlow tree) must stay untouched for everything else.
+own folders of the same name (for example the scaffold copy in ~/the main project, or the live DevFlow tree) must stay untouched for everything else.
 So each agent session gets its own mount namespace (bubblewrap): the whole real filesystem, with each requested desktop folder bind-mounted
 over its desktop path. Nothing outside that session, including DevFlow itself, sees the overlay.
 
-    devflow-agent-view --roots sg1,agent-name,mem-name --chdir ~/SG-1/Team/AgentName -- claude ...
+    devflow-agent-view --roots sg1,agent-name,mem-name --chdir ~/the main project/Team/AgentName -- claude ...
     devflow-agent-view --roots sg1 --check            # print whether every requested folder is mounted and answering, run nothing
 
 Every requested folder must be mounted and answering. If one is not, nothing starts (exit 3): an agent must never silently work on this
@@ -30,6 +30,12 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 BWRAP = "/usr/bin/bwrap"
 LIBRARY_ID = "library"
 LIBRARY_TOP = re.compile(r"[a-z0-9][a-z0-9-]{0,30}")
+# Credentials an agent in a view must not hold (18 Oct 2026 design: no private key in agent hands; the DevFlow server process, which runs outside any view,
+# keeps using them). A file is covered with /dev/null, a folder with an empty tmpfs; a path that does not exist is skipped.
+MASKED_FILES = ("~/.ssh/devflow_to_desktop",)
+# The approvals relay token is DevFlow's alone: with it the approval routes on the PC (read, deny, phone enrolment, phone approval) answer; an agent's
+# broker token is refused there (A8 re-run N1, 30 Oct 2026).
+MASKED_DIRS = ("~/.config/devflow/desktop-bridge", "~/.config/devflow/approvals-relay")
 NEVER_OVERLAY = ("/", "/usr", "/etc", "/bin", "/sbin", "/lib", "/lib64", "/proc", "/sys", "/dev", "/run", "/var", "/boot", "/root", "/home")
 
 
@@ -89,14 +95,40 @@ def library_links(registry, point_of, state_of, read_manifest, env=None):
     return links, point
 
 
-def bwrap_argv(plan, chdir, command, bwrap=BWRAP, links=(), library_point=None):
+def existing_masks(home=None, exists=os.path.exists):
+    """([files], [folders]) of MASKED_FILES and MASKED_DIRS that exist on this machine, as absolute paths."""
+    home = home or os.path.expanduser("~")
+    expand = lambda p: os.path.join(home, p[2:]) if p.startswith("~/") else p
+    return [p for p in map(expand, MASKED_FILES) if exists(p)], [p for p in map(expand, MASKED_DIRS) if exists(p)]
+
+
+def bwrap_argv(plan, chdir, command, bwrap=BWRAP, links=(), library_point=None, masked_files=(), masked_dirs=()):
     """The whole view as a command line. No pid namespace (agent pids must stay the pids the rest of DevFlow sees) and no new session
     (the agent runs in a tmux pane and needs its terminal)."""
     argv = [bwrap, "--bind", "/", "/", "--dev-bind", "/dev", "/dev", "--die-with-parent"]
+    # Inside the view's user namespace only the agent's own uid exists, so every root-owned file shows as owned by "nobody" and OpenSSH refuses to read an
+    # included system config ("Bad owner or permissions on /etc/ssh/ssh_config.d/...": no `ssh` of any kind worked in a view, 25 Oct 2026). An empty folder
+    # there removes the include; the main /etc/ssh/ssh_config has no such check.
+    argv += ["--tmpfs", "/etc/ssh/ssh_config.d"]
+    for path in masked_files:
+        argv += ["--ro-bind", "/dev/null", path]
+    for path in masked_dirs:
+        argv += ["--tmpfs", path]
+    # A desktop folder below /mnt (a project on the PC's E: drive is /mnt/e/...) has parents that do not exist here, and this machine's /mnt
+    # is root's: bwrap cannot create them ("Can't mkdir parents ... Permission denied", the Costa Vida agents, 22 Oct 2026). A private /mnt is laid
+    # first, so the folders and the library links below can be created inside it. Folders elsewhere (below the home folder) never need it.
+    mnt_first = any(path.startswith("/mnt/") for _, path, _ in plan)
+    if mnt_first:
+        argv += ["--tmpfs", "/mnt"]
     for _, desktop_path, mount in plan:
         argv += ["--bind", mount, desktop_path]
     if links:
-        argv += ["--tmpfs", "/mnt"]
+        if not mnt_first:
+            argv += ["--tmpfs", "/mnt"]
+        # A library link at /mnt/<drive> cannot sit where a shared folder already made the real folder /mnt/<drive>/...: that drive keeps
+        # just the shared folders (22 Oct 2026: both wanted /mnt/e, "destination exists and is not a symlink").
+        taken = {"/mnt/" + path.split("/")[2] for _, path, _ in plan if path.startswith("/mnt/") and path.count("/") >= 2}
+        links = [(v, t) for v, t in links if v not in taken]
         for view, target in links:
             argv += ["--symlink", target, view]
         argv += ["--symlink", library_point, "/mnt/desktop-library"]
@@ -139,7 +171,8 @@ def main(argv=None):
         return 3
     if not links and not args.no_library and LIBRARY_ID in registry:
         sys.stderr.write("devflow-agent-view: the desktop library is not available (the desktop may be off or asleep); starting without it\n")
-    full = bwrap_argv(plan, args.chdir, command, links=links, library_point=library_point)
+    masked_files, masked_dirs = existing_masks()
+    full = bwrap_argv(plan, args.chdir, command, links=links, library_point=library_point, masked_files=masked_files, masked_dirs=masked_dirs)
     os.execv(full[0], full)
 
 

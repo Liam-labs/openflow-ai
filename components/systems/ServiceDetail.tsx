@@ -158,7 +158,7 @@ export function ServiceDetail({ serviceId, tab, onTabChange, onBack }: ServiceDe
       </div>
     </div>
   );
-  if (!project) return <div className="svc-detail__loading" style={{ color: '#ef4444' }}>Service not found.</div>;
+  if (!project) return <div className="svc-detail__loading" style={{ color: 'var(--tx-ef4444)' }}>Service not found.</div>;
 
   return (
     <div className="svc-detail">
@@ -272,7 +272,7 @@ function SvgSparkline({ data, width = 160, height = 40 }: { data: number[]; widt
   if (data.length < 2) {
     return (
       <svg width={width} height={height} aria-hidden="true">
-        <line x1="0" y1={height / 2} x2={width} y2={height / 2} stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="3 3" />
+        <line x1="0" y1={height / 2} x2={width} y2={height / 2} stroke="rgba(var(--ink-ch), 0.1)" strokeWidth="1" strokeDasharray="3 3" />
       </svg>
     );
   }
@@ -1239,7 +1239,7 @@ function HealthTab({ projectId, project, process }: { projectId: string; project
                   {watchdogState.cooldownUntil && (
                     <div style={{ gridColumn: '1 / -1' }}>
                       <div className="svc-detail__field-label">Cooldown Until</div>
-                      <div className="svc-detail__field-value" style={{ color: '#eab308' }}>{new Date(watchdogState.cooldownUntil).toLocaleString()}</div>
+                      <div className="svc-detail__field-value" style={{ color: 'var(--tx-eab308)' }}>{new Date(watchdogState.cooldownUntil).toLocaleString()}</div>
                     </div>
                   )}
                 </div>

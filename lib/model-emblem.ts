@@ -10,7 +10,7 @@ export function emblemFamily(modelId: string | undefined | null): EmblemFamily |
   if (m.startsWith('deepseek') || m === 'v4') return 'deepseek';
   if (m.includes('gemini')) return 'gemini';
   if (m.includes('grok')) return 'grok';
-  if (/gpt|openai/.test(m)) return 'openai';
+  if (/gpt|openai|codex/.test(m)) return 'openai';
   return 'claude';
 }
 

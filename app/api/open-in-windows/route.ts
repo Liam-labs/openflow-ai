@@ -87,7 +87,7 @@ export const POST = tracked('/api/open-in-windows', async (request: NextRequest)
   // mentioned in the path (e.g. searching for foo.md at project root when it
   // lives in .MD Files/foo.md) AND files mentioned by bare name in one
   // project's channel that actually live in a sibling project root (e.g.
-  // `sync.py` mentioned in SG-1 channel but living under DevFlow/).
+  // `sync.py` mentioned in the main project channel but living under DevFlow/).
   if (!validation.allowed && validation.reason === 'not found') {
     const fileName = basename(effectivePath);
     if (fileName) {

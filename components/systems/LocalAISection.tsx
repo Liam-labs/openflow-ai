@@ -374,7 +374,7 @@ export function LocalAISection() {
 
   return (
     <div className="systems-section">
-      <div className="systems-section__header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--border-subtle, #2a2a2a)' }}>
+      <div className="systems-section__header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--border-subtle, var(--bg-2a2a2a))' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Brain size={16} />
           <strong>Local AI</strong>
@@ -384,7 +384,7 @@ export function LocalAISection() {
         <button
           onClick={refresh}
           disabled={loading}
-          style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', background: 'transparent', border: '1px solid var(--border-subtle, #2a2a2a)', borderRadius: 4, cursor: 'pointer', color: 'inherit', fontSize: 12 }}
+          style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', background: 'transparent', border: '1px solid var(--border-subtle, var(--bg-2a2a2a))', borderRadius: 4, cursor: 'pointer', color: 'inherit', fontSize: 12 }}
         >
           <RefreshCw size={12} className={loading ? 'spin' : ''} />
           Refresh
@@ -392,7 +392,7 @@ export function LocalAISection() {
       </div>
 
       {error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 12, margin: 16, background: 'rgba(255, 100, 100, 0.1)', border: '1px solid rgba(255, 100, 100, 0.3)', borderRadius: 6, color: '#ff8888' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 12, margin: 16, background: 'rgba(255, 100, 100, 0.1)', border: '1px solid rgba(255, 100, 100, 0.3)', borderRadius: 6, color: 'var(--tx-ff8888)' }}>
           <AlertTriangle size={14} />
           <span style={{ fontSize: 13 }}>{error}. Is Ollama running? Try: <code>ollama serve</code></span>
         </div>
@@ -430,13 +430,13 @@ export function LocalAISection() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                         <strong style={{ fontSize: 13 }}>{m.name}</strong>
                         {isRunning && !isBusy && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, padding: '2px 6px', background: 'rgba(80, 220, 100, 0.15)', color: '#5dd075', borderRadius: 3 }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, padding: '2px 6px', background: 'rgba(80, 220, 100, 0.15)', color: 'var(--tx-5dd075)', borderRadius: 3 }}>
                             <Activity size={10} />
                             loaded
                           </span>
                         )}
                         {isBusy && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, padding: '2px 6px', background: 'rgba(74, 158, 255, 0.15)', color: '#4a9eff', borderRadius: 3 }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, padding: '2px 6px', background: 'rgba(74, 158, 255, 0.15)', color: 'var(--tx-4a9eff)', borderRadius: 3 }}>
                             <Loader2 size={10} className="spin" />
                             {loadingState?.action === 'load' ? 'loading' : 'unloading'} · {loadElapsed.toFixed(1)}s
                           </span>
@@ -462,7 +462,7 @@ export function LocalAISection() {
                           onClick={(e) => { e.stopPropagation(); handleUnload(m.name); }}
                           disabled={loadingState !== null}
                           title="Unload model from memory"
-                          style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '4px 8px', background: 'rgba(255, 150, 80, 0.12)', border: '1px solid rgba(255, 150, 80, 0.3)', borderRadius: 4, cursor: loadingState ? 'wait' : 'pointer', color: '#ffa860', fontSize: 11 }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '4px 8px', background: 'rgba(255, 150, 80, 0.12)', border: '1px solid rgba(255, 150, 80, 0.3)', borderRadius: 4, cursor: loadingState ? 'wait' : 'pointer', color: 'var(--tx-ffa860)', fontSize: 11 }}
                         >
                           <PowerOff size={11} /> Unload
                         </button>
@@ -471,7 +471,7 @@ export function LocalAISection() {
                           onClick={(e) => { e.stopPropagation(); handleLoad(m.name); }}
                           disabled={loadingState !== null}
                           title="Load model into memory"
-                          style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '4px 8px', background: 'rgba(80, 220, 100, 0.12)', border: '1px solid rgba(80, 220, 100, 0.3)', borderRadius: 4, cursor: loadingState ? 'wait' : 'pointer', color: '#5dd075', fontSize: 11 }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '4px 8px', background: 'rgba(80, 220, 100, 0.12)', border: '1px solid rgba(80, 220, 100, 0.3)', borderRadius: 4, cursor: loadingState ? 'wait' : 'pointer', color: 'var(--tx-5dd075)', fontSize: 11 }}
                         >
                           <Power size={11} /> Load
                         </button>
@@ -497,7 +497,7 @@ export function LocalAISection() {
           </div>
 
           {/* Pull form */}
-          <div style={{ marginTop: 16, padding: 12, border: '1px solid var(--border-subtle, #2a2a2a)', borderRadius: 6 }}>
+          <div style={{ marginTop: 16, padding: 12, border: '1px solid var(--border-subtle, var(--bg-2a2a2a))', borderRadius: 6 }}>
             <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
               <Download size={12} /> Pull Model
             </div>
@@ -508,7 +508,7 @@ export function LocalAISection() {
                 onChange={e => setPullName(e.target.value)}
                 placeholder="e.g. gemma4:e4b"
                 disabled={pullBusy}
-                style={{ flex: 1, padding: '6px 10px', background: 'var(--bg-input, #1a1a1a)', border: '1px solid var(--border-subtle, #2a2a2a)', borderRadius: 4, color: 'inherit', fontSize: 13 }}
+                style={{ flex: 1, padding: '6px 10px', background: 'var(--bg-input, var(--bg-1a1a1a))', border: '1px solid var(--border-subtle, var(--bg-2a2a2a))', borderRadius: 4, color: 'inherit', fontSize: 13 }}
               />
               <button
                 onClick={handlePull}
@@ -535,7 +535,7 @@ export function LocalAISection() {
             <span>
               Chat {selected ? <code>{selected}</code> : '(select a model)'}
               {running.length > 0 && running[0].name === selected && (
-                <span style={{ marginLeft: 6, fontSize: 10, color: '#4ade80', fontWeight: 600 }}>● LOADED</span>
+                <span style={{ marginLeft: 6, fontSize: 10, color: 'var(--tx-4ade80)', fontWeight: 600 }}>● LOADED</span>
               )}
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -549,7 +549,7 @@ export function LocalAISection() {
                   onClick={handleClearChat}
                   disabled={chatBusy}
                   title="Clear chat"
-                  style={{ background: 'transparent', border: '1px solid var(--border-subtle, #2a2a2a)', borderRadius: 4, padding: '3px 8px', fontSize: 11, color: 'inherit', opacity: 0.7, cursor: 'pointer' }}
+                  style={{ background: 'transparent', border: '1px solid var(--border-subtle, var(--bg-2a2a2a))', borderRadius: 4, padding: '3px 8px', fontSize: 11, color: 'inherit', opacity: 0.7, cursor: 'pointer' }}
                 >New chat</button>
               )}
             </span>
@@ -564,8 +564,8 @@ export function LocalAISection() {
               maxHeight: 480,
               overflowY: 'auto',
               padding: 12,
-              background: 'var(--bg-input, #0e0e0e)',
-              border: '1px solid var(--border-subtle, #2a2a2a)',
+              background: 'var(--bg-input, var(--bg-0e0e0e))',
+              border: '1px solid var(--border-subtle, var(--bg-2a2a2a))',
               borderRadius: 6,
               fontSize: 13,
               lineHeight: 1.5,
@@ -617,7 +617,7 @@ export function LocalAISection() {
             placeholder="Ask the model something… (Ctrl+Enter to send)"
             rows={3}
             disabled={!selected}
-            style={{ width: '100%', padding: 10, background: 'var(--bg-input, #1a1a1a)', border: '1px solid var(--border-subtle, #2a2a2a)', borderRadius: 6, color: 'inherit', fontSize: 13, fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box' }}
+            style={{ width: '100%', padding: 10, background: 'var(--bg-input, var(--bg-1a1a1a))', border: '1px solid var(--border-subtle, var(--bg-2a2a2a))', borderRadius: 6, color: 'inherit', fontSize: 13, fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box' }}
           />
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
             <button

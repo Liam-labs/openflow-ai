@@ -24,6 +24,7 @@ os.environ["COLLAB_AGENT_WRAPPER"] = "1"
 import sys
 import json
 import re
+import math
 import time
 import signal
 import argparse
@@ -39,6 +40,12 @@ except ImportError:  # ships next to this script; a stray copy without it only l
     def format_reply_context(reply_to):
         return ""
 
+try:
+    from skill_router_hint import fetch_hint
+except ImportError:  # ships next to this script; a stray copy without it only loses the skill hint
+    def fetch_hint(participant_id, message_id, base_url=None, log=None):
+        return None
+
 # ─── Configuration ───────────────────────────────────────────────────────────
 
 DEVFLOW_URL = __import__("os").environ.get("DEVFLOW_URL", "http://localhost:3000").rstrip("/")
@@ -46,7 +53,14 @@ API_BASE = f"{DEVFLOW_URL}/api/collab"
 POLL_INTERVAL = 2  # seconds between inbox polls
 AGY_BINARY = os.path.expanduser("~/.local/bin/agy")
 DEBUG_LOG = "/tmp/collab-antigravity-debug.log"
-AGY_TIMEOUT = 300  # max seconds for an agy --print invocation
+# Max seconds for one agy --print engineering turn. Tool-using design/engineering
+# turns legitimately run well past the old 300s cap, so the default is 30 minutes.
+# Override with the AGY_TIMEOUT env var (whole seconds). The value stays finite on
+# purpose: a hung agy must still release the wrapper. See resolve_agy_timeout().
+AGY_TIMEOUT_DEFAULT = 1800
+AGY_TIMEOUT_MIN = 30      # below this a real tool-using turn cannot finish
+AGY_TIMEOUT_MAX = 14400   # 4h hard ceiling; never unbounded
+AGY_TIMEOUT_EXIT_CODE = -2  # _run_agy exit code reserved for "timed out" (-1 stays generic failure)
 
 # Image-attachment support: AgentChat saves shared images to this directory
 # and exposes them via /api/collab/images/<filename>. The wrapper resolves
@@ -67,6 +81,50 @@ def pane_log(msg: str) -> None:
     """Write activity event to stdout (tmux pane) for terminal-button visibility."""
     ts = time.strftime("%H:%M:%S")
     print(f"[{ts}] {msg}", flush=True)
+
+
+def resolve_agy_timeout(environ=None) -> int:
+    """Return the agy turn timeout in whole seconds from AGY_TIMEOUT, or the default.
+
+    Unset/blank -> AGY_TIMEOUT_DEFAULT. Non-numeric, non-finite, non-positive, or
+    outside [AGY_TIMEOUT_MIN, AGY_TIMEOUT_MAX] values are rejected (logged) and the
+    default is used, so a typo can neither disable the timeout nor make every turn
+    die immediately.
+    """
+    env = os.environ if environ is None else environ
+    raw = env.get("AGY_TIMEOUT")
+    if raw is None or not str(raw).strip():
+        return AGY_TIMEOUT_DEFAULT
+    try:
+        value = float(str(raw).strip())
+    except ValueError:
+        value = float("nan")
+    if not math.isfinite(value) or not (AGY_TIMEOUT_MIN <= value <= AGY_TIMEOUT_MAX):
+        debug(
+            f"Ignoring invalid AGY_TIMEOUT={str(raw)[:40]!r} (need a number of seconds "
+            f"in [{AGY_TIMEOUT_MIN}, {AGY_TIMEOUT_MAX}]); using {AGY_TIMEOUT_DEFAULT}s"
+        )
+        return AGY_TIMEOUT_DEFAULT
+    return int(value)
+
+
+AGY_TIMEOUT = resolve_agy_timeout()
+
+
+def format_timeout_report(sender_name, timeout_s: int) -> str:
+    """User-facing report for an agy turn killed by the wrapper timeout."""
+    target = f"@{sender_name} " if sender_name else ""
+    minutes = timeout_s / 60
+    shown = f"{minutes:g} minutes" if timeout_s % 60 == 0 else f"{timeout_s} seconds"
+    return (
+        f"{target}This turn hit the Antigravity wrapper time limit ({shown}) and the "
+        "agy process was stopped before it returned a response. It may have made "
+        "partial changes (files edited, commands run) before it was stopped, so "
+        "please check the workspace before relying on it. I did not retry "
+        "automatically. To continue, send a narrower follow-up request. The limit "
+        "is configurable with the AGY_TIMEOUT environment variable "
+        f"({AGY_TIMEOUT_MIN}-{AGY_TIMEOUT_MAX} seconds)."
+    )
 
 
 # ─── Collab API helpers ──────────────────────────────────────────────────────
@@ -214,12 +272,12 @@ class CollabAntigravityWrapper:
         })
         debug(f"Left channel {self.channel_id}")
 
-    # ─── Session file (agent shell-exec of collab_helper.py / ask_liam.py) ────
+    # ─── Session file (agent shell-exec of collab_helper.py / ask_owner.py) ────
 
     def _session_file_paths(self) -> list[str]:
         """Session-file lookup paths, keyed on the wrapper PID.
 
-        collab_helper.py / ask_liam.py resolve the session by reading
+        collab_helper.py / ask_owner.py resolve the session by reading
         CLAUDE_PID (= COLLAB_WRAPPER_PID, exported into agy's env) and
         looking for collab-session-<pid>.json in /tmp and {agent_dir}/.claude.
         Keying on the stable wrapper PID means the process-tree walk from any
@@ -234,7 +292,7 @@ class CollabAntigravityWrapper:
 
     def _write_session_file(self) -> None:
         """Write the collab session file so the agent can shell-exec
-        collab_helper.py / ask_liam.py.
+        collab_helper.py / ask_owner.py.
 
         Antigravity agents have no PTY path (collab-pty.ts) writing this file
         for them — the wrapper must do it itself, or every shell-exec fails
@@ -307,7 +365,7 @@ class CollabAntigravityWrapper:
         """UserPromptSubmit equivalent: context-inject + context-health before agy --print.
 
         Fires both hooks Claude agents receive on UserPromptSubmit.
-        context-inject.py includes S2.4 skill-index.md injection for SG-1 skill
+        context-inject.py includes S2.4 skill-index.md injection for the main project skill
         discovery (Cluster J catalog) — non-Claude skill bridge, same as Codex S2.3.
         Returns additionalContext string if context-inject matched a keyword cluster,
         or None if no injection occurred.
@@ -494,21 +552,14 @@ class CollabAntigravityWrapper:
         Also applies to print mode — agy may check trust even in
         non-interactive mode depending on version.
         """
-        trust_file = os.path.expanduser('~/.gemini/trustedFolders.json')
+        # agy 1.4.12 reads trustedWorkspaces in ~/.gemini/antigravity-cli/settings.json; Gemini CLI reads trustedFolders.json. agent_trust.py
+        # writes both (agent folder, its project folder, the images folder). See agent_trust.py for why (31 Oct 2026, Cassandra).
         try:
-            if os.path.exists(trust_file):
-                with open(trust_file) as f:
-                    trust = json.load(f)
-            else:
-                trust = {}
-            if self.agent_dir not in trust:
-                trust[self.agent_dir] = 'TRUST_FOLDER'
-                os.makedirs(os.path.dirname(trust_file), exist_ok=True)
-                with open(trust_file, 'w') as f:
-                    json.dump(trust, f, indent=2)
-                debug(f"Added {self.agent_dir} to trustedFolders.json")
+            import agent_trust
+            result = agent_trust.trust_folders(agent_trust.folders_for(self.agent_dir, (COLLAB_IMAGES_DIR,)))
+            debug(f"Pre-trusted {result['folders']} (agy changed: {result['agy_trustedWorkspaces']})")
         except Exception as e:
-            debug(f"trustedFolders update failed (non-fatal): {e}")
+            debug(f"folder trust update failed (non-fatal): {e}")
 
     def _resolve_gemini_md(self) -> str:
         """Resolve GEMINI.md imports inline."""
@@ -675,7 +726,7 @@ class CollabAntigravityWrapper:
         """
         keyring_env = load_keyring_env()
         # COLLAB_WRAPPER_PID lets the agent's shell-exec of collab_helper.py /
-        # ask_liam.py resolve the session file the wrapper wrote (keyed on this
+        # ask_owner.py resolve the session file the wrapper wrote (keyed on this
         # PID). $PPID inside the agy process chain lands on an intermediate
         # with no session file, so the explicit env var is required.
         env = {
@@ -811,7 +862,7 @@ class CollabAntigravityWrapper:
         except subprocess.TimeoutExpired:
             debug(f"agy timed out after {AGY_TIMEOUT}s")
             pane_log(f"TIMEOUT: agy did not respond within {AGY_TIMEOUT}s")
-            return -1, "", f"timeout after {AGY_TIMEOUT}s"
+            return AGY_TIMEOUT_EXIT_CODE, "", f"timeout after {AGY_TIMEOUT}s"
         except FileNotFoundError:
             debug(f"agy binary not found at {AGY_BINARY}")
             pane_log(f"ERROR: agy binary not found at {AGY_BINARY}")
@@ -840,7 +891,7 @@ class CollabAntigravityWrapper:
             sys.exit(1)
 
         # Write session file so the agent's shell-exec of collab_helper.py /
-        # ask_liam.py can resolve channel + participant. Antigravity has no
+        # ask_owner.py can resolve channel + participant. Antigravity has no
         # PTY path to write it, so the wrapper does it itself (Codex parity).
         self._write_session_file()
 
@@ -911,9 +962,12 @@ class CollabAntigravityWrapper:
                         # The reply line names the full id of the message being answered; it goes to the model only,
                         # never into `content`, which the stream log above already recorded.
                         reply_line = format_reply_context(msg.get("replyTo"))
-                        exit_code, stdout, stderr = self._run_agy(
-                            f"{reply_line}\n{content}" if reply_line else content, image_paths=image_paths or None
-                        )
+                        prompt = f"{reply_line}\n{content}" if reply_line else content
+                        # The skill router's one-line hint (scripts/skill_router_hint.py), after a blank line; model only, not the stream log.
+                        skill_hint = fetch_hint(self.participant_id, msg_id, DEVFLOW_URL, debug)
+                        if skill_hint:
+                            prompt = f"{prompt}\n\n{skill_hint}"
+                        exit_code, stdout, stderr = self._run_agy(prompt, image_paths=image_paths or None)
 
                         decoded_stream = self._refresh_agent_stream()
 
@@ -937,13 +991,16 @@ class CollabAntigravityWrapper:
                             pane_log(f"No response: exit={exit_code} stdout={len(stdout)} stderr={len(stderr)}")
                             sender_name = sender.get("name") if isinstance(sender, dict) else None
                             target = f"@{sender_name} " if sender_name else ""
-                            self.post_message(
-                                f"{target}I received this message, but the Antigravity runtime "
-                                f"failed before returning a response (exit {exit_code}). I did "
-                                "not retry automatically because the turn may have made partial "
-                                "changes.",
-                                reply_to_msg=msg,
-                            )
+                            if exit_code == AGY_TIMEOUT_EXIT_CODE:
+                                report = format_timeout_report(sender_name, AGY_TIMEOUT)
+                            else:
+                                report = (
+                                    f"{target}I received this message, but the Antigravity runtime "
+                                    f"failed before returning a response (exit {exit_code}). I did "
+                                    "not retry automatically because the turn may have made partial "
+                                    "changes."
+                                )
+                            self.post_message(report, reply_to_msg=msg)
 
                         self.is_processing = False
 

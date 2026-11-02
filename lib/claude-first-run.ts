@@ -1,10 +1,16 @@
 /**
  * Claude Code asks a new user a few questions before it will take a message: pick a colour theme, say whether to use the API key it
- * found in the environment, and (when started with permissions bypassed) accept a warning. On a person's own machine they answer once.
- * An agent DevFlow starts for them cannot, so a person who chose "API key" in the setup wizard would see two agents stuck on a menu.
+ * found in the environment, (when started with permissions bypassed) accept a warning, and on recent versions "Try the new fullscreen
+ * renderer?". On a person's own machine they answer once. An agent DevFlow starts for them cannot, so a person who finished the setup
+ * wizard would see their first agent stuck on a menu.
  *
- * This fills in those answers in Claude Code's own settings files, only where they are missing, and only for API-key mode
- * (DEVFLOW_CLAUDE_AUTH=api-key). It never changes a value that is already there, and never touches a login.
+ * The fullscreen-renderer question is the worst of these for an agent. Its Enter eats the hello message, and picking "Yes" makes Claude
+ * save the renderer choice and relaunch itself WITHOUT the wrapper's arguments (no --dangerously-skip-permissions, no --allowedTools, no
+ * transport prompt), so the agent then answers in its own terminal where nobody is reading (BUG-51, 2026-10-30). We answer it in advance
+ * by writing an explicit renderer choice and marking the upsell as seen, exactly as an established working agent already has them.
+ *
+ * This fills in the answers in Claude Code's own settings files, only where they are missing, for every auth mode (subscription mode
+ * passes no key, so the key approval is skipped). It never changes a value that is already there, and never touches a login.
  */
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -30,6 +36,12 @@ export function applyClaudeJson(current: Record<string, unknown>, apiKey: string
     next.theme = 'dark';
     changed = true;
   }
+  // "Try the new fullscreen renderer?" is shown until it has been seen a few times. Marking it seen stops the question appearing, which
+  // stops its Enter eating the hello and stops the renderer "switch" that relaunches Claude without the wrapper's arguments (BUG-51).
+  if (next.fullscreenUpsellSeenCount === undefined) {
+    next.fullscreenUpsellSeenCount = 3;
+    changed = true;
+  }
   const id = apiKey ? apiKeyApprovalId(apiKey) : '';
   if (id) {
     const old = (next.customApiKeyResponses && typeof next.customApiKeyResponses === 'object' ? next.customApiKeyResponses : {}) as { approved?: unknown; rejected?: unknown };
@@ -45,8 +57,19 @@ export function applyClaudeJson(current: Record<string, unknown>, apiKey: string
 }
 
 export function applySettingsJson(current: Record<string, unknown>): { next: Record<string, unknown>; changed: boolean } {
-  if (current.skipDangerousModePermissionPrompt !== undefined) return { next: current, changed: false };
-  return { next: { ...current, skipDangerousModePermissionPrompt: true }, changed: true };
+  const next: Record<string, unknown> = { ...current };
+  let changed = false;
+  if (next.skipDangerousModePermissionPrompt === undefined) {
+    next.skipDangerousModePermissionPrompt = true;
+    changed = true;
+  }
+  // Pin the renderer so Claude never shows the fullscreen-renderer upsell and never relaunches itself to "switch" (BUG-51). "fullscreen"
+  // is what every established working agent runs with; the wrapper's pane capture and startup-dialog detection are tuned against it.
+  if (next.tui === undefined) {
+    next.tui = 'fullscreen';
+    changed = true;
+  }
+  return { next, changed };
 }
 
 async function readObject(file: string): Promise<Record<string, unknown> | null> {

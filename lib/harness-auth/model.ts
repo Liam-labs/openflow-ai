@@ -77,6 +77,7 @@ export const emptyStore = (): Store => ({ credentials: {}, alerts: {}, accounts:
 
 export interface ReportAgent {
   channelId: string; participantId: string; name: string; credentialId: string;
+  runtimeModel?: string | null;
   state: AgentHealthState; detail: string | null; resetsAt: string | null; window: 'session' | 'weekly' | null;
 }
 export interface ReportCredential {
@@ -146,7 +147,7 @@ export function validateReport(body: unknown): Checked<Report> {
     const detail = raw.detail === null || raw.detail === undefined ? null : text(raw.detail);
     if (raw.detail !== null && raw.detail !== undefined && detail === null) return { ok: false, error: 'agent detail is not valid' };
     const window = raw.window === 'session' || raw.window === 'weekly' ? raw.window : null;
-    agents.push({ channelId, participantId, name, credentialId: raw.credentialId as string, state: raw.state as AgentHealthState, detail, resetsAt, window });
+    agents.push({ channelId, participantId, name, runtimeModel: text(raw.runtimeModel) ?? null, credentialId: raw.credentialId as string, state: raw.state as AgentHealthState, detail, resetsAt, window });
   }
   return { ok: true, value: { host, credentials, agents } };
 }

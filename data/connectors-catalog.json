@@ -1,0 +1,630 @@
+{
+  "version": 1,
+  "updated": "2026-10-22",
+  "note": "Optional connectors a new OpenFlow install can set up. Generic on purpose: no private accounts, no credentials, no prices. Add an entry here and it shows up in the setup wizard and in Systems > Connections. Format and rules: platform/openflow-connectors.md.",
+  "categories": [
+    { "id": "ai", "label": "AI tools and models" },
+    { "id": "mcp", "label": "Tools for agents (MCP servers)" },
+    { "id": "media", "label": "Images, video and stock media" },
+    { "id": "dev", "label": "Code hosting and deployment" },
+    { "id": "comms", "label": "Email and messaging" },
+    { "id": "automation", "label": "Automation" }
+  ],
+  "connectors": [
+    {
+      "id": "claude-code",
+      "name": "Claude Code",
+      "category": "ai",
+      "kind": "cli",
+      "recommended": true,
+      "summary": "Anthropic's coding agent. Runs most of your team's agents.",
+      "headline": "Run your agents on Claude",
+      "why": ["Most of the team's agents run on it, so this is the one to set up first", "Signs in with your Claude account, so there is no key to copy", "Agents can read, edit and test your code themselves"],
+      "costKind": "included",
+      "cost": "Included with a Claude subscription plan. Without a plan you pay Anthropic per use through an API key.",
+      "detect": { "binary": "claude" },
+      "setup": {
+        "steps": [
+          "Install it (press Run it for me, or copy the command).",
+          "Open a terminal and run: claude",
+          "Choose your Claude account when it asks you to sign in, then finish in the browser."
+        ],
+        "command": "npm install -g @anthropic-ai/claude-code"
+      },
+      "docs": "https://docs.claude.com/en/docs/claude-code/overview"
+    },
+    {
+      "id": "codex",
+      "name": "Codex",
+      "category": "ai",
+      "kind": "cli",
+      "recommended": true,
+      "summary": "OpenAI's coding agent. Lets you run GPT-based agents next to the Claude ones.",
+      "headline": "Add GPT-based agents to the team",
+      "why": ["A second opinion from a different family of models", "Signs in with your ChatGPT account", "Mix it with Claude agents in the same channel"],
+      "costKind": "included",
+      "cost": "Included with a ChatGPT plan that offers Codex. Otherwise pay OpenAI per use through an API key.",
+      "detect": { "binary": "codex" },
+      "setup": {
+        "steps": [
+          "Install it (press Run it for me, or copy the command).",
+          "Run: codex login",
+          "Finish the sign-in in the browser window it opens."
+        ],
+        "command": "npm install -g @openai/codex"
+      },
+      "docs": "https://github.com/openai/codex"
+    },
+    {
+      "id": "antigravity",
+      "name": "Antigravity (Gemini)",
+      "category": "ai",
+      "kind": "cli",
+      "summary": "Google's agent CLI. Runs Gemini-based agents.",
+      "headline": "Add Gemini-based agents",
+      "why": ["Brings Google's models to your team", "Signs in with your Google account", "Handy for big files and long documents"],
+      "costKind": "included",
+      "cost": "Uses your Google account. Limits depend on the plan you hold with Google.",
+      "detect": { "binary": "agy" },
+      "setup": {
+        "steps": [
+          "Install it (command below; it comes from Google).",
+          "Run: agy",
+          "Sign in with your Google account when the browser opens. On a server it prints a link to open on your own computer."
+        ],
+        "command": "curl -fsSL https://antigravity.google/cli/install.sh | bash"
+      },
+      "docs": "https://antigravity.google/"
+    },
+    {
+      "id": "openrouter",
+      "name": "OpenRouter",
+      "category": "ai",
+      "kind": "api-key",
+      "summary": "One key for hundreds of models from many companies.",
+      "headline": "One key for hundreds of models",
+      "why": ["Try many models without opening an account with each company", "One bill instead of many", "Switch an agent's model without new setup"],
+      "costKind": "pay-per-use",
+      "cost": "Pay per use, at each model's own rate. You top up a balance first.",
+      "detect": { "env": ["OPENROUTER_API_KEY"] },
+      "setup": {
+        "steps": [
+          "Press Get an OpenRouter key. Sign in or create an account; it brings you straight to Keys.",
+          "Add a little credit if it asks, create a key and copy it.",
+          "Come back here and press Paste and save."
+        ],
+        "open": { "label": "Get an OpenRouter key", "url": "https://openrouter.ai/settings/keys" },
+        "key": { "env": "OPENROUTER_API_KEY", "label": "OpenRouter key", "placeholder": "sk-or-...", "test": "openrouter" }
+      },
+      "docs": "https://openrouter.ai/docs"
+    },
+    {
+      "id": "xai",
+      "name": "xAI (Grok)",
+      "category": "ai",
+      "kind": "api-key",
+      "summary": "Grok models from xAI.",
+      "headline": "Grok models for your agents",
+      "why": ["Adds Grok as another model choice", "Pay only for what agents use", "Keep it as a backup when another provider is down"],
+      "costKind": "pay-per-use",
+      "cost": "Pay per use through your xAI account.",
+      "detect": { "env": ["XAI_API_KEY"] },
+      "setup": {
+        "steps": [
+          "Press Get an xAI key. Sign in or create an account, and add credit.",
+          "Open API Keys, create a key and copy it.",
+          "Come back here and press Paste and save."
+        ],
+        "open": { "label": "Get an xAI key", "url": "https://console.x.ai/" },
+        "key": { "env": "XAI_API_KEY", "label": "xAI key", "placeholder": "xai-...", "test": "xai" }
+      },
+      "docs": "https://docs.x.ai/"
+    },
+    {
+      "id": "deepseek",
+      "name": "DeepSeek",
+      "category": "ai",
+      "kind": "api-key",
+      "summary": "DeepSeek models, usually the cheapest way to run a busy agent.",
+      "headline": "Low-cost models for busy agents",
+      "why": ["Often the cheapest way to keep an agent running all day", "Good for routine work that doesn't need a top model", "Pay only for what is used"],
+      "costKind": "pay-per-use",
+      "cost": "Pay per use through your DeepSeek account.",
+      "detect": { "env": ["DEEPSEEK_API_KEY"] },
+      "setup": {
+        "steps": [
+          "Press Get a DeepSeek key. Sign in or create an account, and add credit.",
+          "Create a key and copy it.",
+          "Come back here and press Paste and save."
+        ],
+        "open": { "label": "Get a DeepSeek key", "url": "https://platform.deepseek.com/api_keys" },
+        "key": { "env": "DEEPSEEK_API_KEY", "label": "DeepSeek key", "placeholder": "sk-...", "test": "deepseek" }
+      },
+      "docs": "https://api-docs.deepseek.com/"
+    },
+    {
+      "id": "openai",
+      "name": "OpenAI API",
+      "category": "ai",
+      "kind": "api-key",
+      "summary": "For tools that call OpenAI directly, such as image generation.",
+      "headline": "Let your tools call OpenAI directly",
+      "why": ["Needed for image generation and other tools that use the OpenAI API", "Separate from a ChatGPT subscription", "Pay only for what is used"],
+      "costKind": "pay-per-use",
+      "cost": "Pay per use through your OpenAI API account. This is separate from a ChatGPT plan.",
+      "detect": { "env": ["OPENAI_API_KEY"] },
+      "setup": {
+        "steps": [
+          "Press Get an OpenAI key. Sign in; billing must be set up.",
+          "Create a key and copy it.",
+          "Come back here and press Paste and save."
+        ],
+        "open": { "label": "Get an OpenAI key", "url": "https://platform.openai.com/api-keys" },
+        "key": { "env": "OPENAI_API_KEY", "label": "OpenAI key", "placeholder": "sk-...", "test": "openai" }
+      },
+      "docs": "https://platform.openai.com/docs"
+    },
+    {
+      "id": "ollama",
+      "name": "Ollama (models on your own computer)",
+      "category": "ai",
+      "kind": "local-service",
+      "summary": "Runs open models on your own machine. Nothing leaves your computer.",
+      "headline": "Run AI models on your own computer",
+      "why": ["Nothing leaves your machine, so it is private", "No per-use cost once a model is downloaded", "Works offline"],
+      "costKind": "free",
+      "cost": "Free. It uses your own hardware, so a graphics card helps.",
+      "detect": { "binary": "ollama", "port": 11434 },
+      "setup": {
+        "steps": [
+          "Install Ollama (command below, or the installer from ollama.com).",
+          "Download a model, for example: ollama pull llama3.2",
+          "It listens on port 11434. This page shows Running when it is up."
+        ],
+        "command": "curl -fsSL https://ollama.com/install.sh | sh"
+      },
+      "docs": "https://ollama.com/"
+    },
+    {
+      "id": "mcp-filesystem",
+      "name": "Filesystem tools",
+      "category": "mcp",
+      "kind": "mcp",
+      "summary": "Lets agents read and write inside one folder you choose.",
+      "headline": "Give agents a folder to work in",
+      "why": ["Agents can read and write files in just the folder you pick", "Nothing outside that folder is touched", "Quick to add, quick to remove"],
+      "costKind": "free",
+      "cost": "Free.",
+      "detect": { "mcp": "filesystem" },
+      "setup": {
+        "steps": [
+          "Choose the folder agents may use.",
+          "Press Add. It is added to your MCP list; agents pick it up the next time they start."
+        ],
+        "mcp": {
+          "name": "filesystem",
+          "transport": "stdio",
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-filesystem", "{folder}"],
+          "inputs": [{ "id": "folder", "label": "Folder agents may use", "placeholder": "~/projects", "kind": "folder" }]
+        }
+      },
+      "docs": "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem"
+    },
+    {
+      "id": "mcp-playwright",
+      "name": "Browser control (Playwright)",
+      "category": "mcp",
+      "kind": "mcp",
+      "summary": "Lets agents open pages, click, fill forms and take screenshots in a real browser.",
+      "headline": "Let agents use a real browser",
+      "why": ["Agents can open pages, click, fill in forms and screenshot the result", "Lets them test the websites they build", "Free, and it downloads its own browser"],
+      "costKind": "free",
+      "cost": "Free.",
+      "detect": { "mcp": "playwright" },
+      "setup": {
+        "steps": [
+          "Press Add. It is added to your MCP list; agents pick it up the next time they start.",
+          "The first use downloads a browser, which takes a minute."
+        ],
+        "mcp": { "name": "playwright", "transport": "stdio", "command": "npx", "args": ["-y", "@playwright/mcp@latest"] }
+      },
+      "docs": "https://github.com/microsoft/playwright-mcp"
+    },
+    {
+      "id": "mcp-context7",
+      "name": "Library docs (Context7)",
+      "category": "mcp",
+      "kind": "mcp",
+      "summary": "Gives agents current documentation for code libraries instead of what they remember.",
+      "headline": "Current docs for any code library",
+      "why": ["Stops agents guessing from out-of-date memory", "Fewer broken examples and wrong function names", "Free to use"],
+      "costKind": "free-tier",
+      "cost": "Free tier. Heavy use needs an account with Upstash.",
+      "detect": { "mcp": "context7" },
+      "setup": {
+        "steps": ["Press Add. It is added to your MCP list; agents pick it up the next time they start."],
+        "mcp": { "name": "context7", "transport": "stdio", "command": "npx", "args": ["-y", "@upstash/context7-mcp"] }
+      },
+      "docs": "https://github.com/upstash/context7"
+    },
+    {
+      "id": "mcp-memory",
+      "name": "Simple memory",
+      "category": "mcp",
+      "kind": "mcp",
+      "summary": "A small notebook agents can write facts into and look things up from. No database needed.",
+      "headline": "A simple notebook for agents",
+      "why": ["Agents write facts down and look them up later", "No database to install", "A good first step before shared memory search"],
+      "costKind": "free",
+      "cost": "Free.",
+      "detect": { "mcp": "memory" },
+      "setup": {
+        "steps": ["Press Add. It is added to your MCP list; agents pick it up the next time they start."],
+        "mcp": { "name": "memory", "transport": "stdio", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-memory"] }
+      },
+      "docs": "https://github.com/modelcontextprotocol/servers/tree/main/src/memory"
+    },
+    {
+      "id": "mcp-sequential-thinking",
+      "name": "Step-by-step thinking",
+      "category": "mcp",
+      "kind": "mcp",
+      "summary": "Helps an agent break a hard problem into steps and revise them.",
+      "headline": "Help agents think a problem through",
+      "why": ["Breaks a hard problem into steps an agent can revise", "Cuts down on rushed, half-finished answers", "Free to use"],
+      "costKind": "free",
+      "cost": "Free.",
+      "detect": { "mcp": "sequential-thinking" },
+      "setup": {
+        "steps": ["Press Add. It is added to your MCP list; agents pick it up the next time they start."],
+        "mcp": { "name": "sequential-thinking", "transport": "stdio", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"] }
+      },
+      "docs": "https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking"
+    },
+    {
+      "id": "mcp-supabase",
+      "name": "Supabase (database tools)",
+      "category": "mcp",
+      "kind": "mcp",
+      "summary": "Lets agents read and change a Supabase project's tables and settings.",
+      "headline": "Let agents work with your database",
+      "why": ["Agents can read and change tables and settings in a Supabase project", "Saves you copying SQL back and forth", "You choose which project it can see"],
+      "costKind": "free-tier",
+      "cost": "The tool is free. Supabase itself has a free tier and paid plans.",
+      "detect": { "mcp": "supabase" },
+      "setup": {
+        "steps": [
+          "Press Get a Supabase access token. Sign in, generate a token and copy it.",
+          "Come back here, press Paste and save, then press Add. Use a development project, not live data."
+        ],
+        "open": { "label": "Get a Supabase access token", "url": "https://supabase.com/dashboard/account/tokens" },
+        "mcp": {
+          "name": "supabase",
+          "transport": "stdio",
+          "command": "npx",
+          "args": ["-y", "@supabase/mcp-server-supabase@latest", "--read-only"],
+          "env": [{ "name": "SUPABASE_ACCESS_TOKEN", "label": "Supabase access token", "placeholder": "sbp_..." }]
+        }
+      },
+      "docs": "https://supabase.com/docs/guides/getting-started/mcp"
+    },
+    {
+      "id": "mcp-qdrant",
+      "name": "Shared memory search (Qdrant)",
+      "category": "mcp",
+      "kind": "mcp",
+      "summary": "Searchable team memory: agents store what they learn and find it again later. Needs a Qdrant database running.",
+      "headline": "Team memory that agents can search",
+      "why": ["Agents store what they learn and find it again later", "Your team stops solving the same problem twice", "Runs on your own computer"],
+      "costKind": "free",
+      "cost": "Free. Qdrant runs on your own machine in Docker.",
+      "detect": { "mcp": "qdrant", "port": 6333 },
+      "setup": {
+        "steps": [
+          "Start Qdrant (press Run it for me, or copy the command). It needs Docker.",
+          "Press Add. The tool needs Python's uv installed (astral.sh/uv).",
+          "Agents pick it up the next time they start."
+        ],
+        "command": "docker run -d --name qdrant -p 127.0.0.1:6333:6333 -v qdrant_data:/qdrant/storage qdrant/qdrant",
+        "mcp": {
+          "name": "qdrant",
+          "transport": "stdio",
+          "command": "uvx",
+          "args": ["mcp-server-qdrant"],
+          "fixedEnv": { "QDRANT_URL": "http://127.0.0.1:6333", "COLLECTION_NAME": "openflow-memory" }
+        }
+      },
+      "docs": "https://github.com/qdrant/mcp-server-qdrant"
+    },
+    {
+      "id": "higgsfield",
+      "name": "Higgsfield",
+      "category": "media",
+      "kind": "mcp",
+      "summary": "Image and video generation from your agents.",
+      "headline": "Make images and video from your agents",
+      "why": ["Agents can generate pictures and clips for you", "Handy for mock-ups, social posts and demos", "Signs in with your Higgsfield account"],
+      "costKind": "paid-plan",
+      "cost": "Needs a paid Higgsfield plan. Every job uses credits, and the free plan has none.",
+      "detect": { "mcp": "higgsfield", "binary": "higgsfield" },
+      "setup": {
+        "steps": [
+          "Press Add to put the Higgsfield tool in your MCP list.",
+          "The first time an agent uses it, it gives a link. Open it and sign in to your Higgsfield account.",
+          "Optional command line: npm install -g @higgsfield/cli, then higgsfield auth login."
+        ],
+        "mcp": { "name": "higgsfield", "transport": "http", "url": "https://mcp.higgsfield.ai/mcp" }
+      },
+      "docs": "https://higgsfield.ai/blog/higgsfield-cli"
+    },
+    {
+      "id": "fal",
+      "name": "fal.ai",
+      "category": "media",
+      "kind": "api-key",
+      "summary": "Fast image, video and audio models behind one key.",
+      "headline": "Fast image, video and audio models",
+      "why": ["Many models behind a single key", "Quick results, so agents aren't left waiting", "Pay only for what is used"],
+      "costKind": "pay-per-use",
+      "cost": "Pay per use. You buy credit first.",
+      "detect": { "env": ["FAL_KEY"] },
+      "setup": {
+        "steps": [
+          "Press Get a fal key. Sign in or create an account, and add credit.",
+          "Create a key and copy it.",
+          "Come back here and press Paste and save."
+        ],
+        "open": { "label": "Get a fal key", "url": "https://fal.ai/dashboard/keys" },
+        "key": { "env": "FAL_KEY", "label": "fal key", "placeholder": "..." }
+      },
+      "docs": "https://docs.fal.ai/"
+    },
+    {
+      "id": "replicate",
+      "name": "Replicate",
+      "category": "media",
+      "kind": "api-key",
+      "summary": "Thousands of community image, video and audio models.",
+      "headline": "Thousands of community AI models",
+      "why": ["Pick from a huge library of image, video and audio models", "Try a model before you commit to it", "Pay only for what is used"],
+      "costKind": "pay-per-use",
+      "cost": "Pay per use, billed by the second the model runs.",
+      "detect": { "env": ["REPLICATE_API_TOKEN"] },
+      "setup": {
+        "steps": [
+          "Press Get a Replicate token. Sign in or create an account, and add a payment method.",
+          "Create a token and copy it.",
+          "Come back here and press Paste and save."
+        ],
+        "open": { "label": "Get a Replicate token", "url": "https://replicate.com/account/api-tokens" },
+        "key": { "env": "REPLICATE_API_TOKEN", "label": "Replicate token", "placeholder": "r8_...", "test": "replicate" }
+      },
+      "docs": "https://replicate.com/docs"
+    },
+    {
+      "id": "pexels",
+      "name": "Pexels (stock photos and video)",
+      "category": "media",
+      "kind": "api-key",
+      "summary": "Free stock photos and clips agents can search and download.",
+      "headline": "Free stock photos and video",
+      "why": ["Agents can find and download pictures and clips for a project", "Free to use under Pexels' licence", "No cost for the key"],
+      "costKind": "free",
+      "cost": "Free. Rate limits apply.",
+      "detect": { "env": ["PEXELS_API_KEY"] },
+      "setup": {
+        "steps": [
+          "Press Get a Pexels key. Sign in or create a free account and fill in the short form; the key is instant.",
+          "Copy the key.",
+          "Come back here and press Paste and save."
+        ],
+        "open": { "label": "Get a Pexels key", "url": "https://www.pexels.com/api/new/" },
+        "key": { "env": "PEXELS_API_KEY", "label": "Pexels key", "placeholder": "...", "test": "pexels" }
+      },
+      "docs": "https://www.pexels.com/api/documentation/"
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "category": "dev",
+      "kind": "cli",
+      "recommended": true,
+      "summary": "Lets agents clone, branch, push and open pull requests.",
+      "headline": "Let agents work with your code on GitHub",
+      "why": ["Agents can clone, branch, push and open pull requests", "Your code stays backed up and shareable", "You stay in charge: review before anything is merged"],
+      "costKind": "free",
+      "cost": "Free for personal and small-team use.",
+      "detect": { "binary": "gh" },
+      "authCheck": ["gh", "auth", "status"],
+      "setup": {
+        "steps": [
+          "Install the GitHub command line tool, gh (cli.github.com).",
+          "Run: gh auth login",
+          "Choose GitHub.com, then your browser, and finish there."
+        ],
+        "command": "gh auth login"
+      },
+      "docs": "https://cli.github.com/manual/"
+    },
+    {
+      "id": "cloudflare-wrangler",
+      "name": "Cloudflare (Wrangler)",
+      "category": "dev",
+      "kind": "cli",
+      "summary": "Publish sites and small back ends to Cloudflare.",
+      "headline": "Publish sites with Cloudflare",
+      "why": ["Put a website or small back end online from the terminal", "Fast worldwide, with a free starting tier", "Agents can deploy for you"],
+      "costKind": "free-tier",
+      "cost": "Free tier. Paid plans for heavy use.",
+      "detect": { "binary": "wrangler" },
+      "setup": {
+        "steps": ["Install it (press Run it for me, or copy the command).", "Run: wrangler login", "Approve access in the browser."],
+        "command": "npm install -g wrangler"
+      },
+      "docs": "https://developers.cloudflare.com/workers/wrangler/"
+    },
+    {
+      "id": "netlify",
+      "name": "Netlify",
+      "category": "dev",
+      "kind": "cli",
+      "summary": "Publish websites to Netlify.",
+      "headline": "Publish websites with Netlify",
+      "why": ["Put a site online with one command", "Preview links for every change", "Agents can deploy for you"],
+      "costKind": "free-tier",
+      "cost": "Free tier. Paid plans for heavy use.",
+      "detect": { "binary": "netlify" },
+      "setup": {
+        "steps": ["Install it (press Run it for me, or copy the command).", "Run: netlify login", "Approve access in the browser."],
+        "command": "npm install -g netlify-cli"
+      },
+      "docs": "https://docs.netlify.com/cli/get-started/"
+    },
+    {
+      "id": "vercel",
+      "name": "Vercel",
+      "category": "dev",
+      "kind": "cli",
+      "summary": "Publish websites and Next.js apps to Vercel.",
+      "headline": "Publish Next.js apps with Vercel",
+      "why": ["Built for Next.js, and fine for any web app", "Preview links for every change", "Agents can deploy for you"],
+      "costKind": "free-tier",
+      "cost": "Free tier for personal projects. Paid plans for teams and heavy use.",
+      "detect": { "binary": "vercel" },
+      "setup": {
+        "steps": ["Install it (press Run it for me, or copy the command).", "Run: vercel login", "Approve access in the browser."],
+        "command": "npm install -g vercel"
+      },
+      "docs": "https://vercel.com/docs/cli"
+    },
+    {
+      "id": "supabase-cli",
+      "name": "Supabase command line",
+      "category": "dev",
+      "kind": "cli",
+      "summary": "Run a Supabase database on your own machine and manage projects from the terminal.",
+      "headline": "Run a database on your own computer",
+      "why": ["Full Supabase stack for building and testing, with nothing online", "Manage projects from the terminal", "Agents can set up and migrate for you"],
+      "costKind": "free",
+      "cost": "Free. Hosted Supabase projects have their own plans.",
+      "detect": { "binary": "supabase" },
+      "setup": {
+        "steps": [
+          "Install it by the method for your system (link below). It also needs Docker for a local database.",
+          "To use a hosted project, run: supabase login"
+        ],
+        "command": "supabase login"
+      },
+      "docs": "https://supabase.com/docs/guides/local-development/cli/getting-started"
+    },
+    {
+      "id": "resend",
+      "name": "Resend (send email)",
+      "category": "comms",
+      "kind": "api-key",
+      "summary": "Lets your apps and agents send email from your own domain.",
+      "headline": "Send email from your own domain",
+      "why": ["Your apps and agents can send real email", "Replies and receipts come from your address", "A free tier is enough to start"],
+      "costKind": "free-tier",
+      "cost": "Free tier with a monthly sending limit. Paid plans above it.",
+      "detect": { "env": ["RESEND_API_KEY"] },
+      "setup": {
+        "steps": [
+          "Press Get a Resend key. Sign in or create an account (verify your sending domain if you will send from it).",
+          "Create a key with sending access and copy it.",
+          "Come back here and press Paste and save."
+        ],
+        "open": { "label": "Get a Resend key", "url": "https://resend.com/api-keys" },
+        "key": { "env": "RESEND_API_KEY", "label": "Resend key", "placeholder": "re_...", "test": "resend" }
+      },
+      "docs": "https://resend.com/docs"
+    },
+    {
+      "id": "n8n",
+      "name": "n8n (workflow automation)",
+      "category": "automation",
+      "kind": "local-service",
+      "summary": "Draw workflows that connect your apps, then let agents trigger them.",
+      "headline": "Draw workflows that connect your apps",
+      "why": ["Join apps together without writing code", "Agents can trigger a workflow when something happens", "Runs on your own computer"],
+      "costKind": "free",
+      "cost": "Free to run yourself. n8n also sells a hosted version.",
+      "detect": { "port": 5678 },
+      "setup": {
+        "steps": [
+          "Start n8n (press Run it for me, or copy the command). It needs Docker.",
+          "Open http://localhost:5678 and create your owner account. This page shows Running when it is up."
+        ],
+        "command": "docker run -d --name n8n -p 127.0.0.1:5678:5678 -v n8n_data:/home/node/.n8n docker.n8n.io/n8nio/n8n"
+      },
+      "docs": "https://docs.n8n.io/hosting/"
+    },
+    {
+      "id": "typesafe-jev",
+      "name": "TypeSafe Jev",
+      "category": "ai",
+      "kind": "api-key",
+      "recommended": false,
+      "headline": "Smart skill hints for your agents",
+      "summary": "A very fast, cheap checker that tells an agent which skill its task probably needs. This connection also unlocks the skill hints option.",
+      "why": [
+        "Agents are nudged to the right skill instead of having to know every skill",
+        "Checks a message in about a fifth of a second",
+        "Off until you switch it on; it only adds one line to a message, which the agent can ignore"
+      ],
+      "costKind": "pay-per-use",
+      "cost": "Pay per use, a tiny fraction of a cent for each message checked. You top up a balance first.",
+      "detect": {
+        "env": [
+          "TYPESAFE_API_KEY"
+        ]
+      },
+      "setup": {
+        "steps": [
+          "Press Get a TypeSafe key. Sign in or create an account and open the API keys page.",
+          "Add a little credit if it asks, create a key and copy it.",
+          "Come back here and press Paste and save. Then switch on skill hints."
+        ],
+        "open": {
+          "label": "Get a TypeSafe key",
+          "url": "https://typesafe.ai"
+        },
+        "key": {
+          "env": "TYPESAFE_API_KEY",
+          "label": "TypeSafe key",
+          "placeholder": "paste your key",
+          "test": "typesafe"
+        }
+      },
+      "docs": "https://docs.typesafe.ai"
+    },
+    {
+      "id": "whatsapp-switchboard",
+      "name": "WhatsApp Switchboard",
+      "category": "comms",
+      "kind": "local-service",
+      "recommended": false,
+      "headline": "One WhatsApp link for all your services",
+      "summary": "A local service that links to your WhatsApp as a linked device, so your assistants can use it with their own keys and limits. Off until you switch it on.",
+      "why": [
+        "One connection, with a separate key and set of limits for every service that uses it",
+        "A kill switch, an audit log with no message text, and held deletes you can cancel",
+        "Contacts are sorted by type, so each service only sees the people it should"
+      ],
+      "costKind": "free",
+      "cost": "Free. It is an unofficial linked-device connection, so WhatsApp may limit or ban an account that sends a lot. For business messaging, the official WhatsApp Business API is the safer choice.",
+      "detect": {
+        "port": 8310
+      },
+      "setup": {
+        "steps": [
+          "Read the warning first: this is an unofficial connection, so keep it to light, personal use.",
+          "Start the service. It is off by default. This page shows Running when it is up.",
+          "Open the WhatsApp page in DevFlow, then scan the QR code from Linked devices on your phone."
+        ]
+      },
+      "docs": "https://openflow-ai.com/"
+    }
+  ]
+}

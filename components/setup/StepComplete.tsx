@@ -15,6 +15,7 @@ const NEXT_STEPS = [
   'Talk to your agents in the channel',
   'Point them at your own project folder',
   'Add more agents from the roster',
+  'Connect more: Systems > Connections > Set up more (password, phone access, your own domain, browser, memory)',
 ] as const;
 
 // ─── Animated Gradient Border ─────────────────────────────────────────────────
@@ -95,7 +96,7 @@ export function StepComplete({ onGoToDashboard, hasChannel }: StepCompleteProps)
         <h2 className="text-2xl font-semibold text-white leading-tight mb-1">
           Setup Complete
         </h2>
-        <p className="text-sm mb-7" style={{ color: 'rgba(255,255,255,0.40)' }}>
+        <p className="text-sm mb-7" style={{ color: 'rgba(var(--ink-ch), 0.40)' }}>
           {PRODUCT_NAME} is ready.
         </p>
 
@@ -121,7 +122,7 @@ export function StepComplete({ onGoToDashboard, hasChannel }: StepCompleteProps)
             <li
               key={step}
               className="flex items-center gap-2.5 text-sm"
-              style={{ color: 'rgba(255,255,255,0.55)' }}
+              style={{ color: 'rgba(var(--ink-ch), 0.55)' }}
             >
               <ChevronRight
                 className="w-4 h-4 flex-shrink-0 text-[#60a5fa]"
@@ -131,6 +132,11 @@ export function StepComplete({ onGoToDashboard, hasChannel }: StepCompleteProps)
             </li>
           ))}
         </ul>
+
+        <p className="w-full text-xs text-left mb-6" style={{ color: 'rgba(var(--ink-ch), 0.45)' }}>
+          Scripts and other programs that call the API need the access token. Setup saved it as DEVFLOW_API_TOKEN in the
+          .env file in the app folder, which only your user account can read. This computer does not need it.
+        </p>
 
         {/* CTA */}
         <button

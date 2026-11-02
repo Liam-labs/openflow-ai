@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -28,6 +28,8 @@ export interface DataTableProps<T> {
   className?: string;
   /** Override footer — e.g. for section-level actions */
   footer?: React.ReactNode;
+  /** When this value changes the table goes back to its first page (use it for the filter that decides which rows are shown). */
+  resetKey?: string | number;
 }
 
 export type StatusVariant = 'online' | 'stopped' | 'errored' | 'warning' | 'launching' | 'pending' | 'unknown' | 'active' | 'configured';
@@ -40,17 +42,17 @@ export interface StatusBadgeProps {
 // ─── StatusBadge ─────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { color: string; dot: string; bg: string; border: string }> = {
-  online:     { color: '#22c55e', dot: '#22c55e', bg: 'rgba(34,197,94,0.10)',  border: 'rgba(34,197,94,0.25)'  },
-  active:     { color: '#22c55e', dot: '#22c55e', bg: 'rgba(34,197,94,0.10)',  border: 'rgba(34,197,94,0.25)'  },
-  stopped:    { color: '#71717a', dot: '#71717a', bg: 'rgba(113,113,122,0.10)',border: 'rgba(113,113,122,0.25)' },
-  errored:    { color: '#ef4444', dot: '#ef4444', bg: 'rgba(239,68,68,0.10)',  border: 'rgba(239,68,68,0.25)'  },
-  error:      { color: '#ef4444', dot: '#ef4444', bg: 'rgba(239,68,68,0.10)',  border: 'rgba(239,68,68,0.25)'  },
-  warning:    { color: '#eab308', dot: '#eab308', bg: 'rgba(234,179,8,0.10)',  border: 'rgba(234,179,8,0.25)'  },
-  launching:  { color: '#3b82f6', dot: '#3b82f6', bg: 'rgba(59,130,246,0.10)', border: 'rgba(59,130,246,0.25)' },
-  pending:    { color: '#3b82f6', dot: '#3b82f6', bg: 'rgba(59,130,246,0.10)', border: 'rgba(59,130,246,0.25)' },
-  configured: { color: '#eab308', dot: '#eab308', bg: 'rgba(234,179,8,0.10)',  border: 'rgba(234,179,8,0.25)'  },
-  connected:  { color: '#22c55e', dot: '#22c55e', bg: 'rgba(34,197,94,0.10)',  border: 'rgba(34,197,94,0.25)'  },
-  unknown:    { color: '#71717a', dot: '#71717a', bg: 'rgba(113,113,122,0.10)',border: 'rgba(113,113,122,0.25)' },
+  online:     { color: 'var(--tx-22c55e)', dot: '#22c55e', bg: 'rgba(34,197,94,0.10)',  border: 'rgba(34,197,94,0.25)'  },
+  active:     { color: 'var(--tx-22c55e)', dot: '#22c55e', bg: 'rgba(34,197,94,0.10)',  border: 'rgba(34,197,94,0.25)'  },
+  stopped:    { color: 'var(--tx-71717a)', dot: '#71717a', bg: 'rgba(113,113,122,0.10)',border: 'rgba(113,113,122,0.25)' },
+  errored:    { color: 'var(--tx-ef4444)', dot: '#ef4444', bg: 'rgba(239,68,68,0.10)',  border: 'rgba(239,68,68,0.25)'  },
+  error:      { color: 'var(--tx-ef4444)', dot: '#ef4444', bg: 'rgba(239,68,68,0.10)',  border: 'rgba(239,68,68,0.25)'  },
+  warning:    { color: 'var(--tx-eab308)', dot: '#eab308', bg: 'rgba(234,179,8,0.10)',  border: 'rgba(234,179,8,0.25)'  },
+  launching:  { color: 'var(--tx-3b82f6)', dot: '#3b82f6', bg: 'rgba(59,130,246,0.10)', border: 'rgba(59,130,246,0.25)' },
+  pending:    { color: 'var(--tx-3b82f6)', dot: '#3b82f6', bg: 'rgba(59,130,246,0.10)', border: 'rgba(59,130,246,0.25)' },
+  configured: { color: 'var(--tx-eab308)', dot: '#eab308', bg: 'rgba(234,179,8,0.10)',  border: 'rgba(234,179,8,0.25)'  },
+  connected:  { color: 'var(--tx-22c55e)', dot: '#22c55e', bg: 'rgba(34,197,94,0.10)',  border: 'rgba(34,197,94,0.25)'  },
+  unknown:    { color: 'var(--tx-71717a)', dot: '#71717a', bg: 'rgba(113,113,122,0.10)',border: 'rgba(113,113,122,0.25)' },
 };
 
 export function StatusBadge({ status, label }: StatusBadgeProps) {
@@ -113,10 +115,16 @@ export function DataTable<T>({
   emptyMessage = 'No data available.',
   className = '',
   footer,
+  resetKey,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(initialSort?.key ?? null);
   const [sortDir, setSortDir] = useState<SortDirection>(initialSort?.direction ?? 'asc');
   const [page, setPage] = useState(0);
+  // The list behind the table changed (a filter was chosen): start again from the first page instead of keeping the old page number.
+  const lastResetKey = useRef(resetKey);
+  useEffect(() => {
+    if (lastResetKey.current !== resetKey) { lastResetKey.current = resetKey; setPage(0); }
+  }, [resetKey]);
 
   const handleSort = useCallback((key: string) => {
     setSortKey(prev => {
@@ -159,18 +167,26 @@ export function DataTable<T>({
                   onClick={col.sortable ? () => handleSort(col.key) : undefined}
                   aria-sort={sortKey === col.key ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}
                 >
-                  <span className="dt-table__th-inner">
-                    {col.header}
-                    {col.sortable && (
-                      <span className="dt-table__sort-icon" aria-hidden="true">
-                        {sortKey === col.key
-                          ? sortDir === 'asc'
-                            ? <ChevronUp size={12} />
-                            : <ChevronDown size={12} />
-                          : <ChevronsUpDown size={12} />}
-                      </span>
-                    )}
-                  </span>
+                  {(() => {
+                    const content = (
+                      <>
+                        {col.header}
+                        {col.sortable && (
+                          <span className="dt-table__sort-icon" aria-hidden="true">
+                            {sortKey === col.key
+                              ? sortDir === 'asc'
+                                ? <ChevronUp size={12} />
+                                : <ChevronDown size={12} />
+                              : <ChevronsUpDown size={12} />}
+                          </span>
+                        )}
+                      </>
+                    );
+                    // A sortable header holds a real button, so the keyboard can reach it. Enter or Space clicks it and the click reaches the cell's handler.
+                    return col.sortable
+                      ? <button type="button" className="dt-table__th-inner dt-table__th-button">{content}</button>
+                      : <span className="dt-table__th-inner">{content}</span>;
+                  })()}
                 </th>
               ))}
             </tr>
