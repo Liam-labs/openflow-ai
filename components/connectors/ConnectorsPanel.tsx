@@ -11,6 +11,7 @@ import { Bot, BookOpen, Check, ClipboardPaste, ChevronDown, ChevronRight, Clappe
 import { Logo } from '@/components/setup-cards/Logo';
 import { SetupCard } from '@/components/setup-cards/SetupCard';
 import { SetupModal } from '@/components/setup-cards/SetupModal';
+import bundledCatalog from '@/data/connectors-catalog.json';
 import type { Connector, ConnectorsCatalog } from '@/lib/connectors/catalog';
 import type { ConnectorState, ConnectorStatus } from '@/lib/connectors/detect';
 import { installArgv } from '@/lib/connectors/install-parse';
@@ -370,7 +371,8 @@ export function ConnectorsPanel({ variant = 'page' }: Props) {
       setLoaded({ catalog: json.catalog, statuses });
       setError('');
     } catch {
-      setError('The connectors list could not be loaded.');
+      setLoaded(current => current ?? { catalog: bundledCatalog as ConnectorsCatalog, statuses: {} });
+      setError('Connection status could not be loaded. These services are available to set up; retry to check their status.');
     } finally {
       setRefreshing(false);
     }
@@ -385,17 +387,18 @@ export function ConnectorsPanel({ variant = 'page' }: Props) {
       .filter((g) => g.items.length > 0);
   }, [loaded]);
 
-  if (error) return <p className="text-sm text-red-400">{error}</p>;
+  const errorNotice = error ? <p role="alert" className="text-sm text-red-400">{error} <button type="button" onClick={() => void load()}>Retry</button></p> : null;
   if (!loaded) return <p className="text-sm text-white/50 flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Looking at what is already set up…</p>;
 
   const total = loaded.catalog.connectors.length;
   const ready = Object.values(loaded.statuses).filter((s) => s.state === 'ready' || s.state === 'running').length;
 
-  const statusOf = (c: Connector): ConnectorStatus => loaded.statuses[c.id] ?? { id: c.id, state: 'not-set-up', notes: [] };
+  const statusOf = (c: Connector): ConnectorStatus => loaded.statuses[c.id] ?? { id: c.id, state: error ? 'unknown' : 'not-set-up', notes: [] };
 
   if (variant === 'page') {
     return (
       <>
+        {errorNotice}
         <div className="sc-bar">
           <p className="sc-lead">{ready} of {total} ready. Everything here is optional; set up what you will use.</p>
           <button type="button" className="sc-refresh" onClick={() => void load()} disabled={refreshing} aria-label="Look again" title="Look again">
@@ -424,6 +427,7 @@ export function ConnectorsPanel({ variant = 'page' }: Props) {
 
   return (
     <div className="flex flex-col gap-5" data-variant={variant}>
+      {errorNotice}
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs text-white/50">
           {ready} of {total} ready. Everything here is optional; set up what you will use.

@@ -3,7 +3,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link, CheckCircle2, AlertCircle, Clock, Tag, Globe, FileText, RefreshCw, FlaskConical } from 'lucide-react';
 import { StatusBadge } from './DataTable';
+import { ProviderKeyForm } from './connections/ProviderKeyForm';
+import { keyProvider, PROVIDER_PREFIX } from './connections/provider-link';
 import type { Connection, McpServerEntry, ConnectionsData, ConnectionHealthResult } from '@/lib/types';
+import { connectionBadge, authLabel } from '@/lib/connection-status';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -17,10 +20,7 @@ type TabId = 'overview' | 'health';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function normaliseStatus(status: string): string {
-  if (status === 'active') return 'active';
-  if (status === 'configured' || status === 'configured_not_active') return 'configured';
-  if (status === 'pending') return 'pending';
-  return 'unknown';
+  return connectionBadge(status).badge;
 }
 
 // ─── Sub-views ────────────────────────────────────────────────────────────────
@@ -32,7 +32,7 @@ function OverviewTab({ conn, envStatus }: { conn: Connection | McpServerEntry; e
     <div className="conn-detail__content">
       {/* Status row */}
       <div className="conn-detail__meta-row conn-detail__meta-row--hero">
-        <StatusBadge status={status} />
+        <StatusBadge status={status} label={connectionBadge(conn.status).label} />
         {c.category && (
           <span className="conn-detail__tag">
             <Tag size={11} />
@@ -51,6 +51,38 @@ function OverviewTab({ conn, envStatus }: { conn: Connection | McpServerEntry; e
         <div className="conn-detail__section-label">Purpose</div>
         <div className="conn-detail__section-value">{conn.purpose}</div>
       </div>
+
+      {c.page && (
+        <div className="conn-detail__section">
+          <a href={c.page} className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-blue-400/40 bg-blue-500/15 px-3.5 text-sm font-semibold text-blue-200 hover:bg-blue-500/25">Open the {conn.name} page</a>
+        </div>
+      )}
+
+      {/* Status note, how it signs in, where it runs, when it was last checked */}
+      {conn.status_note && (
+        <div className="conn-detail__section">
+          <div className="conn-detail__section-label">Status</div>
+          <div className="conn-detail__section-value">{conn.status_note}</div>
+        </div>
+      )}
+      {conn.auth?.method && (
+        <div className="conn-detail__section">
+          <div className="conn-detail__section-label">Signs in with</div>
+          <div className="conn-detail__section-value">{authLabel(conn.auth.method)}{conn.auth.stored_in ? ` — kept in ${conn.auth.stored_in}` : ''}</div>
+        </div>
+      )}
+      {c.runs_on && (
+        <div className="conn-detail__section">
+          <div className="conn-detail__section-label">Runs on</div>
+          <div className="conn-detail__section-value">{c.runs_on}</div>
+        </div>
+      )}
+      {conn.verified?.on && (
+        <div className="conn-detail__section">
+          <div className="conn-detail__section-label">Last checked</div>
+          <div className="conn-detail__section-value">{conn.verified.on} — {conn.verified.how}</div>
+        </div>
+      )}
 
       {/* Endpoint */}
       {conn.endpoint && (
@@ -87,11 +119,11 @@ function OverviewTab({ conn, envStatus }: { conn: Connection | McpServerEntry; e
       )}
 
       {/* Used in */}
-      {c.used_in && c.used_in.length > 0 && (
+      {(conn.used_in ?? c.used_in) && (conn.used_in ?? c.used_in)!.length > 0 && (
         <div className="conn-detail__section">
           <div className="conn-detail__section-label">Used In</div>
           <div className="conn-detail__tag-list">
-            {c.used_in.map(p => <span key={p} className="conn-detail__tag">{p}</span>)}
+            {(conn.used_in ?? c.used_in)!.map(p => <span key={p} className="conn-detail__tag">{p}</span>)}
           </div>
         </div>
       )}
@@ -175,7 +207,7 @@ function HealthTab({ conn, onTest }: {
 
       {!result && !isLoading && (
         <div className="conn-detail__health-empty">
-          Click "Run Health Check" to test this connection live.
+          Click &quot;Run Health Check&quot; to test this connection live.
         </div>
       )}
     </div>
@@ -184,7 +216,19 @@ function HealthTab({ conn, onTest }: {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function ConnectionDetail({ connectionId, isMcp = false }: ConnectionDetailProps) {
+export function ConnectionDetail(props: ConnectionDetailProps) {
+  const provider = !props.isMcp && props.connectionId.startsWith(PROVIDER_PREFIX)
+    ? keyProvider(props.connectionId.slice(PROVIDER_PREFIX.length)) : undefined;
+  if (provider) return (
+    <div className="conn-detail">
+      <div className="conn-detail__header"><h2 className="conn-detail__name">{provider.label}</h2></div>
+      <ProviderKeyForm key={provider.id} providerId={provider.id} />
+    </div>
+  );
+  return <CatalogConnectionDetail {...props} />;
+}
+
+function CatalogConnectionDetail({ connectionId, isMcp = false }: ConnectionDetailProps) {
   const [conn, setConn] = useState<Connection | McpServerEntry | null>(null);
   const [envStatus, setEnvStatus] = useState<Record<string, boolean> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -233,7 +277,7 @@ export function ConnectionDetail({ connectionId, isMcp = false }: ConnectionDeta
       {/* Header */}
       <div className="conn-detail__header">
         <span className="conn-detail__header-icon">
-          <Link size={16} style={{ color: '#3b82f6' }} />
+          <Link size={16} style={{ color: 'var(--tx-3b82f6)' }} />
         </span>
         <div>
           <h2 className="conn-detail__name">{conn.name}</h2>

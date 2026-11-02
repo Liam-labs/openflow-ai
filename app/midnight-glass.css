@@ -7,6 +7,9 @@
 @font-face{font-family:'Satoshi';font-weight:500;font-style:normal;font-display:swap;src:url('/fonts/Satoshi-Medium.woff2') format('woff2')}
 @font-face{font-family:'Satoshi';font-weight:700;font-style:normal;font-display:swap;src:url('/fonts/Satoshi-Bold.woff2') format('woff2')}
 .mg-scope{
+  --void-ch:0,0,0;
+  --ink-ch:255,255,255;
+  --glow-ch:59,140,255;
   --bg:#040816;
   --glass:rgba(9,17,40,0.66);
   --menu-top:#0d1838;

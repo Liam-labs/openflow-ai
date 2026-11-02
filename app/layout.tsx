@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./setup-cards.css";
 import "./fonts-local.css";
 import "./midnight-glass.css";
 import "./midnight-glass-team.css";

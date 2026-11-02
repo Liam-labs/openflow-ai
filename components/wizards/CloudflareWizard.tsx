@@ -5,6 +5,7 @@
  * Talks to /api/wizards/cloudflare (this computer only). The API token is typed here once, checked by the server and never shown again.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useWizardRefresh } from './useWizardRefresh';
 import { Check, Copy, Loader2 } from 'lucide-react';
 import { ProofList, StatusPill, WizardFrame, type ProofLine } from '@/components/wizards/WizardFrame';
 import { looksLikeCloudflareToken } from '@/lib/wizards/cloudflare-token-shape';
@@ -57,15 +58,23 @@ export function CloudflareWizard() {
   // The last token we checked: coming back from Cloudflare before copying the new one must not check the old one again.
   const lastChecked = useRef('');
 
-  const apply = (r: Record<string, unknown>) => { if (r.record) setState(r as unknown as State); };
+  const apply = (r: Record<string, unknown>) => {
+    if (!r.record) return;
+    const next = r as unknown as State;
+    setState(next);
+    setZoneId(current => current || next.record.known?.zones[0]?.id || '');
+    setEmails(current => current || next.defaultEmail || '');
+  };
   const refresh = useCallback(async () => {
+    try {
     const r = await call();
     if (r.success) { apply(r); setLoadError(''); } else setLoadError(typeof r.error === 'string' ? r.error : 'Could not read the state. Open this page on the computer that runs the app.');
+    } catch { setLoadError('Could not reach the server. Check your connection, then try again.'); }
   }, []);
-  useEffect(() => { void refresh(); }, [refresh]);
+  useWizardRefresh('cloudflare', refresh);
 
   const zones = state?.record.known?.zones ?? [];
-  useEffect(() => { if (!zoneId && zones.length) setZoneId(zones[0].id); }, [zones, zoneId]);
+
 
   const saveToken = useCallback(async (value: string) => {
     setBusy('token'); setTokenResult(null); lastChecked.current = value.trim();
@@ -92,7 +101,7 @@ export function CloudflareWizard() {
   }, [opened, state?.tokenSaved, busy, saveToken]);
 
   // Offer the address from this computer's git settings as the one allowed to sign in.
-  useEffect(() => { if (!emails && state?.defaultEmail) setEmails(state.defaultEmail); }, [state?.defaultEmail, emails]);
+
 
   const runProof = async () => {
     setBusy('prove');
@@ -125,7 +134,7 @@ export function CloudflareWizard() {
     : 'Press Switch on first. Continue switches on once it is on and the test has run.';
   return (
     <WizardFrame
-      message={message}
+      message={message ?? (loadError ? { ok: false, text: loadError } : null)}
       holdSetup={hold}
       testSignal={testSignal}
       title="Reach it from anywhere with your Cloudflare domain"

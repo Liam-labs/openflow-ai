@@ -7,7 +7,7 @@
  * stays one scrolling card.
  */
 import { createPortal } from 'react-dom';
-import { isValidElement, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { isValidElement, useContext, useEffect, useState, type ReactNode } from 'react';
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { WizardShellContext, type Tone } from '@/components/wizards/WizardShell';
 
@@ -75,8 +75,11 @@ const UNDO_STEP = STEPS.findIndex(s => s.key === 'undo');
  */
 function Pager({ slots, startAt, testSignal, holdSetup, message }: { slots: Record<(typeof STEPS)[number]['key'], ReactNode>; startAt: number; testSignal: number; holdSetup: string | null; message: ReactNode }) {
   const [at, setAt] = useState(startAt);
-  const firstRun = useRef(true);
-  useEffect(() => { if (firstRun.current) { firstRun.current = false; return; } setAt(TEST_STEP); }, [testSignal]);
+  const [lastTestSignal, setLastTestSignal] = useState(testSignal);
+  if (lastTestSignal !== testSignal) {
+    setLastTestSignal(testSignal);
+    setAt(TEST_STEP);
+  }
   const step = STEPS[at];
   const last = at === STEPS.length - 1;
   const held = holdSetup && at >= DO_STEP ? holdSetup : null;

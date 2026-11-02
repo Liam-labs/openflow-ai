@@ -38,6 +38,14 @@ describe('WizardFrame in a dialog', () => {
   });
   afterEach(() => { act(() => root.unmount()); container.remove(); body.remove(); });
 
+  it('keeps an unconfigured wizard on setup during StrictMode effect replay', async () => {
+    await act(async () => root.render(React.createElement(React.StrictMode, null,
+      React.createElement(WizardShellContext.Provider,
+        { value: { cardStatusEl: null, modalStatusEl: null, bodyEl: body, setTone: () => undefined } },
+        React.createElement(WizardFrame, { title: 'T', status: React.createElement(StatusPill, { tone: 'idle' }, 'Off'), ...slots, testSignal: 0 })))));
+    expect(heading()).toBe('Set it up');
+  });
+
   it('shows the last result on whichever step is open, the Test and Undo steps included', async () => {
     await render('good', 0, null, { ok: true, text: 'RESULT-TEXT' });
     expect(heading()).toBe('Check that it works');

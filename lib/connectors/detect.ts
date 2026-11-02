@@ -11,7 +11,7 @@ import { getHomeDir } from '@/lib/home-dir';
 import type { Connector } from '@/lib/connectors/catalog';
 import { jevConnection } from '@/lib/skill-router-jev';
 
-export type ConnectorState = 'not-set-up' | 'installed' | 'ready' | 'running';
+export type ConnectorState = 'unknown' | 'not-set-up' | 'installed' | 'ready' | 'running';
 
 export interface ConnectorStatus {
   id: string;

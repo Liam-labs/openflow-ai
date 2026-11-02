@@ -9,7 +9,7 @@ import type { SystemsNavState } from './systems-types';
 type BridgeStatus = 'connected' | 'pairing' | 'disconnected' | 'not_configured' | 'error';
 
 interface BridgeState {
-  id: 'slack';
+  id: 'whatsapp' | 'slack' | 'teams';
   label: string;
   status: BridgeStatus;
   detail?: string;
@@ -24,11 +24,11 @@ interface BridgesSectionProps {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<BridgeStatus, { label: string; color: string; bg: string; border: string; icon: React.ReactNode }> = {
-  connected:      { label: 'Connected',      color: 'var(--tx-22c55e)', bg: 'rgba(34,197,94,0.10)',   border: 'rgba(34,197,94,0.25)',   icon: <CheckCircle2 size={14} /> },
-  pairing:        { label: 'Pairing',         color: 'var(--tx-3b82f6)', bg: 'rgba(59,130,246,0.10)',  border: 'rgba(59,130,246,0.25)',  icon: <Wifi size={14} /> },
-  disconnected:   { label: 'Disconnected',    color: 'var(--tx-ef4444)', bg: 'rgba(239,68,68,0.10)',   border: 'rgba(239,68,68,0.25)',   icon: <WifiOff size={14} /> },
-  not_configured: { label: 'Not Configured',  color: 'var(--tx-71717a)', bg: 'rgba(113,113,122,0.10)', border: 'rgba(113,113,122,0.25)', icon: <AlertCircle size={14} /> },
-  error:          { label: 'Error',           color: 'var(--tx-ef4444)', bg: 'rgba(239,68,68,0.10)',   border: 'rgba(239,68,68,0.25)',   icon: <AlertCircle size={14} /> },
+  connected:      { label: 'Connected',      color: '#22c55e', bg: 'rgba(34,197,94,0.10)',   border: 'rgba(34,197,94,0.25)',   icon: <CheckCircle2 size={14} /> },
+  pairing:        { label: 'Pairing',         color: '#3b82f6', bg: 'rgba(59,130,246,0.10)',  border: 'rgba(59,130,246,0.25)',  icon: <Wifi size={14} /> },
+  disconnected:   { label: 'Disconnected',    color: '#ef4444', bg: 'rgba(239,68,68,0.10)',   border: 'rgba(239,68,68,0.25)',   icon: <WifiOff size={14} /> },
+  not_configured: { label: 'Not Configured',  color: '#71717a', bg: 'rgba(113,113,122,0.10)', border: 'rgba(113,113,122,0.25)', icon: <AlertCircle size={14} /> },
+  error:          { label: 'Error',           color: '#ef4444', bg: 'rgba(239,68,68,0.10)',   border: 'rgba(239,68,68,0.25)',   icon: <AlertCircle size={14} /> },
 };
 
 // ─── Bridge card ──────────────────────────────────────────────────────────────
@@ -37,6 +37,11 @@ function BridgeIcon({ id }: { id: string }) {
   if (id === 'slack') return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
       <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z" />
+    </svg>
+  );
+  if (id === 'teams') return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M20.625 6h-2.156a2.706 2.706 0 0 0 .531-1.594A2.72 2.72 0 0 0 16.313 1.72 2.72 2.72 0 0 0 13.625 4.406c0 .586.195 1.125.516 1.594H12a1.5 1.5 0 0 0-1.5 1.5v5.25a1.5 1.5 0 0 0 1.5 1.5h3.75v5.25A2.25 2.25 0 0 1 13.5 21.75h-3A2.25 2.25 0 0 1 8.25 19.5V14.25H4.5a1.5 1.5 0 0 1-1.5-1.5V7.5A1.5 1.5 0 0 1 4.5 6h2.156A2.706 2.706 0 0 1 6.125 4.406 2.72 2.72 0 0 1 8.813 1.72a2.72 2.72 0 0 1 2.687 2.686c0 .586-.195 1.125-.516 1.594H12a1.5 1.5 0 0 1 1.5 1.5v5.25a1.5 1.5 0 0 1-1.5 1.5H8.25v5.25A2.25 2.25 0 0 0 10.5 21.75h3a2.25 2.25 0 0 0 2.25-2.25V14.25h4.875a1.5 1.5 0 0 0 1.5-1.5V7.5a1.5 1.5 0 0 0-1.5-1.5z" />
     </svg>
   );
   return <MessageCircle size={18} />;
@@ -106,6 +111,33 @@ export function BridgesSection({ onNavigate }: BridgesSectionProps) {
   const fetchAll = useCallback(async () => {
     const results: BridgeState[] = [];
 
+    // WhatsApp
+    try {
+      const res = await fetch('/api/bridges/whatsapp');
+      if (res.ok) {
+        const data = await res.json();
+        const cfg = data.config;
+        const s = data.status?.status;
+        let status: BridgeStatus = 'not_configured';
+        let detail: string | undefined;
+        if (cfg?.enabled) {
+          if (s === 'connected') {
+            status = 'connected';
+            detail = data.status?.phoneName || data.status?.phone;
+          } else if (s === 'pairing' || s === 'connecting') {
+            status = 'pairing';
+          } else if (s === 'disconnected') {
+            status = 'disconnected';
+          }
+        }
+        results.push({ id: 'whatsapp', label: 'WhatsApp', status, detail, enabled: cfg?.enabled ?? false, lastChecked: new Date().toISOString() });
+      } else {
+        results.push({ id: 'whatsapp', label: 'WhatsApp', status: 'not_configured', enabled: false });
+      }
+    } catch {
+      results.push({ id: 'whatsapp', label: 'WhatsApp', status: 'error', enabled: false });
+    }
+
     // Slack
     try {
       const res = await fetch('/api/bridges/slack/status');
@@ -122,15 +154,41 @@ export function BridgesSection({ onNavigate }: BridgesSectionProps) {
       results.push({ id: 'slack', label: 'Slack', status: 'not_configured', enabled: false });
     }
 
-    setBridges(results);
-    setIsLoading(false);
+    // Teams
+    try {
+      const res = await fetch('/api/bridges/teams/status');
+      if (res.ok) {
+        const data = await res.json();
+        const configured = data.configured ?? data.config?.enabled ?? false;
+        const connected = data.connected ?? data.status?.connected ?? false;
+        const status: BridgeStatus = configured ? (connected ? 'connected' : 'disconnected') : 'not_configured';
+        results.push({ id: 'teams', label: 'Microsoft Teams', status, enabled: configured, lastChecked: new Date().toISOString() });
+      } else {
+        results.push({ id: 'teams', label: 'Microsoft Teams', status: 'not_configured', enabled: false });
+      }
+    } catch {
+      results.push({ id: 'teams', label: 'Microsoft Teams', status: 'not_configured', enabled: false });
+    }
+
+    return results;
   }, []);
 
-  useEffect(() => {
-    fetchAll();
-    const id = setInterval(fetchAll, 20_000);
-    return () => clearInterval(id);
+  const refresh = useCallback(async () => {
+    const results = await fetchAll();
+    setBridges(results);
+    setIsLoading(false);
   }, [fetchAll]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchAll().then(results => {
+      if (cancelled) return;
+      setBridges(results);
+      setIsLoading(false);
+    });
+    window.addEventListener('focus', refresh);
+    return () => { cancelled = true; window.removeEventListener('focus', refresh); };
+  }, [fetchAll, refresh]);
 
   const connectedCount = bridges.filter(b => b.status === 'connected').length;
   const configuredCount = bridges.filter(b => b.enabled).length;
@@ -148,7 +206,7 @@ export function BridgesSection({ onNavigate }: BridgesSectionProps) {
       {/* Header with inline stat pills */}
       <div className="systems-section__header">
         <div className="systems-section__header-left">
-          <MessageCircle size={16} style={{ color: 'var(--tx-22c55e)', flexShrink: 0 }} />
+          <MessageCircle size={16} style={{ color: '#22c55e', flexShrink: 0 }} />
           <h2 className="systems-section__title">Communication Bridges</h2>
           <span className="systems-stat-pill systems-stat-pill--success">
             <span className="systems-stat-pill__value">{connectedCount}</span> connected
@@ -160,13 +218,13 @@ export function BridgesSection({ onNavigate }: BridgesSectionProps) {
             <span className="systems-stat-pill__value">{bridges.length}</span> total
           </span>
         </div>
-        <button className="systems-filter-bar__action" onClick={fetchAll} title="Refresh">
+        <button className="systems-filter-bar__action" onClick={refresh} title="Refresh">
           <RefreshCw size={13} />
         </button>
       </div>
 
       {/* Bridge cards grid */}
-      <p className="systems-section__desc">Slack message bridge. Route conversations between external platforms and your services.</p>
+      <p className="systems-section__desc">WhatsApp, Slack, and Teams message bridges. Route conversations between external platforms and your services.</p>
       <div className="bridges-grid">
         {bridges.map(bridge => (
           <BridgeCard
