@@ -170,15 +170,25 @@ export function BridgesSection({ onNavigate }: BridgesSectionProps) {
       results.push({ id: 'teams', label: 'Microsoft Teams', status: 'not_configured', enabled: false });
     }
 
-    setBridges(results);
-    setIsLoading(false);
+    return results;
   }, []);
 
-  useEffect(() => {
-    fetchAll();
-    const id = setInterval(fetchAll, 20_000);
-    return () => clearInterval(id);
+  const refresh = useCallback(async () => {
+    const results = await fetchAll();
+    setBridges(results);
+    setIsLoading(false);
   }, [fetchAll]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchAll().then(results => {
+      if (cancelled) return;
+      setBridges(results);
+      setIsLoading(false);
+    });
+    window.addEventListener('focus', refresh);
+    return () => { cancelled = true; window.removeEventListener('focus', refresh); };
+  }, [fetchAll, refresh]);
 
   const connectedCount = bridges.filter(b => b.status === 'connected').length;
   const configuredCount = bridges.filter(b => b.enabled).length;
@@ -208,7 +218,7 @@ export function BridgesSection({ onNavigate }: BridgesSectionProps) {
             <span className="systems-stat-pill__value">{bridges.length}</span> total
           </span>
         </div>
-        <button className="systems-filter-bar__action" onClick={fetchAll} title="Refresh">
+        <button className="systems-filter-bar__action" onClick={refresh} title="Refresh">
           <RefreshCw size={13} />
         </button>
       </div>
