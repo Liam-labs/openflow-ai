@@ -131,6 +131,7 @@ export function BrowserWizard() {
           )}
           <div className="flex items-center gap-2">
             <button type="button" className="glass-button primary px-4 py-2 text-xs" disabled={busy !== null || on} onClick={() => void start()}>{busy === 'start' ? 'Starting…' : 'Start the browser'}</button>
+            <button type="button" className="glass-button px-3 py-2 text-xs" disabled={busy !== null} onClick={() => void refresh()}>Check again</button>
             <button type="button" className="glass-button px-3 py-2 text-xs" disabled={busy !== null || !on || !!state?.record.mcp} onClick={() => void agent()}>{busy === 'agent' ? 'Adding…' : state?.record.mcp ? 'Agents can use it' : 'Let my agents use it'}</button>
           </div>
           {on && state?.windowPossible && (
