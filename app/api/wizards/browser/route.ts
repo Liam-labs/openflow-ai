@@ -8,11 +8,11 @@
  *       { action: 'add-agent-access' }     add the Playwright MCP server that attaches to this browser
  *       { action: 'stop', deleteProfile? } stop it and remove agent access; the saved sign-ins stay unless deleteProfile
  *
- * Only this machine or an admin token: the browser's control port is full control of every site it is signed in to.
+ * Owner password session (same-origin writes), local owner, or an admin API token.
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
-import { requireTokenOrLocal } from '@/lib/api-auth';
+import { requireWizardAccess } from '@/lib/wizards/auth';
 import { addAgentAccess, displayAvailable, openUrlProblem, proveBrowser, realDeps, startBrowser, stopBrowser, type Deps } from '@/lib/wizards/browser-use';
 
 export const dynamic = 'force-dynamic';
@@ -32,13 +32,13 @@ async function state(d: Deps) {
 }
 
 export async function GET(request: NextRequest) {
-  const denied = await requireTokenOrLocal(request, 'admin');
+  const denied = await requireWizardAccess(request);
   if (denied) return denied;
   return json({ success: true, ...(await state(await realDeps())) });
 }
 
 export async function POST(request: NextRequest) {
-  const denied = await requireTokenOrLocal(request, 'admin');
+  const denied = await requireWizardAccess(request);
   if (denied) return denied;
   let body: { action?: unknown; url?: unknown; deleteProfile?: unknown };
   try {
@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
   } catch {
     return json({ success: false, error: 'Send JSON.' }, 400);
   }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return json({ success: false, error: 'Send a JSON object.' }, 400);
   const d = await realDeps();
   const reply = async (status: number, extra: Record<string, unknown>) => json({ success: status < 400, ...extra, ...(await state(d)) }, status);
 

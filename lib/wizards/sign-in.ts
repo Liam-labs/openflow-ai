@@ -41,7 +41,7 @@ export async function signInCheck(env: Env = process.env): Promise<SignInCheck> 
     passwordSet: await hasPassword(),
     setAt: stored.password?.setAt ?? null,
     signedInBrowsers: await sessionCount().catch(() => 0),
-    exposures: exposureReasons(env, await remoteAccessEnabled()),
+    exposures: [...exposureReasons(env, await remoteAccessEnabled()), ...(env.DEVFLOW_SERVER_MODE === '1' ? ['this is a server installation'] : [])],
   };
 }
 
@@ -55,6 +55,8 @@ export function mayRemovePassword(exposures: string[], allowOpen: boolean): { ok
 }
 
 export async function removePassword(env: Env = process.env): Promise<{ ok: true } | { ok: false; reason: string }> {
+  // A loopback-bound server is still public through its installer-managed proxy.
+  if (env.DEVFLOW_SERVER_MODE === '1') return { ok: false, reason: 'A server installation must keep its owner password. Change the password instead of removing it.' };
   const verdict = mayRemovePassword(exposureReasons(env, await remoteAccessEnabled()), env.DEVFLOW_ALLOW_OPEN_REMOTE === '1');
   if (!verdict.ok) return verdict;
   await clearPassword();

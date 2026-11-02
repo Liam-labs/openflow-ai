@@ -7,6 +7,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         tmux python3 python3-pexpect git curl socat ca-certificates build-essential \
     && rm -rf /var/lib/apt/lists/*
 
+# Official signed package repositories; connectors run unprivileged with app-owned state.
+RUN curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.noarmor.gpg -o /usr/share/keyrings/tailscale-archive-keyring.gpg \
+    && curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.tailscale-keyring.list -o /etc/apt/sources.list.d/tailscale.list \
+    && curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg -o /usr/share/keyrings/cloudflare-main.gpg \
+    && echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared bookworm main' > /etc/apt/sources.list.d/cloudflared.list \
+    && apt-get update && apt-get install -y --no-install-recommends tailscale cloudflared \
+    && rm -rf /var/lib/apt/lists/*
+
 # The agent programs. Signing in happens later, inside the dashboard.
 RUN npm install -g @anthropic-ai/claude-code @openai/codex && npm cache clean --force
 

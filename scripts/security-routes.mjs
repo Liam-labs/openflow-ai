@@ -20,7 +20,7 @@ const root = path.resolve(args.find((a) => !a.startsWith('--')) || path.join(pat
 const require = createRequire(path.join(root, 'package.json'));
 const ts = require('typescript');
 
-export const GUARDS = ['requireAuthOrLocal', 'requireTokenOrLocal', 'validateApiToken', 'withApiAuth', 'requireAuth', 'isLocalRequest', 'requireOwnerSession', 'requireRileyVoiceCompanion', 'requireLiamSession', 'gateTokenOk', 'requireBrowserTap'];
+export const GUARDS = ['requireWizardAccess', 'requireAuthOrLocal', 'requireTokenOrLocal', 'validateApiToken', 'withApiAuth', 'requireAuth', 'isLocalRequest', 'requireOwnerSession', 'requireRileyVoiceCompanion', 'requireLiamSession', 'gateTokenOk', 'requireBrowserTap'];
 const METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']);
 
 function* routeFiles(dir) {

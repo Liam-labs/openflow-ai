@@ -6,11 +6,12 @@
  *       { action: 'prove' }   the tailnet address reaches this app (the second device's visit is judged in GET)
  *       { action: 'disable' } remove only the Serve entry this wizard added
  *
- * Only this machine or an admin token: a browser signed in from elsewhere cannot switch remote access on or off.
+ * Owner password session (same-origin writes), local owner, or an admin API token.
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { loginIsolatedTailscale } from '@/lib/wizards/tailscale-runtime';
 import { emitWizardChanged } from '@/lib/wizards/events';
-import { requireTokenOrLocal } from '@/lib/api-auth';
+import { requireWizardAccess } from '@/lib/wizards/auth';
 import { gatherFacts, judgeSecondDevice, planServe, proveReachable, readRecord, recordMatches, enableTailscale, disableTailscale } from '@/lib/wizards/tailscale';
 import { recentOtherDeviceVisits } from '@/lib/wizards/tailscale-visits';
 import { hasPassword } from '@/lib/dashboard-auth';
@@ -31,13 +32,13 @@ async function state() {
 }
 
 export async function GET(request: NextRequest) {
-  const denied = await requireTokenOrLocal(request, 'admin');
+  const denied = await requireWizardAccess(request);
   if (denied) return denied;
   return json({ success: true, ...(await state()) });
 }
 
 export async function POST(request: NextRequest) {
-  const denied = await requireTokenOrLocal(request, 'admin');
+  const denied = await requireWizardAccess(request);
   if (denied) return denied;
 
   let body: { action?: unknown };
@@ -46,7 +47,12 @@ export async function POST(request: NextRequest) {
   } catch {
     return json({ success: false, error: 'Send JSON.' }, 400);
   }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return json({ success: false, error: 'Send a JSON object.' }, 400);
 
+  if (body.action === 'login') {
+    const result = await loginIsolatedTailscale();
+    return json({ success: result.ok, ...result, ...(await state()) }, result.ok ? 200 : 409);
+  }
   if (body.action === 'enable') {
     const result = await enableTailscale();
     emitWizardChanged('tailscale');
@@ -62,7 +68,9 @@ export async function POST(request: NextRequest) {
     if (!record.tailscale) return json({ success: false, error: 'Switch remote access on first.' }, 409);
     const facts = await gatherFacts();
     if (!recordMatches(record, facts.serve)) return json({ success: false, error: 'Switch remote access on first.' }, 409);
-    return json({ success: true, ...(await proveReachable(record.tailscale.url)), ...(await state()) });
+    const proof = await proveReachable(record.tailscale.url);
+    emitWizardChanged('tailscale');
+    return json({ success: true, ...proof, ...(await state()) });
   }
   return json({ success: false, error: 'Unknown action.' }, 400);
 }

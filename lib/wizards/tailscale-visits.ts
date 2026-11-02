@@ -9,7 +9,7 @@
 
 import { emitWizardChanged } from './events';
 
-export interface Visit { at: number; device: string; user: string | null; /** the gate let this request see the pages */ allowed: boolean }
+export interface Visit { at: number; device: string; user: string | null; /** the gate let this request see the pages */ allowed: boolean; authenticated?: boolean }
 
 const MAX = 20;
 
@@ -25,19 +25,22 @@ export function isTailnetAddress(ip: string): boolean {
   return /^fd7a:115c:a1e0:/i.test(ip);
 }
 
-export function noteTailnetVisit(headers: { get(name: string): string | null }, allowed: boolean, now = Date.now()): void {
+export function noteTailnetVisit(headers: { get(name: string): string | null }, allowed: boolean, now = Date.now(), authenticated = false): void {
   const user = headers.get('tailscale-user-login');
   const chain = (headers.get('x-forwarded-for') || '').split(',').map((s) => s.trim()).filter(Boolean);
+  // Middleware appends its kernel-stamped loopback proxy peer. The preceding
+  // final non-loopback hop remains the device, not any client-supplied first hop.
+  while (chain.length > 1 && /^(127\.0\.0\.1|::1|::ffff:127\.0\.0\.1)$/.test(chain[chain.length - 1])) chain.pop();
   const device = chain[chain.length - 1];
   if (!user && !device) return;
   if (!device || !isTailnetAddress(device)) return;
   const visits = store();
   const last = visits[visits.length - 1];
-  visits.push({ at: now, device, user: user ? user.slice(0, 120) : null, allowed });
+  visits.push({ at: now, device, user: user ? user.slice(0, 120) : null, allowed, authenticated });
   if (visits.length > MAX) visits.splice(0, visits.length - MAX);
   // Tell the open wizard once per change: a new device, or the same device whose answer changed, or one quiet for over 30 s. Every page
   // request comes through here, so repeats from the same device are not events. No user name travels with the event.
-  const repeat = last && last.device === device && last.allowed === allowed && now - last.at < 30_000;
+  const repeat = last && last.device === device && last.allowed === allowed && !!last.authenticated === authenticated && now - last.at < 30_000;
   if (!repeat) emitWizardChanged('tailscale');
 }
 

@@ -10,7 +10,8 @@ import { requestHasSession } from '@/lib/dashboard-auth';
 import { noteTailnetVisit } from '@/lib/wizards/tailscale-visits';
 
 export async function GET(request: NextRequest) {
-  const allow = isLocalRequest(request) || isCloudflaredRequest(request) || (await requestHasSession(request));
-  noteTailnetVisit(request.headers, allow);
+  const authenticated = await requestHasSession(request);
+  const allow = isLocalRequest(request) || isCloudflaredRequest(request) || authenticated;
+  noteTailnetVisit(request.headers, allow, Date.now(), authenticated);
   return NextResponse.json({ allow }, { headers: { 'Cache-Control': 'no-store' } });
 }

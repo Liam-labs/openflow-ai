@@ -12,7 +12,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
-import { requireTokenOrLocal } from '@/lib/api-auth';
+import { requireWizardAccess } from '@/lib/wizards/auth';
 import { addAgentAccess, disableMemory, enableMemory, gatherFacts, planMemory, proveMemory, realDeps, skipMemory, MODELS, type Deps, type ModelId } from '@/lib/wizards/memory';
 
 export const dynamic = 'force-dynamic';
@@ -25,13 +25,13 @@ async function state(d: Deps) {
 }
 
 export async function GET(request: NextRequest) {
-  const denied = await requireTokenOrLocal(request, 'admin');
+  const denied = await requireWizardAccess(request);
   if (denied) return denied;
   return json({ success: true, ...(await state(await realDeps())) });
 }
 
 export async function POST(request: NextRequest) {
-  const denied = await requireTokenOrLocal(request, 'admin');
+  const denied = await requireWizardAccess(request);
   if (denied) return denied;
   let body: { action?: unknown; model?: unknown; deleteData?: unknown };
   try {
@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
   } catch {
     return json({ success: false, error: 'Send JSON.' }, 400);
   }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return json({ success: false, error: 'Send a JSON object.' }, 400);
   const d = await realDeps();
   const reply = async (status: number, extra: Record<string, unknown>) => json({ success: status < 400, ...extra, ...(await state(d)) }, status);
 

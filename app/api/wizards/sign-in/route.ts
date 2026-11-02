@@ -6,10 +6,10 @@
  *       { action: 'prove', password }  sign in through the real routes with it and check the refusals
  *       { action: 'undo' }             forget the password (refused while other computers can reach the dashboard)
  *
- * Only this machine or an admin token: a browser signed in from elsewhere cannot change or remove the password.
+ * Owner password session (same-origin writes), local owner, or an admin API token.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTokenOrLocal } from '@/lib/api-auth';
+import { requireWizardAccess } from '@/lib/wizards/auth';
 import { setPassword } from '@/lib/dashboard-auth';
 import { proveSignIn, removePassword, signInCheck } from '@/lib/wizards/sign-in';
 
@@ -18,13 +18,13 @@ export const dynamic = 'force-dynamic';
 const json = (body: Record<string, unknown>, status = 200) => NextResponse.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 
 export async function GET(request: NextRequest) {
-  const denied = await requireTokenOrLocal(request, 'admin');
+  const denied = await requireWizardAccess(request);
   if (denied) return denied;
   return json({ success: true, ...(await signInCheck()) });
 }
 
 export async function POST(request: NextRequest) {
-  const denied = await requireTokenOrLocal(request, 'admin');
+  const denied = await requireWizardAccess(request);
   if (denied) return denied;
 
   let body: { action?: unknown; password?: unknown };
@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
   } catch {
     return json({ success: false, error: 'Send JSON.' }, 400);
   }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return json({ success: false, error: 'Send a JSON object.' }, 400);
   const password = typeof body.password === 'string' ? body.password : '';
 
   if (body.action === 'set') {

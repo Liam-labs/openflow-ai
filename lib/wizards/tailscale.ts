@@ -1,3 +1,4 @@
+import { isolatedTailscaleNode, tailscaleSocketArgs } from './tailscale-runtime';
 /**
  * Remote-access wizard, Tailscale route (stage 1 of the setup wizards).
  *
@@ -9,7 +10,8 @@
  * Undo   remove only the Serve entry this wizard added, and only if it is still the one we added.
  *
  * Needs a sign-in password first (lib/wizards/sign-in.ts): the app refuses to start with remote access on and none set.
- * The user's Tailscale account stays theirs: this never logs in, never changes ACLs, never touches other Serve entries.
+ * Native hosts keep their existing login; the isolated container supports explicit owner-initiated sign-in.
+ * Neither path changes ACLs or unrelated Serve entries.
  */
 
 import { execFile } from 'child_process';
@@ -56,7 +58,7 @@ export function tailscaleBinary(): string {
 
 export const defaultRunTs: RunTs = (args) => new Promise((resolve) => {
   if (!allowedTailscaleArgs(args)) { resolve({ code: 126, stdout: '', stderr: 'command not allowed' }); return; }
-  execFile(tailscaleBinary(), args, { timeout: 20000, maxBuffer: 1 << 20 }, (error, stdout, stderr) => {
+  execFile(tailscaleBinary(), [...tailscaleSocketArgs(), ...args], { timeout: 20000, maxBuffer: 1 << 20 }, (error, stdout, stderr) => {
     const code = error ? (typeof (error as NodeJS.ErrnoException & { code?: unknown }).code === 'number' ? (error as unknown as { code: number }).code : 127) : 0;
     resolve({ code, stdout: String(stdout), stderr: String(stderr) + (error && code === 127 ? ` ${error.message}` : '') });
   });
@@ -76,6 +78,7 @@ export interface TailscaleFacts {
   operatorOk: boolean;             // may this user change Serve without sudo
   /** The app runs in a container: Tailscale belongs on the host computer, so the wizard shows commands instead of running them. */
   inContainer: boolean;
+  isolatedNode?: boolean;
   serve: ServeEntry[];
 }
 
@@ -115,13 +118,14 @@ export function parseServe(json: string): ServeEntry[] {
 export const runsInContainer = (): boolean => existsSync('/.dockerenv') || existsSync('/run/.containerenv');
 
 export async function gatherFacts(run: RunTs = defaultRunTs, inContainer: boolean = runsInContainer()): Promise<TailscaleFacts> {
-  if (inContainer) return { installed: false, version: null, state: null, dnsName: null, ips: [], httpsReady: false, operatorOk: false, inContainer: true, serve: [] };
+  const isolatedNode = inContainer && isolatedTailscaleNode();
+  if (inContainer && !isolatedNode) return { installed: false, version: null, state: null, dnsName: null, ips: [], httpsReady: false, operatorOk: false, inContainer: true, serve: [] };
   const version = await run(['version']);
   if (version.code !== 0) return { installed: false, version: null, state: null, dnsName: null, ips: [], httpsReady: false, operatorOk: false, inContainer: false, serve: [] };
   const [status, serve, prefs] = await Promise.all([run(['status', '--json']), run(['serve', 'status', '--json']), run(['debug', 'prefs'])]);
   let operatorOk = false;
   try { operatorOk = !!(JSON.parse(prefs.stdout) as { OperatorUser?: string }).OperatorUser || (typeof process.getuid === 'function' && process.getuid() === 0); } catch { /* unreadable prefs: ask for the one-time command */ }
-  return { installed: true, version: version.stdout.split('\n')[0].trim() || null, ...parseStatus(status.stdout), operatorOk, inContainer: false, serve: parseServe(serve.stdout) };
+  return { installed: true, version: version.stdout.split('\n')[0].trim() || null, ...parseStatus(status.stdout), operatorOk: operatorOk || isolatedNode, inContainer, isolatedNode, serve: parseServe(serve.stdout) };
 }
 
 // ─── The plan (pure) ─────────────────────────────────────────────────────────────────────────────────
@@ -131,7 +135,8 @@ export type PlanResult = ServePlan | { ok: false; reason: string; fix?: string }
 
 /** What the wizard would do, or why it cannot. Never plans over a port something else already serves. */
 export function planServe(facts: TailscaleFacts, appPort: number): PlanResult {
-  if (facts.inContainer) return { ok: false, reason: 'This app runs in a container, so Tailscale has to be set up on the computer that hosts it.', fix: 'container' };
+  if (facts.inContainer && !facts.isolatedNode) return { ok: false, reason: 'This app runs in a container, so Tailscale has to be set up on the computer that hosts it.', fix: 'container' };
+  if (facts.isolatedNode && !facts.httpsReady && facts.state === 'Running') return { ok: false, reason: 'Enable HTTPS certificates in your Tailscale account before sharing this server. Owner sign-in requires HTTPS.', fix: 'https' };
   if (isBrowserDebugPort(appPort)) return { ok: false, reason: 'That port is a browser debugging port. It controls every website you are signed in to and is never shared.' };
   if (!facts.installed) return { ok: false, reason: 'Tailscale is not installed on this computer.', fix: 'install' };
   if (facts.state !== 'Running' || !facts.dnsName) return { ok: false, reason: 'Tailscale is installed but not signed in and running.', fix: 'login' };
@@ -243,6 +248,12 @@ export interface Fetch1 { (url: string): Promise<{ status: number }> }
 export interface ProofStep { name: string; ok: boolean; detail: string }
 
 export const realFetch1: Fetch1 = async (url) => {
+  if (isolatedTailscaleNode()) {
+    const code = await new Promise<string>((resolve, reject) => {
+      execFile('curl', ['--silent', '--show-error', '--proxy', 'http://127.0.0.1:1055', '--max-time', '10', '--output', '/dev/null', '--write-out', '%{http_code}', url], { timeout: 12000, maxBuffer: 4096 }, (error, stdout) => error ? reject(new Error('The isolated tailnet proxy could not reach the address.')) : resolve(stdout));
+    });
+    return { status: Number(code) };
+  }
   const res = await fetch(url, { redirect: 'manual', cache: 'no-store', signal: AbortSignal.timeout(10000) });
   return { status: res.status };
 };
@@ -264,9 +275,11 @@ export async function proveReachable(url: string, fetch1: Fetch1 = realFetch1): 
 export interface SecondDevice { state: 'waiting' | 'ok' | 'open'; detail: string }
 
 /** What the visits from OTHER devices say. One that got in without signing in beats any number that were turned away. */
-export function judgeSecondDevice(visits: { device: string; allowed: boolean }[]): SecondDevice {
-  const open = visits.find((v) => v.allowed);
+export function judgeSecondDevice(visits: { device: string; allowed: boolean; authenticated?: boolean }[]): SecondDevice {
+  const open = visits.find((v) => v.allowed && !v.authenticated);
   if (open) return { state: 'open', detail: `${open.device} opened the dashboard WITHOUT signing in. Something is treating Tailscale devices as this computer (DEVFLOW_TRUST_TAILNET=1). Switch remote access off and turn that setting off.` };
+  const signedIn = visits.find((v) => v.allowed && v.authenticated);
+  if (signedIn) return { state: 'ok', detail: `${signedIn.device} reached the dashboard with a verified owner sign-in.` };
   if (visits.length) return { state: 'ok', detail: `${visits[visits.length - 1].device} reached it and was sent to the sign-in page.` };
   return { state: 'waiting', detail: 'Waiting for another device to open the address.' };
 }

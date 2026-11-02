@@ -8,6 +8,14 @@
 export async function startSubsystems() {
     const cleanups = global.__devflowCleanups!;
 
+    // Restore only the connector already enabled by the owner; never provision on startup.
+    try {
+      const { ensureConnectorAtStartup } = await import('./lib/wizards/cloudflare-service');
+      await ensureConnectorAtStartup();
+    } catch {
+      console.error('[cloudflare] Could not restore the saved connector; open Connections to retry.');
+    }
+
     // First run: the starting model list (see lib/seed-data.ts). Never replaces an existing file.
     try {
       const { seedFileIfMissing } = await import('./lib/seed-data');
