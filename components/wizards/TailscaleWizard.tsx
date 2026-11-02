@@ -4,7 +4,8 @@
  * Remote access wizard, Tailscale route: reach this dashboard from your own phone or laptop over your private Tailscale network.
  * Talks to /api/wizards/tailscale (this computer only). Needs the sign-in password from the wizard above.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useWizardRefresh } from './useWizardRefresh';
 import { Check, Copy, Loader2 } from 'lucide-react';
 import { ProofList, StatusPill, WizardFrame, type ProofLine } from '@/components/wizards/WizardFrame';
 
@@ -52,17 +53,12 @@ export function TailscaleWizard() {
 
   const apply = (r: Record<string, unknown>) => { if (r.facts) setState(r as unknown as State); };
   const refresh = useCallback(async () => {
+    try {
     const r = await call();
     if (r.success) { apply(r); setLoadError(''); } else setLoadError(typeof r.error === 'string' ? r.error : 'Could not read Tailscale. Open this page on the computer that runs the app.');
+    } catch { setLoadError('Could not reach the server. Check your connection, then try again.'); }
   }, []);
-  useEffect(() => { void refresh(); }, [refresh]);
-  // While it is on, look for the second device every few seconds.
-  const on = !!state?.active;
-  useEffect(() => {
-    if (!on) return;
-    const t = setInterval(() => { void refresh(); }, 5000);
-    return () => clearInterval(t);
-  }, [on, refresh]);
+  useWizardRefresh('tailscale', refresh);
 
   const enable = async () => {
     setBusy('enable'); setMessage(null); setProof(null);
@@ -94,7 +90,7 @@ export function TailscaleWizard() {
   const fixInfo = !state?.passwordSet ? undefined : fix ? FIXES[fix] : undefined;
   return (
     <WizardFrame
-      message={message}
+      message={message ?? (loadError ? { ok: false, text: loadError } : null)}
       testSignal={testSignal}
       title="Reach it from your phone or laptop (Tailscale)"
       status={state ? <StatusPill tone={state.active ? 'good' : 'idle'}>{state.active ? 'On' : 'Off'}</StatusPill> : <Loader2 className="w-3.5 h-3.5 animate-spin text-white/40" />}

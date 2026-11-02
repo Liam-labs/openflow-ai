@@ -73,3 +73,16 @@ it.each([
   fetchMock.mockResolvedValueOnce(reply({ serverMode: true, needsSetup: true })).mockResolvedValueOnce(reply({ code, error: 'Use a longer password.', retryAfterSeconds: 90 }, false));
   await render(); await submit(); expect(host.textContent).toContain(expected); expect(host.textContent).not.toContain('Protected wizard');
 });
+
+it('protects a shared Connections child and retains its sign-in return address', async () => {
+  fetchMock.mockResolvedValueOnce(reply({serverMode:true,needsSetup:false})).mockResolvedValueOnce(reply({signedIn:false}));
+  await act(async () => root.render(createElement(SetupEntry, {nextPath:'/setup/connections'}, createElement('p',null,'Protected connections'))));
+  expect(host.textContent).not.toContain('Protected connections');
+  expect(host.querySelector('a')?.getAttribute('href')).toBe('/login?next=%2Fsetup%2Fconnections');
+});
+
+it('shows the shared Connections child after authenticated setup checks', async () => {
+  fetchMock.mockResolvedValueOnce(reply({serverMode:true,needsSetup:false})).mockResolvedValueOnce(reply({signedIn:true}));
+  await act(async () => root.render(createElement(SetupEntry, {nextPath:'/setup/connections'}, createElement('p',null,'Protected connections'))));
+  expect(host.textContent).toContain('Protected connections');
+});

@@ -11,6 +11,7 @@ export const COST_LABEL: Record<CostKind, string> = {
 };
 
 export const STATE_LABEL: Record<ConnectorState, string> = {
+  unknown: 'Status unavailable',
   'not-set-up': 'Not set up',
   installed: 'Installed',
   ready: 'Ready',
@@ -18,6 +19,7 @@ export const STATE_LABEL: Record<ConnectorState, string> = {
 };
 
 export const STATE_TONE: Record<ConnectorState, string> = {
+  unknown: 'border-white/15 text-white/50 bg-white/5',
   'not-set-up': 'border-white/15 text-white/50 bg-white/5',
   installed: 'border-yellow-400/30 text-yellow-300 bg-yellow-400/10',
   ready: 'border-green-400/30 text-green-300 bg-green-400/10',
