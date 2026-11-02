@@ -14,10 +14,10 @@ export const dynamic = 'force-dynamic';
 
 type Params = { params: Promise<{ channelId: string; toolId: string; path: string[] }> };
 
-export const GET = tracked('/api/channel-tools/file', async (request: NextRequest, context?: Params) => {
+export const GET = tracked('/api/channel-tools/file', async (request: NextRequest, context: Params) => {
   const authDenied = await requireAuthOrLocal(request, 'read');
   if (authDenied) return authDenied;
-  const { channelId, toolId, path } = await context!.params;
+  const { channelId, toolId, path } = await context.params;
   const decode = (s: string) => { try { return decodeURIComponent(s); } catch { return '\0'; } };
   const rel = path.map(decode).join('/');
   const file = await readChannelToolFile(decode(channelId), decode(toolId), rel);

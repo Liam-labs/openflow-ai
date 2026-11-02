@@ -15,6 +15,8 @@ import { DataPaths } from '@/lib/data-paths';
 import { readJsonFile, writeJsonFile } from '@/lib/data-io';
 import { createToken as createApiToken, hashToken, loadTokensData, requireAuthOrLocal } from '@/lib/api-auth';
 import { tracked } from '@/lib/api-tracking';
+import { validateProfilePatch } from '@/lib/account-profile';
+import { updateAccount } from '@/lib/account-store';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -102,7 +104,7 @@ function validateStep5(data: unknown): data is Step5Data {
 // Step handlers
 // ---------------------------------------------------------------------------
 
-async function saveStep1(data: Step1Data): Promise<void> {
+async function saveStep1(data: Step1Data, displayName: string): Promise<void> {
   const profile = {
     name: data.name.trim(),
     businessName: data.businessName?.trim() || '',
@@ -119,6 +121,11 @@ async function saveStep1(data: Step1Data): Promise<void> {
 
   await ensureDir(path.dirname(DataPaths.user.profile));
   await writeJsonFile(DataPaths.user.profile, profile);
+
+  // The name is how agents address the owner. Every agent's user-profile.md is rendered from the account profile
+  // (GET /api/account), and the channel store stamps it on the owner's participant records at every save, so step 1
+  // saves it there as Settings does (D3, README trial 2026-10-31: the agents kept addressing the owner as "You").
+  await updateAccount({ profile: { displayName } });
 }
 
 async function saveStep2(data: Step2Data): Promise<{ devflowApiToken: string }> {
@@ -254,7 +261,16 @@ export const POST = tracked('/api/setup/save-step', async (request: NextRequest)
             { status: 400 }
           );
         }
-        await saveStep1(data as Step1Data);
+        {
+          const checked = validateProfilePatch({ displayName: (data as Step1Data).name });
+          if (!checked.ok || !checked.value.displayName) {
+            return NextResponse.json(
+              { success: false, error: checked.ok ? 'Your name is required.' : checked.errors.map(e => e.message).join(' ') },
+              { status: 400 }
+            );
+          }
+          await saveStep1(data as Step1Data, checked.value.displayName);
+        }
         break;
 
       case 2: {

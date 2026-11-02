@@ -112,7 +112,7 @@ function GaugePanel({ machine }: { machine: MachineEntry }) {
         <div className="wmg-gauge-col">
           <div className="wmg-ring" style={{ '--pct': data.usagePercent, '--risk': riskColor } as React.CSSProperties}>
             <svg viewBox="0 0 120 120" className="wmg-ring-svg">
-              <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
+              <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(var(--ink-ch), 0.06)" strokeWidth="10" />
               <circle
                 cx="60" cy="60" r="52"
                 fill="none"
@@ -145,7 +145,7 @@ function GaugePanel({ machine }: { machine: MachineEntry }) {
             <span className="wmg-stat-value">
               <span style={{ color: riskColor }}>{fmtGb(data.usedMb)}</span>
               {' / '}
-              <span style={{ color: '#22c55e' }}>{fmtGb(data.availableMb)}</span>
+              <span style={{ color: 'var(--tx-22c55e)' }}>{fmtGb(data.availableMb)}</span>
             </span>
             <span className="wmg-stat-sub">
               {data.availableMb < 1024 ? `Only ${data.availableMb} MB free` : `${fmtGb(data.availableMb)} available`}
@@ -157,7 +157,7 @@ function GaugePanel({ machine }: { machine: MachineEntry }) {
                 Swap
                 {data.swapPercent > 80 && <span className="wmg-warn-dot" />}
               </span>
-              <span className="wmg-stat-value" style={{ color: data.swapPercent > 80 ? '#f97316' : 'rgba(255,255,255,0.7)' }}>
+              <span className="wmg-stat-value" style={{ color: data.swapPercent > 80 ? '#f97316' : 'rgba(var(--ink-ch), 0.7)' }}>
                 {fmtGb(data.swapUsedMb)} / {fmtGb(data.swapTotalMb)}
               </span>
               <span className="wmg-stat-sub">{data.swapPercent}% used</span>

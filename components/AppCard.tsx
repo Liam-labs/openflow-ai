@@ -78,8 +78,8 @@ export function AppCard({ app, healthStatus, onEdit, onStartService, index = 0 }
   const isRemote = useMemo(() => {
     if (typeof window === 'undefined') return false;
     const host = window.location.hostname;
-    // A public domain name (not an IP address, not a tailnet or LAN name) means the tunnel.
-    const isPublicDomain = host.includes('.') && !/^[\d.]+$/.test(host) && !/\.(ts\.net|local|lan|internal)$/.test(host);
+    // A public domain name (not an IP address, not a tailnet, LAN or <app>.localhost name) means the tunnel.
+    const isPublicDomain = host.includes('.') && !/^[\d.]+$/.test(host) && !/\.(ts\.net|local|lan|internal|localhost)$/.test(host);
     return isPublicDomain || host.includes('tunnel');
   }, []);
 
@@ -179,8 +179,8 @@ export function AppCard({ app, healthStatus, onEdit, onStartService, index = 0 }
           WebkitBackdropFilter: 'blur(20px) saturate(160%)',
           border: `1px solid rgba(${rgb.r},${rgb.g},${rgb.b},${isHovered ? 0.45 : 0.28})`,
           boxShadow: isHovered
-            ? `0 20px 50px rgba(0,0,0,0.55), 0 0 40px rgba(${rgb.r},${rgb.g},${rgb.b},0.18), inset 0 1px 0 rgba(255,255,255,0.06)`
-            : `0 8px 28px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.035)`,
+            ? `0 20px 50px rgba(0,0,0,0.55), 0 0 40px rgba(${rgb.r},${rgb.g},${rgb.b},0.18), inset 0 1px 0 rgba(var(--ink-ch), 0.06)`
+            : `0 8px 28px rgba(0,0,0,0.45), inset 0 1px 0 rgba(var(--ink-ch), 0.035)`,
         }}
       >
         {/* Top gradient accent line */}
@@ -213,7 +213,7 @@ export function AppCard({ app, healthStatus, onEdit, onStartService, index = 0 }
                 className="relative w-14 h-14 rounded-2xl flex items-center justify-center transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105 group-hover:-rotate-3"
                 style={{
                   background: `linear-gradient(145deg, rgb(${emblemLight.r},${emblemLight.g},${emblemLight.b}) 0%, rgb(${emblemDark.r},${emblemDark.g},${emblemDark.b}) 100%)`,
-                  boxShadow: `inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -10px 14px rgba(0,0,0,0.18), 0 8px 18px rgba(${rgb.r},${rgb.g},${rgb.b},0.4)`,
+                  boxShadow: `inset 0 1px 0 rgba(var(--ink-ch), 0.35), inset 0 -10px 14px rgba(0,0,0,0.18), 0 8px 18px rgba(${rgb.r},${rgb.g},${rgb.b},0.4)`,
                 }}
               >
                 {app.iconType === 'emoji' ? (
@@ -295,14 +295,14 @@ export function AppCard({ app, healthStatus, onEdit, onStartService, index = 0 }
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-semibold text-white transition-all duration-200 cursor-pointer"
                 style={{
                   background: `linear-gradient(135deg, rgb(${launchLight.r},${launchLight.g},${launchLight.b}) 0%, rgb(${launchDark.r},${launchDark.g},${launchDark.b}) 100%)`,
-                  boxShadow: `0 4px 14px rgba(${rgb.r},${rgb.g},${rgb.b},0.35), inset 0 1px 0 rgba(255,255,255,0.22)`,
+                  boxShadow: `0 4px 14px rgba(${rgb.r},${rgb.g},${rgb.b},0.35), inset 0 1px 0 rgba(var(--ink-ch), 0.22)`,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = `0 6px 22px rgba(${rgb.r},${rgb.g},${rgb.b},0.55), inset 0 1px 0 rgba(255,255,255,0.32)`;
+                  e.currentTarget.style.boxShadow = `0 6px 22px rgba(${rgb.r},${rgb.g},${rgb.b},0.55), inset 0 1px 0 rgba(var(--ink-ch), 0.32)`;
                   e.currentTarget.style.transform = 'translateY(-1px)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = `0 4px 14px rgba(${rgb.r},${rgb.g},${rgb.b},0.35), inset 0 1px 0 rgba(255,255,255,0.22)`;
+                  e.currentTarget.style.boxShadow = `0 4px 14px rgba(${rgb.r},${rgb.g},${rgb.b},0.35), inset 0 1px 0 rgba(var(--ink-ch), 0.22)`;
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
                 title={isUnreachable ? "This service is local-only and cannot be reached via tunnel" : canStart ? `Start ${app.name} and open` : isRemote && app.tunnelUrl ? `Open via WebGate: ${app.tunnelUrl}` : "Open in browser"}

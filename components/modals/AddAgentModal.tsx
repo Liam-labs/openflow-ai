@@ -179,6 +179,19 @@ export function AddAgentModal({
   onCloseRef.current = onClose;
   const selectedRole = roles.find((role) => role.id === roleId);
   const selectedModel = modelRegistry.find((model) => model.id === modelId);
+  // The registry can hold an alias ("sonnet") and a pinned id ("sonnet-5-5") for the same
+  // API model under one label. List each API model once: the selected id, else the default
+  // entry, else the first.
+  const selectableModels = useMemo(() => {
+    const byApi = new Map<string, ModelEntry>();
+    for (const model of modelRegistry) {
+      const key = model.apiId || model.id;
+      const kept = byApi.get(key);
+      const prefer = model.id === modelId || (kept?.id !== modelId && model.isDefault && !kept?.isDefault);
+      if (!kept || prefer) byApi.set(key, model);
+    }
+    return modelRegistry.filter((model) => byApi.get(model.apiId || model.id) === model);
+  }, [modelRegistry, modelId]);
   const harnesses = compatibleHarnesses(selectedModel);
   const inferredHarness = harnesses[0] || 'claude';
   const agentType = harnessOverride && harnesses.includes(harnessOverride) ? harnessOverride : inferredHarness;
@@ -611,6 +624,7 @@ export function AddAgentModal({
                         type="button"
                         role="radio"
                         aria-checked={selected}
+                        title={role.description || undefined}
                         disabled={busy}
                         data-autofocus={index === 0 ? '' : undefined}
                         onClick={() => chooseRole(role)}
@@ -635,6 +649,11 @@ export function AddAgentModal({
                     );
                   })}
                 </div>
+                {selectedRole?.description && (
+                  <p className="mt-3 text-xs leading-relaxed text-[#9fb3c8]" data-testid="selected-role-description">
+                    <span className="font-semibold text-[#c8d5e5]">{selectedRole.name}:</span> {selectedRole.description}
+                  </p>
+                )}
               </section>
 
               {selectedRole && (
@@ -708,7 +727,7 @@ export function AddAgentModal({
                         className="min-h-11 w-full rounded-lg border border-[#294766] bg-[#07111e] px-3 text-sm text-[#dce9f8] focus:outline-none focus:ring-2 focus:ring-blue-400/60"
                       >
                         <option value="" className="bg-[#0a1425]">Role default</option>
-                        {modelRegistry.map((model) => (
+                        {selectableModels.map((model) => (
                           <option key={model.id} value={model.id} className="bg-[#0a1425]">
                             {model.label}
                           </option>

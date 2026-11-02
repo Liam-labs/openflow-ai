@@ -67,6 +67,16 @@ except ImportError:  # ships next to this script; a stray copy without it only l
     def format_reply_context(reply_to):
         return ""
 
+try:
+    from skill_router_hint import SkillHintClient
+except ImportError:  # ships next to this script; a stray copy without it only loses the skill hint
+    class SkillHintClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def hint_for(self, message_id):
+            return ""
+
 
 # ---------------------------------------------------------------------------
 # Codex JSONL helpers (replaces jsonl_state_reader import from collab-claude.py)
@@ -472,6 +482,196 @@ def codex_final_response_disposition(jsonl_path: str, after_byte: int = 0) -> st
     return disposition
 
 
+# ─── Provider / model error detection for a finished turn ────────────────────
+#
+# A Codex turn can end because the model call itself failed (HTTP 429 or 5xx
+# after Codex's own retries, a dropped stream, a usage limit). Codex then ends
+# the turn with no answer. The idle detectors cannot tell that from a finished
+# turn, so without this check the wrapper marked the delivery handled and the
+# message was lost (Vala, 26 Oct 2026: "exceeded retry limit, last status: 429").
+#
+# Evidence sources, strongest first:
+#   rollout  an `event_msg` of type `error` written after the user message.
+#            Codex may persist these only in its extended history mode, so
+#            they can be absent from a normal interactive rollout.
+#   pane     the error cell the TUI prints, a line starting with "■". Matched
+#            only after the last copy of this delivery's token, so an older
+#            error or a model quoting the text is never mistaken for it.
+TURN_FAILURE_REASON_PREFIX = "codex_turn_failed"
+# Total attempts per message, matching the ledger's MAX_DELIVERY_ATTEMPTS.
+TURN_FAILURE_MAX_ATTEMPTS = 3
+# Wait before attempt N+1 after attempt N fails. Applied through the existing
+# claim gate, not a new loop.
+TURN_FAILURE_BACKOFF_SECONDS = (30.0, 120.0, 300.0)
+
+_HTTP_STATUS_TEXT = {
+    429: "Too Many Requests", 500: "Internal Server Error", 502: "Bad Gateway",
+    503: "Service Unavailable", 504: "Gateway Timeout",
+}
+_USAGE_LIMIT_RE = re.compile(r"hit\s+your\s+usage\s+limit", re.I)
+_USAGE_RESET_RE = re.compile(r"try\s+again\s+(?:at|in)\s+(.{1,60}?)\.(?:\s|$)", re.I | re.S)
+_RETRY_LIMIT_RE = re.compile(
+    r"exceeded\s+retry\s+limit,\s*last\s+status:\s*(\d{3})[ \t]*([A-Za-z][A-Za-z \t-]*)?", re.I)
+_STREAM_DROPPED_RE = re.compile(r"stream\s+disconnected\s+before\s+completion", re.I)
+_MODEL_OUTPUT_ITEM_TYPES = {
+    "reasoning", "function_call", "function_call_output", "custom_tool_call",
+    "custom_tool_call_output", "local_shell_call", "web_search_call",
+}
+
+
+def classify_codex_turn_failure_text(text) -> dict | None:
+    """Classify Codex error text as a provider failure, or None when it is something else.
+
+    Returns {'kind', 'code', 'retryable', ...}. Only the three failures that
+    leave a message unanswered through no fault of the message are recognised;
+    any other error keeps its current handling.
+    """
+    if not isinstance(text, str) or not text.strip():
+        return None
+    if _USAGE_LIMIT_RE.search(text):
+        reset = _USAGE_RESET_RE.search(" ".join(text.split()))
+        return {
+            "kind": "usage_limit", "code": "usage_limit", "retryable": False,
+            "reset": reset.group(1).strip() if reset else None,
+        }
+    retry = _RETRY_LIMIT_RE.search(text)
+    if retry:
+        status = int(retry.group(1))
+        phrase = (retry.group(2) or "").strip() or _HTTP_STATUS_TEXT.get(status, "")
+        return {
+            "kind": "provider_error", "code": f"http_{status}", "retryable": True,
+            "status": status, "status_text": f"{status} {phrase}".strip(),
+        }
+    if _STREAM_DROPPED_RE.search(text):
+        return {"kind": "stream_disconnected", "code": "stream_disconnected", "retryable": True}
+    return None
+
+
+def _scan_codex_rollout_for_turn_failure(jsonl_path: str, after_byte: int = 0) -> dict:
+    """Read the rollout after `after_byte` for a provider error in the newest turn.
+
+    Returns {'failure': dict|None, 'model_output': bool, 'readable': bool}.
+    A non-empty final answer cancels any earlier error: the turn produced a reply.
+    """
+    result = {"failure": None, "model_output": False, "readable": False}
+    try:
+        with open(jsonl_path, "r", errors="replace") as f:
+            if after_byte:
+                f.seek(max(after_byte - 1, 0))
+                if f.read(1) != "\n":
+                    f.readline()
+            content = f.read()
+    except (FileNotFoundError, PermissionError, OSError, TypeError):
+        return result
+    result["readable"] = True
+    for line in content.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            entry = json.loads(line)
+        except (json.JSONDecodeError, ValueError):
+            continue
+        if not isinstance(entry, dict):
+            continue
+        etype = entry.get("type")
+        payload = entry.get("payload")
+        if not isinstance(payload, dict):
+            continue
+        if etype == "event_msg":
+            ptype = payload.get("type")
+            if ptype == "task_started":
+                result["failure"] = None
+                result["model_output"] = False
+            elif ptype == "error":
+                failure = classify_codex_turn_failure_text(payload.get("message"))
+                if failure:
+                    result["failure"] = failure
+            continue
+        if etype != "response_item":
+            continue
+        if payload.get("role") == "user":
+            result["failure"] = None
+            result["model_output"] = False
+            continue
+        if payload.get("phase") == "final_answer":
+            blocks = payload.get("content")
+            text = "\n".join(
+                b.get("text") or "" for b in blocks
+                if isinstance(b, dict) and isinstance(b.get("text"), str)
+            ) if isinstance(blocks, list) else ""
+            result["model_output"] = True
+            if text.strip():
+                result["failure"] = None
+            continue
+        ptype = payload.get("type")
+        if ptype in _MODEL_OUTPUT_ITEM_TYPES or (ptype == "message" and payload.get("role") == "assistant"):
+            result["model_output"] = True
+    return result
+
+
+def _codex_pane_error_blocks(text: str) -> list:
+    """Error cells in pane text: each "■" line plus up to three continuation lines."""
+    lines = text.splitlines()
+    blocks = []
+    for index, line in enumerate(lines):
+        if line.lstrip().startswith("■"):
+            blocks.append("\n".join(lines[index:index + 4]))
+    return blocks
+
+
+def detect_codex_turn_failure(jsonl_path, after_byte, pane_text, token) -> dict | None:
+    """Return a classified provider failure for the delivery's turn, or None.
+
+    None means "no evidence of a failed turn": the caller then keeps its normal
+    handled behaviour, so a missing rollout or pane can never cause a replay.
+    """
+    rollout = _scan_codex_rollout_for_turn_failure(jsonl_path, after_byte) if jsonl_path else None
+    if rollout and rollout["failure"]:
+        return dict(rollout["failure"], source="rollout")
+    if not isinstance(pane_text, str) or not pane_text:
+        return None
+    attributed = None
+    if token:
+        pattern = r"\s*".join(re.escape(ch) for ch in token)
+        last_end = None
+        for match in re.finditer(pattern, pane_text):
+            last_end = match.end()
+        if last_end is not None:
+            attributed = pane_text[last_end:]
+    if attributed is not None:
+        scope = attributed
+    else:
+        # Token scrolled out of view or wrapped oddly. Accept only the last few
+        # lines, and only when the rollout proves the model produced nothing.
+        if not rollout or not rollout["readable"] or rollout["model_output"]:
+            return None
+        scope = "\n".join(pane_text.splitlines()[-15:])
+    for block in reversed(_codex_pane_error_blocks(scope)):
+        failure = classify_codex_turn_failure_text(block)
+        if failure:
+            return dict(failure, source="pane")
+    return None
+
+
+def build_turn_failure_note(agent_name: str, failure: dict, attempts: int) -> str:
+    """One plain-English channel note for a message that could not be answered."""
+    who = (agent_name or "The agent").strip() or "The agent"
+    if failure.get("kind") == "usage_limit":
+        reset = failure.get("reset")
+        when = f" Codex says it resets at {reset}." if reset else ""
+        return (f"{who} could not answer this message: the Codex usage limit has been reached.{when}"
+                " Resend it after the limit resets.")
+    times = f"{attempts} time{'s' if attempts != 1 else ''}"
+    if failure.get("kind") == "stream_disconnected":
+        what = "the connection to OpenAI dropped before the answer finished"
+    elif failure.get("status") == 429:
+        what = f"OpenAI refused the request ({failure.get('status_text') or '429 Too Many Requests'})"
+    else:
+        what = f"OpenAI returned an error ({failure.get('status_text') or 'unknown status'})"
+    return f"{who} could not answer this message: {what} {times}. Resend it later."
+
+
 def read_codex_context_usage(jsonl_path: str) -> tuple[int, int] | None:
     """Return the latest live-context token count and model window.
 
@@ -714,7 +914,7 @@ class CollabCodexWrapper:
         # Session-bound hook support. Per-message hooks are intentionally disabled;
         # durable scaffolding is loaded at startup and DevFlow records outcomes.
         self.agent_name = agent_name  # e.g. "an agent"
-        self.agent_dir = agent_dir    # e.g. "~/SG-1/Team/an agent"
+        self.agent_dir = agent_dir    # e.g. "~/the main project/Team/an agent"
         self.child = None  # pexpect child process
         self.last_keystroke = time.time()
         self.last_poll_time = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -1387,6 +1587,10 @@ class CollabCodexWrapper:
                 or not self.channel_id or not self.participant_id
                 or not self.child or not self.child.isalive()):
             return None
+        # A message whose turn failed on a provider error waits out its backoff
+        # here. This reuses the claim cycle that already runs; it adds no loop.
+        if time.monotonic() < getattr(self, '_turn_failure_retry_not_before_mono', 0.0):
+            return None
         # Local is_processing is authoritative only for turns initiated by the
         # wrapper. Startup prompts, direct terminal input, and tool work can
         # begin outside inject_message(), so verify transcript ground truth at
@@ -1414,6 +1618,7 @@ class CollabCodexWrapper:
             return None
         self._active_delivery = record
         self._active_delivery_started_mono = time.monotonic()
+        self._turn_failure_just_handled = False
         debug(
             f"Durable delivery claimed: {record.get('messageId', '')[:8]} "
             f"lease={record.get('lease', {}).get('id', '')[:8]} attempt={record.get('attempts')}"
@@ -1425,7 +1630,11 @@ class CollabCodexWrapper:
             )
             self._dead_letter_active_delivery('wrapper_attempt_ceiling')
             return None
-        if record.get('attempts', 0) > 1 or record.get('recoveryReason'):
+        if ((record.get('attempts', 0) > 1 or record.get('recoveryReason'))
+                and not str(record.get('recoveryReason') or '').startswith(TURN_FAILURE_REASON_PREFIX)):
+            # A requeue after a failed turn is the opposite case: the old token
+            # in the rollout belongs to the turn that failed, so the message
+            # must be injected again, not treated as already ingested.
             token = record.get('token') or delivery_token(
                 record.get('messageId', ''), self.participant_id
             )
@@ -1599,13 +1808,17 @@ class CollabCodexWrapper:
         debug(f"Durable delivery {record.get('messageId', '')[:8]} {outcome}: {reason}")
         return True
 
-    def _dead_letter_active_delivery(self, reason):
-        """Quarantine an ambiguous delivery instead of replaying or dropping it."""
+    def _dead_letter_active_delivery(self, reason, notice=None):
+        """Quarantine an ambiguous delivery instead of replaying or dropping it.
+
+        `notice` is a short plain-English line the server posts once to the
+        message's sender when the record is quarantined.
+        """
         active = getattr(self, '_active_delivery', None)
         if not active:
             return False
         lease = active.get('lease') or {}
-        result = self._delivery_api_call({
+        payload = {
             'action': 'deadletter',
             'channelId': getattr(self, 'channel_id', None),
             'participantId': getattr(self, 'participant_id', None),
@@ -1613,7 +1826,10 @@ class CollabCodexWrapper:
             'leaseId': lease.get('id', ''),
             'ownerId': self._delivery_owner_id(),
             'reason': reason,
-        })
+        }
+        if notice:
+            payload['notice'] = notice
+        result = self._delivery_api_call(payload)
         if isinstance(result, dict) and result.get('record'):
             debug(f"Durable delivery {active.get('messageId', '')[:8]} quarantined: {reason}")
             self._clear_active_delivery_state(reason)
@@ -1677,6 +1893,13 @@ class CollabCodexWrapper:
     def _sync_voice_session_file(self):
         if getattr(self, 'joined', False) and getattr(self, 'channel_id', None):
             self._write_session_file(self.channel_id, getattr(self, 'channel_name', None))
+
+    def _skill_hint(self, msg_id):
+        """The skill-router hint line for this message, or ''. Shared by every runtime: scripts/skill_router_hint.py."""
+        client = getattr(self, '_skill_hint_client', None)
+        if client is None:
+            client = self._skill_hint_client = SkillHintClient(DEVFLOW_URL, getattr(self, 'participant_id', '') or '', log=debug)
+        return client.hint_for(msg_id)
 
     def _voice_reply_hint(self, message_id):
         active = getattr(self, '_active_delivery', None)
@@ -1916,6 +2139,65 @@ class CollabCodexWrapper:
         except Exception as e:
             debug(f"Failed to clear Codex composer after submit failure: {e}")
 
+    def _active_turn_failure(self, active):
+        """Classified provider failure for the active delivery's finished turn, or None."""
+        record_key = (active.get('id'), active.get('attempts'))
+        seen = getattr(self, '_turn_failure_seen', None)
+        if seen and seen[0] == record_key:
+            return seen[1]
+        try:
+            token = active.get('token') or delivery_token(
+                active.get('messageId', ''), getattr(self, 'participant_id', None))
+            path = active.get('transcriptPath') or self._resolve_transcript()
+            failure = detect_codex_turn_failure(
+                path, active.get('transcriptByte') or 0, self._capture_tmux_pane(300), token)
+            if failure and self._agent_responded_since_last_inject() is not False:
+                # The agent posted to the channel (or this could not be checked):
+                # the message was answered, so a later error must not replay it.
+                failure = None
+        except Exception as e:
+            debug(f"Turn failure detection error (treating turn as normal): {e}")
+            failure = None
+        if failure:
+            self._turn_failure_seen = (record_key, failure)
+            debug(f"Provider error ended the turn for {active.get('messageId', '')[:8]}: "
+                  f"{failure.get('code')} via {failure.get('source')}")
+        return failure
+
+    def _handle_failed_turn(self, active, failure):
+        """Requeue a message whose turn failed, or dead-letter it once retries are spent.
+
+        Always returns False: the delivery is not handled either way. A failed
+        server call leaves the record leased, and this is retried at most every
+        two seconds.
+        """
+        now = time.monotonic()
+        if now < getattr(self, '_turn_failure_next_try_mono', 0.0):
+            return False
+        self._turn_failure_next_try_mono = now + 2.0
+        attempts = max(int(active.get('attempts') or 1), 1)
+        reason = f"{TURN_FAILURE_REASON_PREFIX}:{failure.get('code')}"
+        message_id = active.get('messageId', '')
+        if not failure.get('retryable') or attempts >= TURN_FAILURE_MAX_ATTEMPTS:
+            note = build_turn_failure_note(self.participant_name, failure, attempts)
+            done = self._dead_letter_active_delivery(reason, notice=note)
+            outcome = 'dead-lettered with one channel note'
+        else:
+            delay = TURN_FAILURE_BACKOFF_SECONDS[min(attempts - 1, len(TURN_FAILURE_BACKOFF_SECONDS) - 1)]
+            done = self._release_active_delivery(reason, requeue=True)
+            if done:
+                self._turn_failure_retry_not_before_mono = time.monotonic() + delay
+                self._clear_active_delivery_state(reason)
+            outcome = f'requeued, retry in {delay:.0f}s (attempt {attempts} of {TURN_FAILURE_MAX_ATTEMPTS})'
+        if done:
+            self._turn_failure_seen = None
+            self._turn_failure_just_handled = True
+            debug(f"Durable delivery {message_id[:8]} {outcome}: {reason}")
+            self.log_delivery_failure(message_id, f"turn_failed_{failure.get('code')}")
+        else:
+            debug(f"Durable delivery {message_id[:8]} failed-turn handling did not reach the server; will retry")
+        return False
+
     def _complete_active_delivery(self):
         """Move an ingested item to handled and only then advance UI read state."""
         active = self._active_delivery
@@ -1923,6 +2205,12 @@ class CollabCodexWrapper:
             return False
         handled_ts = active.get('message', {}).get('timestamp')
         message_id = active.get('messageId', '')
+        # A turn that ended on a provider error answered nothing. Marking it
+        # handled would lose the message, so it goes back through the ledger.
+        failure = self._active_turn_failure(active)
+        if failure:
+            self._handle_failed_turn(active, failure)
+            return False
         if not self._transition_active_delivery('handled'):
             return False
         if handled_ts:
@@ -2240,7 +2528,7 @@ class CollabCodexWrapper:
         Ported from collab-antigravity.py T1.1 (2026-05-25). Fires:
           1. check-rotate.sh — session rotation check (existing Codex behaviour)
           2. context-inject.py — keyword-cluster injection + drift prevention
-             (includes S2.3 skill-index.md injection for SG-1 skill discovery)
+             (includes S2.3 skill-index.md injection for the main project skill discovery)
           3. context-health-sample.py — context fill tracking (noop for Codex, no Claude session_id)
 
         Returns additionalContext string if context-inject matched a keyword cluster,
@@ -2721,7 +3009,7 @@ class CollabCodexWrapper:
     def join_channel(self, channel_id, channel_name=None, force=False):
         self.channel_id = channel_id
         if channel_name:
-            self.channel_name = channel_name  # Store for OTEL and Pulse reporting
+            self.channel_name = channel_name  # Stored for logging
         payload = self._join_payload(channel_id, force=force)
         result = self.api_call("", "POST", payload)
         if result.get("success"):
@@ -3467,6 +3755,9 @@ class CollabCodexWrapper:
                     append_prompt = f"{token_prefix}\n[Channel message from {sender} in {ch}] {reply_line}: {content}"
                 else:
                     append_prompt = f"{token_prefix}\n[Channel message from {sender} in {ch}]: {content}"
+                skill_hint = self._skill_hint(msg_id)
+                if skill_hint:
+                    append_prompt += f"\n\n{skill_hint}"
                 # Add mention annotation
                 is_mentioned_append = False
                 if mentions:
@@ -3539,6 +3830,10 @@ class CollabCodexWrapper:
             active = getattr(self, '_active_delivery', None)
             if active and active.get('messageId') == msg_id:
                 prompt = f"{active.get('token') or delivery_token(msg_id, self.participant_id)}\n{prompt}"
+
+            skill_hint = self._skill_hint(msg_id)
+            if skill_hint:
+                prompt += f"\n\n{skill_hint}"
 
             if is_mentioned:
                 prompt += "\n(@you)"
@@ -4291,6 +4586,11 @@ class CollabCodexWrapper:
                             self._post_compact_reinject_pending = False
                             self._reinject_after_compaction()
                         self._complete_active_delivery()
+                        # A turn that died on a provider error was requeued or
+                        # dead-lettered above. The agent said nothing, so the
+                        # terminal-only corrective below must not fire.
+                        _turn_failed = bool(getattr(self, '_turn_failure_just_handled', False))
+                        self._turn_failure_just_handled = False
                         # Deferred mark_read
                         if self.pending_mark_read:
                             if self.pending_mark_read_timestamp:
@@ -4334,12 +4634,12 @@ class CollabCodexWrapper:
                         # quietly). Only the transcript separates them, and only
                         # for the turn that began at this delivery. Anything
                         # short of proven emptiness keeps the warning.
-                        _silent_turn = False
+                        _silent_turn = _turn_failed
                         if not agent_responded and self.last_injected_sender and _time_since_inject >= 30:
                             _t = self._resolve_transcript()
                             _after = getattr(self, '_verify_after_byte', 0) or 0
                             _disposition = codex_final_response_disposition(_t, _after) if _t else None
-                            _silent_turn = _disposition == "empty"
+                            _silent_turn = _silent_turn or _disposition == "empty"
                             if _silent_turn:
                                 debug(
                                     "Deliberate silence: turn completed with no final answer "

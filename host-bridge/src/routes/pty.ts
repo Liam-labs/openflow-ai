@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { exec, execSync } from 'child_process';
+import { execFile, execFileSync } from 'child_process';
 import { promisify } from 'util';
 import { randomUUID } from 'crypto';
-import { existsSync, readFileSync, statSync, mkdirSync } from 'fs';
+import { existsSync, readFileSync, statSync, mkdirSync, chmodSync } from 'fs';
 import { join, isAbsolute } from 'path';
 import type {
   BridgeConfig,
@@ -16,8 +16,9 @@ import type {
   PtySessionInfo,
   PtyListResponse,
 } from '../../../lib/host-bridge/types';
+import { buildSessionCommand, historyLimit, newSessionArgs, pipePaneArgs, sendTextArgs } from '../tmux-args';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 interface ActiveSession {
   sessionId: string;
@@ -36,7 +37,9 @@ export function ptyRouter(config: BridgeConfig): Router {
   const router = Router();
 
   // Ensure pipe log dir exists
-  mkdirSync(PIPE_LOG_DIR, { recursive: true });
+  // Private: these logs hold everything a session printed.
+  mkdirSync(PIPE_LOG_DIR, { recursive: true, mode: 0o700 });
+  try { chmodSync(PIPE_LOG_DIR, 0o700); } catch { /* a folder owned by someone else: the spawn will fail on its own */ }
 
   // POST /pty/spawn — create a new PTY session
   router.post('/spawn', async (req, res) => {
@@ -49,7 +52,7 @@ export function ptyRouter(config: BridgeConfig): Router {
       return;
     }
 
-    const { workingDirectory, command, args, env, historyLimit } = req.body as PtySpawnRequest;
+    const { workingDirectory, command, args, env, historyLimit: requestedHistory } = req.body as PtySpawnRequest;
 
     if (!workingDirectory || !isAbsolute(workingDirectory)) {
       res.status(400).json({
@@ -72,39 +75,25 @@ export function ptyRouter(config: BridgeConfig): Router {
     const sessionId = randomUUID();
     const tmuxName = `hb-${sessionId.slice(0, 8)}`;
     const pipeLog = join(PIPE_LOG_DIR, `${sessionId}.log`);
-    const limit = historyLimit || 50_000;
+    const limit = historyLimit(requestedHistory);
 
-    // Build the command
-    let fullCommand = command || 'bash';
-    if (args && args.length > 0) {
-      fullCommand += ' ' + args.map((a) => `'${a.replace(/'/g, "'\\''")}'`).join(' ');
+    let sessionCommand: string;
+    try {
+      sessionCommand = buildSessionCommand(command, args, env);
+    } catch (e) {
+      res.status(400).json({ success: false, error: e instanceof Error ? e.message : String(e), timestamp: new Date().toISOString() });
+      return;
     }
-
-    // Build env string
-    let envPrefix = '';
-    if (env) {
-      envPrefix = Object.entries(env)
-        .map(([k, v]) => `${k}='${v.replace(/'/g, "'\\''")}'`)
-        .join(' ') + ' ';
-    }
-
-    const tmuxCmd = [
-      `tmux new-session -d -s ${tmuxName} -c '${workingDirectory}'`,
-      `'${envPrefix}${fullCommand}'`,
-      `\\; set-option -t ${tmuxName} history-limit ${limit}`,
-      `\\; pipe-pane -t ${tmuxName} -o 'cat >> ${pipeLog}'`,
-    ].join(' ');
 
     try {
-      await execAsync(tmuxCmd, { timeout: 10_000 });
+      await execFileAsync('tmux', newSessionArgs(tmuxName, workingDirectory, sessionCommand), { timeout: 10_000 });
+      await execFileAsync('tmux', ['set-option', '-t', tmuxName, 'history-limit', String(limit)], { timeout: 5_000 });
+      await execFileAsync('tmux', pipePaneArgs(tmuxName, pipeLog), { timeout: 5_000 });
 
       // Get the PID of the tmux session's shell
       let pid = 0;
       try {
-        const { stdout } = await execAsync(
-          `tmux list-panes -t ${tmuxName} -F '#{pane_pid}'`,
-          { timeout: 5_000 }
-        );
+        const { stdout } = await execFileAsync('tmux', ['list-panes', '-t', tmuxName, '-F', '#{pane_pid}'], { timeout: 5_000 });
         pid = parseInt(stdout.trim()) || 0;
       } catch {
         // PID lookup is best-effort
@@ -170,12 +159,10 @@ export function ptyRouter(config: BridgeConfig): Router {
     }
 
     try {
-      // Escape special chars for tmux send-keys -l
-      const escaped = input.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\$/g, '\\$').replace(/`/g, '\\`');
-      execSync(`tmux send-keys -t ${session.tmuxSession} -l "${escaped}"`, { timeout: 5_000 });
+      execFileSync('tmux', sendTextArgs(session.tmuxSession, input), { timeout: 5_000 });
 
       if (!raw) {
-        execSync(`tmux send-keys -t ${session.tmuxSession} Enter`, { timeout: 5_000 });
+        execFileSync('tmux', ['send-keys', '-t', session.tmuxSession, 'Enter'], { timeout: 5_000 });
       }
 
       const response: BridgeResponse<PtyWriteResponse> = {
@@ -252,7 +239,7 @@ export function ptyRouter(config: BridgeConfig): Router {
     }
 
     try {
-      await execAsync(`tmux kill-session -t ${session.tmuxSession} 2>/dev/null`, { timeout: 5_000 });
+      await execFileAsync('tmux', ['kill-session', '-t', session.tmuxSession], { timeout: 5_000 });
     } catch {
       // Session may already be dead
     }
@@ -298,7 +285,7 @@ export function ptyRouter(config: BridgeConfig): Router {
 
 function isSessionAlive(tmuxName: string): boolean {
   try {
-    execSync(`tmux has-session -t ${tmuxName} 2>/dev/null`, { timeout: 2_000 });
+    execFileSync('tmux', ['has-session', '-t', tmuxName], { timeout: 2_000, stdio: 'ignore' });
     return true;
   } catch {
     return false;

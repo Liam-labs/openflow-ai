@@ -38,6 +38,13 @@ except ImportError:
 
 # Configuration
 DEVFLOW_URL = __import__("os").environ.get("DEVFLOW_URL", "http://localhost:3000").rstrip("/")
+
+# The skill router's one-line hint, asked for just before the message is typed (scripts/skill_router_hint.py).
+try:
+    from skill_router_hint import fetch_hint
+except ImportError:  # ships next to this script; a stray copy without it only loses the skill hint
+    def fetch_hint(participant_id, message_id, base_url=None, log=None):
+        return None
 API_BASE = f"{DEVFLOW_URL}/api/collab"
 POLL_INTERVAL = 2  # seconds
 IDLE_THRESHOLD = 1.5  # seconds since last keystroke before injecting
@@ -216,7 +223,7 @@ class CollabGeminiWrapper:
         Fires:
           1. check-rotate.sh — session rotation check
           2. context-inject.py — keyword-cluster injection + drift prevention
-             (includes S2.5 skill-index.md injection for SG-1 skill discovery)
+             (includes S2.5 skill-index.md injection for the main project skill discovery)
           3. context-health-sample.py — context fill tracking
 
         Returns additionalContext string if context-inject matched a keyword cluster,
@@ -469,7 +476,7 @@ class CollabGeminiWrapper:
         debug(f"Failed to post: {result}")
         return False
 
-    def inject_message(self, sender, content):
+    def inject_message(self, sender, content, msg_id=None):
         """Inject a message into Gemini's input using pexpect - deferred Enter"""
         if not self.child or not self.child.isalive():
             debug("Cannot inject - child not alive")
@@ -486,6 +493,9 @@ class CollabGeminiWrapper:
 
         try:
             prompt = f"[Channel message from {sender}]: {content}"
+            skill_hint = fetch_hint(self.participant_id or "", msg_id, DEVFLOW_URL, debug)
+            if skill_hint:
+                prompt += f" {skill_hint}"  # same line, no line break: a line break could submit the input early in this CLI
             debug(f"Injecting (deferred Enter): {prompt}")
             # Send ONLY the text - NO Enter yet!
             # Enter will be sent when we detect the > prompt in output_filter
@@ -571,7 +581,7 @@ A mention alone does not require an acknowledgement. Follow channel-communicatio
 
                             if sender_id == self.participant_id or sender_id == "system":
                                 continue
-                            if self.inject_message(sender, content):
+                            if self.inject_message(sender, content, msg_id=msg.get("id")):
                                 injected_any = True
                         if injected_any:
                             self.mark_read()
@@ -597,10 +607,18 @@ A mention alone does not require an acknowledgement. Follow channel-communicatio
             print(f"\033[31mError: Gemini not found. Install it or set GEMINI_BINARY path.\033[0m", file=sys.stderr)
             return 1
 
+        # Pre-trust this folder and its project folder so Gemini CLI never stops on a folder-trust question (31 Oct 2026).
+        try:
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            import agent_trust
+            agent_trust.trust_folders(agent_trust.folders_for(os.getcwd()))
+        except Exception as error:
+            debug(f"folder trust update failed (non-fatal): {error}")
+
         # Build command - default to interactive mode
         args = list(self.gemini_args) if self.gemini_args else ["-y"]
         # S2.5: pin a model that works on oauth-personal (settings.json's default
-        # gemini-3.5-flash 404s fleet-wide; gemini-2.5-flash runs) + grant the SG-1
+        # gemini-3.5-flash 404s fleet-wide; gemini-2.5-flash runs) + grant the the main project
         # skills dir so the injected skill-index.md catalog's "Read .../SKILL.md"
         # paths clear Gemini's workspace-sandboxed read_file (-y only auto-approves,
         # it does NOT widen the sandbox — mirrors Antigravity's dir-grant). Guards

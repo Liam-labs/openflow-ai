@@ -35,3 +35,37 @@ fonts.googleapis.com     # only in scripts/fetch-fonts.py, a developer script th
 names.openflow-ai.com  # OpenFlow-operated install-name registry; installer sends public key, server IP and signed proof, never account credentials.
 claim.openflow.invalid  # Non-resolving Host header for inbound port-80 install proof; not an outbound DNS destination.
 api.ipify.org  # Public IPv4 discovery only when no global IPv4 is assigned to a local interface; sends no app state or credentials.
+api.openai.com             # the key-test button on the Connections key form sends one request to check the key you typed
+api.pexels.com             # same key test
+api.replicate.com          # same key test
+api.resend.com             # same key test
+api.typesafe.ai            # same key test, and the decision model call (Jev) once a TypeSafe key is saved
+api.cloudflare.com         # the Cloudflare wizard sends your own API token here and nowhere else
+dash.cloudflare.com        # a link the Cloudflare wizard shows so you can create the token; the app never calls it
+one.dash.cloudflare.com    # a link in the Cloudflare wizard; the app never calls it
+developers.cloudflare.com  # a documentation link in the Cloudflare wizard
+tailscale.com              # the Tailscale wizard shows the official install command; the app never runs or calls it
+astral.sh                  # the memory wizard shows the official uv install command; the app never runs or calls it
+docs.docker.com            # a documentation link in the memory wizard
+www.google.com             # a Download Google Chrome link in the browser wizard
+other-site.example         # a fake origin the sign-in wizard sends to prove cross-site logins are refused; the address does not exist
+api-docs.deepseek.com      # docs link in the connector catalogue; the user opens it, the app never calls it
+cli.github.com             # docs link in the connector catalogue (GitHub CLI manual)
+console.x.ai               # link the user opens to create an xAI key
+docs.claude.com            # docs link in the connector catalogue
+docs.fal.ai                # docs link in the connector catalogue
+docs.n8n.io                # docs link in the connector catalogue
+docs.netlify.com           # docs link in the connector catalogue
+docs.typesafe.ai           # docs link in the connector catalogue
+docs.x.ai                  # docs link in the connector catalogue
+fal.ai                     # link the user opens to create a fal key
+higgsfield.ai              # docs link in the connector catalogue
+mcp.higgsfield.ai          # remote MCP address written into the agent configuration when the user installs the Higgsfield connector; the agent program connects to it, the app does not
+openflow-ai.com            # docs link in the connector catalogue (this project)
+platform.deepseek.com      # link the user opens to create a DeepSeek key
+platform.openai.com        # docs link and the page where the user creates an OpenAI key
+replicate.com              # docs link and the page where the user creates a Replicate token
+resend.com                 # docs link and the page where the user creates a Resend key
+typesafe.ai                # link the user opens to create a TypeSafe key
+vercel.com                 # docs link in the connector catalogue
+www.pexels.com             # docs link and the page where the user creates a Pexels key

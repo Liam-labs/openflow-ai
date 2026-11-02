@@ -19,15 +19,15 @@ export interface ChartBlockProps {
 
 const DEFAULT_COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#a855f7', '#06b6d4'];
 
-const AXIS_TICK = { fill: '#71717a', fontFamily: "'JetBrains Mono', monospace", fontSize: 10 };
-const GRID_STROKE = { stroke: 'rgba(255,255,255,0.06)' };
+const AXIS_TICK = { fill: 'var(--tx-71717a)', fontFamily: "'JetBrains Mono', monospace", fontSize: 10 };
+const GRID_STROKE = { stroke: 'rgba(var(--ink-ch), 0.06)' };
 const TOOLTIP_CONTENT = {
-  background: 'rgba(10,20,40,0.95)',
+  background: 'rgba(var(--deep-ch), 0.95)',
   border: '1px solid rgba(59,130,246,0.25)',
   borderRadius: 6,
   fontFamily: "'JetBrains Mono', monospace",
   fontSize: 11,
-  color: '#e4e4e7',
+  color: 'var(--tx-e4e4e7)',
 };
 
 function inferKeys(
@@ -97,7 +97,7 @@ export default function ChartBlock({ spec }: ChartBlockProps) {
           <CartesianGrid {...GRID_STROKE} />
           <XAxis dataKey={x} tick={AXIS_TICK} />
           <YAxis tick={AXIS_TICK} width={40} />
-          <Tooltip contentStyle={TOOLTIP_CONTENT} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+          <Tooltip contentStyle={TOOLTIP_CONTENT} cursor={{ fill: 'rgba(var(--ink-ch), 0.04)' }} />
           {ys.length > 1 && <Legend />}
           {ys.map((key, i) => (
             <Bar key={key} dataKey={key} fill={colors[i % colors.length]} radius={[2, 2, 0, 0]} />

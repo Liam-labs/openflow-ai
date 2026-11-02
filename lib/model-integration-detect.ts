@@ -105,6 +105,24 @@ export function resetAdapterCache(): void {
   _adapterCache = null;
 }
 
+// Antigravity's MCP schemas live in ~/.gemini/antigravity-cli/mcp/ on the machine agy runs on. When DevFlow runs on a
+// different machine (the server + PC split since 4 Oct 2026), that folder is on the PC, so the detect pass fetches it
+// through the host helper (lib/model-integration-persist.ts) and sets it here before the sync detection runs. BUG-42:
+// without this the detector read the server's own (empty) folder and always reported MCP 'none'.
+//   undefined → not set: read the local folder (DevFlow runs on the same machine as agy, e.g. a single-machine install).
+//   facts | null → use the remote answer; do NOT read the local folder (null = the PC could not be read → treat as none).
+let _antigravityRemoteMcp: { globalMcpValid: boolean } | null | undefined;
+
+/** Set by the persist pass when agy runs on another machine: the facts, or null when that machine could not be read. */
+export function setAntigravityRemoteMcp(facts: { globalMcpValid: boolean } | null): void {
+  _antigravityRemoteMcp = facts;
+}
+
+/** Clear back to local-folder mode (the default). */
+export function clearAntigravityRemoteMcp(): void {
+  _antigravityRemoteMcp = undefined;
+}
+
 function findAdapterForAgentType(agentType: string): AdapterInfo | undefined {
   const reg = getAdapterRegistry();
   // adapters publish `matches_conditions` like ['model:gpt-5.6-sol'] or
@@ -325,9 +343,9 @@ function detectFeed(agentType: string): CapabilityLevel {
 }
 
 /**
- * `skills` — SG-1 skill bridge detection via file-probe.
+ * `skills` — the main project skill bridge detection via file-probe.
  *
- * Claude: native 'full' (scaffolding deploys SG-1 skills to `~/.claude/skills/`
+ * Claude: native 'full' (scaffolding deploys the main project skills to `~/.claude/skills/`
  * per agent, invokable via /name).
  *
  * Non-Claude: probes the wrapper for per-runtime skill signals:
@@ -393,26 +411,32 @@ function detectMcp(agentType: string): CapabilityLevel {
   // exists with .json files, agy surfaces those tools under --print mode.
   // ALSO check the agent-specific AGENT-DIR/.mcp.json to ensure it has defined servers.
   if (at === 'antigravity') {
-    const home = getHomeDir();
-    const mcpDir = path.join(home, '.gemini', 'antigravity-cli', 'mcp');
     let globalMcpValid = false;
-    try {
-      const entries = readdirSync(mcpDir, { withFileTypes: true });
-      const schemaDirs = entries.filter(
-        (e) => e.isDirectory() && e.name !== '.' && e.name !== '..',
-      );
-      if (schemaDirs.length > 0) {
-        // Check at least one schema dir contains .json tool schemas
-        for (const dir of schemaDirs) {
-          const files = readdirSync(path.join(mcpDir, dir.name));
-          if (files.some((f) => f.endsWith('.json'))) {
-            globalMcpValid = true;
-            break;
+    if (_antigravityRemoteMcp !== undefined) {
+      // agy runs on another machine; use the answer the host helper gave. null = that machine could not be read → none.
+      globalMcpValid = _antigravityRemoteMcp?.globalMcpValid ?? false;
+    } else {
+      // DevFlow runs on the same machine as agy: read the local folder.
+      const home = getHomeDir();
+      const mcpDir = path.join(home, '.gemini', 'antigravity-cli', 'mcp');
+      try {
+        const entries = readdirSync(mcpDir, { withFileTypes: true });
+        const schemaDirs = entries.filter(
+          (e) => e.isDirectory() && e.name !== '.' && e.name !== '..',
+        );
+        if (schemaDirs.length > 0) {
+          // Check at least one schema dir contains .json tool schemas
+          for (const dir of schemaDirs) {
+            const files = readdirSync(path.join(mcpDir, dir.name));
+            if (files.some((f) => f.endsWith('.json'))) {
+              globalMcpValid = true;
+              break;
+            }
           }
         }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
     }
 
     if (!globalMcpValid) return 'none';
@@ -593,18 +617,18 @@ const INTERFACE_TYPE_META: Record<string, { label: string; description: string; 
   },
   'gemini-cli': {
     label: 'Gemini CLI',
-    description: "Google's Gemini CLI with full hook lifecycle coverage; SG-1 wraps via collab-gemini.py.",
+    description: "Google's Gemini CLI with full hook lifecycle coverage; the app wraps via collab-gemini.py.",
     // Retired 2026-10-02: Google ended Gemini CLI for individual accounts
     // ("migrate to Antigravity"). Gemini models run through Antigravity.
     retired: true,
   },
   'grok-cli': {
     label: 'Grok CLI',
-    description: "xAI's Grok CLI with full hook lifecycle coverage; SG-1 wraps via collab-grok.py.",
+    description: "xAI's Grok CLI with full hook lifecycle coverage; the app wraps via collab-grok.py.",
   },
   ollama: {
     label: 'Ollama',
-    description: "Local model runtime; SG-1 wraps via collab-agent.py.",
+    description: "Local model runtime; the app wraps via collab-agent.py.",
   },
 };
 

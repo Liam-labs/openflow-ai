@@ -3,6 +3,8 @@
  * and includes it in the collab:typing SSE event.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+// These tests call a handler directly, outside the transaction mutateChannels opens, so saving is stubbed; the handler's change to the data is what they check.
+vi.mock('@/lib/collab-channel-store', async (orig) => ({ ...(await orig<typeof import('@/lib/collab-channel-store')>()), saveChannels: vi.fn() }));
 import { handleHeartbeat } from '@/app/api/collab/_handlers/settings';
 import { eventBus } from '@/lib/event-bus';
 import type { CollabChannelsData, CollabParticipant } from '@/lib/types';

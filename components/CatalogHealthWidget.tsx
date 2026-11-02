@@ -32,14 +32,14 @@ const STATUS_CONFIG: Record<FeatureStatus, StatusConfig> = {
   audited:    { label: 'Audited',     bg: 'rgba(59,130,246,0.09)', border: 'rgba(59,130,246,0.22)',  text: '#60a5fa', dot: '#60a5fa' },
   'needs-work': { label: 'Needs Work', bg: 'rgba(251,146,60,0.09)', border: 'rgba(251,146,60,0.22)',  text: '#fb923c', dot: '#fb923c' },
   cataloged:  { label: 'Cataloged',   bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.2)',   text: '#a78bfa', dot: '#a78bfa' },
-  discovered: { label: 'Discovered',  bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.1)', text: 'rgba(255,255,255,0.45)', dot: 'rgba(255,255,255,0.3)' },
+  discovered: { label: 'Discovered',  bg: 'rgba(var(--ink-ch), 0.04)', border: 'rgba(var(--ink-ch), 0.1)', text: 'rgba(var(--ink-ch), 0.45)', dot: 'rgba(var(--ink-ch), 0.3)' },
 };
 
 const SEVERITY_CONFIG: Record<Severity, SeverityConfig> = {
   critical: { label: 'CRIT', bg: 'rgba(239,68,68,0.15)',  border: 'rgba(239,68,68,0.3)',  text: '#f87171' },
   high:     { label: 'HIGH', bg: 'rgba(251,146,60,0.12)', border: 'rgba(251,146,60,0.28)', text: '#fb923c' },
   medium:   { label: 'MED',  bg: 'rgba(250,204,21,0.1)',  border: 'rgba(250,204,21,0.25)', text: '#fbbf24' },
-  low:      { label: 'LOW',  bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.12)', text: 'rgba(255,255,255,0.4)' },
+  low:      { label: 'LOW',  bg: 'rgba(var(--ink-ch), 0.05)', border: 'rgba(var(--ink-ch), 0.12)', text: 'rgba(var(--ink-ch), 0.4)' },
 };
 
 const SEVERITY_ORDER: Record<Severity, number> = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -122,7 +122,7 @@ export function CatalogHealthWidget() {
     return Math.round((healthy / total) * 100);
   })() : null;
 
-  const scoreColor = healthScore === null ? 'rgba(255,255,255,0.3)' :
+  const scoreColor = healthScore === null ? 'rgba(var(--ink-ch), 0.3)' :
     healthScore >= 70 ? '#10b981' :
     healthScore >= 40 ? '#fb923c' : '#ef4444';
 
@@ -139,7 +139,7 @@ export function CatalogHealthWidget() {
       <div className="chw-header">
         <div className="chw-header-left">
           <div className="chw-icon-wrap" aria-hidden="true">
-            <ShieldCheck className="w-3.5 h-3.5" style={{ color: '#60a5fa' }} />
+            <ShieldCheck className="w-3.5 h-3.5" style={{ color: 'var(--tx-60a5fa)' }} />
           </div>
           <span className="chw-title">Catalog Health</span>
           {summary && (
@@ -163,7 +163,7 @@ export function CatalogHealthWidget() {
           >
             <RefreshCw
               className={`w-3.5 h-3.5 ${refreshing ? 'chw-spin' : ''}`}
-              style={{ color: 'rgba(255,255,255,0.35)' }}
+              style={{ color: 'rgba(var(--ink-ch), 0.35)' }}
             />
           </button>
         </div>
@@ -202,10 +202,10 @@ export function CatalogHealthWidget() {
           {summary.topIssues.length > 0 && (
             <div
               className="chw-issues"
-              style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px', marginTop: '12px' }}
+              style={{ borderTop: '1px solid rgba(var(--ink-ch), 0.06)', paddingTop: '12px', marginTop: '12px' }}
             >
               <div className="chw-issues-header">
-                <AlertTriangle className="w-3 h-3" style={{ color: '#fb923c' }} aria-hidden="true" />
+                <AlertTriangle className="w-3 h-3" style={{ color: 'var(--tx-fb923c)' }} aria-hidden="true" />
                 <span className="chw-issues-title">Open Issues</span>
               </div>
               <ul className="chw-issue-list" aria-label="Top open issues">
@@ -236,7 +236,7 @@ export function CatalogHealthWidget() {
           {summary.topIssues.length === 0 && summary.total > 0 && (
             <div
               className="chw-clean"
-              style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px', marginTop: '12px' }}
+              style={{ borderTop: '1px solid rgba(var(--ink-ch), 0.06)', paddingTop: '12px', marginTop: '12px' }}
             >
               <CheckCircle2 className="w-3.5 h-3.5" style={{ color: '#10b981' }} aria-hidden="true" />
               <span className="chw-clean-text">No open issues</span>

@@ -83,7 +83,7 @@ export function ProcessCard({
           style={{
             fontSize: '0.875rem',
             fontWeight: 600,
-            color: '#e4e4e7',
+            color: 'var(--tx-e4e4e7)',
             flex: 1,
             minWidth: 0,
             overflow: 'hidden',
@@ -115,7 +115,7 @@ export function ProcessCard({
             <span style={{
               fontSize: '0.68rem',
               fontFamily: 'monospace',
-              color: '#71717a',
+              color: 'var(--tx-71717a)',
               minWidth: 44,
               textAlign: 'right',
               fontVariantNumeric: 'tabular-nums',
@@ -165,7 +165,7 @@ export function ProcessCard({
       {/* Meta row: port · uptime · CPU bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {/* Port + uptime */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.68rem', color: '#71717a', fontFamily: 'monospace', flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.68rem', color: 'var(--tx-71717a)', fontFamily: 'monospace', flex: 1, minWidth: 0 }}>
           {port && <span style={{ color: 'rgba(113,113,122,0.8)' }}>:{port}</span>}
           {port && uptime && <span style={{ color: 'rgba(113,113,122,0.3)' }}>·</span>}
           {uptime && <span>{uptime}</span>}
@@ -179,7 +179,7 @@ export function ProcessCard({
         {/* Inline CPU bar — only when online */}
         {isOnline && process && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, width: 80 }}>
-            <div style={{ flex: 1, height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+            <div style={{ flex: 1, height: 3, borderRadius: 2, background: 'rgba(var(--ink-ch), 0.07)', overflow: 'hidden' }}>
               <div style={{
                 height: '100%',
                 borderRadius: 2,
@@ -222,7 +222,7 @@ function ActionButton({
         border: 'none',
         cursor: disabled ? 'not-allowed' : 'pointer',
         padding: '2px',
-        color: '#71717a',
+        color: 'var(--tx-71717a)',
         display: 'flex',
         alignItems: 'center',
         opacity: disabled ? 0.4 : 1,

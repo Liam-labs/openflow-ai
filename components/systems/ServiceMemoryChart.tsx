@@ -55,10 +55,10 @@ export function ServiceMemoryChart({ processes, height = 200, maxItems = 8 }: Se
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'none' },
-        backgroundColor: 'rgba(8,16,36,0.92)',
+        backgroundColor: 'rgba(var(--deep-ch), 0.92)',
         borderColor: 'rgba(59,130,246,0.3)',
         borderWidth: 1,
-        textStyle: { color: 'rgba(255,255,255,0.88)', fontSize: 11 },
+        textStyle: { color: 'rgba(var(--ink-ch), 0.88)', fontSize: 11 },
         formatter: (params: { name: string; value: number }[]) => {
           const p = params[0];
           return `<b>${p.name}</b><br/>Memory: <b>${fmtMb(p.value)}</b>`;
@@ -68,9 +68,11 @@ export function ServiceMemoryChart({ processes, height = 200, maxItems = 8 }: Se
         type: 'value',
         axisLine: { show: false },
         axisTick: { show: false },
+        splitNumber: 3,
         axisLabel: {
-          color: 'rgba(255,255,255,0.28)',
+          color: 'rgba(var(--ink-ch), 0.28)',
           fontSize: 9,
+          hideOverlap: true,
           formatter: (v: number) => fmtMb(v),
         },
         splitLine: { lineStyle: { color: 'rgba(59,130,246,0.06)', type: 'dashed' } },
@@ -82,7 +84,8 @@ export function ServiceMemoryChart({ processes, height = 200, maxItems = 8 }: Se
         axisLine: { show: false },
         axisTick: { show: false },
         axisLabel: {
-          color: 'rgba(255,255,255,0.68)',
+          interval: 0, // name every bar: the default hides every other label when the chart is short (phone width)
+          color: 'rgba(var(--ink-ch), 0.68)',
           fontSize: 11,
           width: 120,
           overflow: 'truncate',
@@ -106,7 +109,7 @@ export function ServiceMemoryChart({ processes, height = 200, maxItems = 8 }: Se
             show: true,
             position: 'right',
             formatter: (p: { value: number }) => fmtMb(p.value),
-            color: 'rgba(255,255,255,0.42)',
+            color: 'rgba(var(--ink-ch), 0.42)',
             fontSize: 9,
           },
           emphasis: {

@@ -259,6 +259,8 @@ def friendly_failure(harness, parsed):
     last = URL_RE.sub("", parsed.get("lastLine") or "").strip()
     if harness == "claude" and "400" in last:
         return "That code didn't work. The link is single-use, so start the sign-in again for a new one."
+    if harness == "claude" and "invalid code" in last.lower():
+        return "That code didn't work. Make sure you copied the whole code. If it still fails, start the sign-in again for a new link."
     if harness == "antigravity":
         return "That code didn't work. Start the sign-in again for a new link."
     if last:
@@ -445,6 +447,13 @@ def refresh(rec):
             return rec
         if re.search(r"(?i)\b(invalid|failed|denied|expired|error)\b", "\n".join([l for l in text.splitlines() if l.strip()][-6:])) or now() - (rec.get("submittedAt") or now()) > ANTIGRAVITY_VERIFY_SECONDS:
             finish(rec, "failed", friendly_failure("antigravity", parsed))
+            return rec
+    if rec["harness"] == "claude" and alive and rec["submitted"] and parsed["exit"] is None:
+        # A wrong code does not end `claude auth login`: it prints this line and asks for the code again, which would leave the
+        # dialog spinning until the link expires. Only the lines after the submission can hold it, so an old one cannot trigger this.
+        tail = "\n".join([l for l in text.splitlines() if l.strip()][-6:])
+        if re.search(r"(?i)\binvalid code\b", tail):
+            finish(rec, "failed", friendly_failure("claude", dict(parsed, lastLine="Invalid code")))
             return rec
     if parsed["exit"] is not None:
         if parsed["exit"] == 0:

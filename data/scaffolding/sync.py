@@ -2,7 +2,7 @@
 """
 Global Scaffolding Sync Engine
 
-Single source of truth for SG-1 agent scaffolding files.
+Single source of truth for the main project agent scaffolding files.
 Reads manifest.json + agents.json, renders templates, and deploys files.
 
 Usage:
@@ -19,6 +19,7 @@ import hashlib
 import json
 import socket
 import os
+import stat
 import re
 import shutil
 import subprocess
@@ -270,7 +271,7 @@ def drop_roster_aliases(agents: list[dict], teams: dict) -> list[dict]:
     """Drop roster entries whose home dir is a symlink to another agent's home.
 
     A renamed agent can leave its old name in the roster with the old dir
-    symlinked to the new one (SG-1/Team/CJack -> Riley). Syncing the old name
+    symlinked to the new one (the main project/Team/CJack -> Riley). Syncing the old name
     then writes its own identity (CJack paths, hooks, Workspace.md) into the
     live agent's files. The entry that owns the real directory wins.
     """
@@ -484,7 +485,7 @@ def agent_matches_condition(agent: dict, condition: str,
         # there. Pairs with Edit 1 (roster-ops fix) but works without it.
         return required_type in [m.lower() for m in agent.get("models", [])]
     if condition.startswith("channel:"):
-        # channel:SG-1,Commander — matches agents whose _channelNames
+        # channel:the main project,Commander — matches agents whose _channelNames
         # intersect the comma-separated list. _channelNames is a
         # pre-computed set attached by run_sync() from collab-channels.json.
         required_names = set(n.strip() for n in condition.split(":", 1)[1].split(","))
@@ -639,6 +640,17 @@ def write_managed_text(target: Path, content: str) -> None:
             handle.write(content)
             handle.flush()
             os.fsync(handle.fileno())
+        # mkstemp makes the file 0600; keep the mode the file had (an executable stays executable, a file another user reads stays
+        # readable). A new file gets the usual 0666 minus the umask. The mode of a symlink's former target is not copied.
+        try:
+            mode = stat.S_IMODE(os.lstat(target).st_mode) if target.exists() and not target.is_symlink() else None
+        except OSError:
+            mode = None
+        if mode is None:
+            umask = os.umask(0)
+            os.umask(umask)
+            mode = 0o666 & ~umask
+        os.chmod(temp_path, mode)
         os.replace(temp_path, target)
     finally:
         if temp_path.exists():
@@ -1082,7 +1094,7 @@ def verify_agent_files(teams: dict, agent: dict, manifest: dict,
         # Sprint Q2 T2 (Reynolds, 2026-05-27): dedup targets by resolved
         # filesystem path within an entry. Many manifest entries declare
         # two targets — `{agent_dir}/X` AND `{team_dir}/X` — that resolve
-        # to the SAME concrete path for SG-1 agents (where AGENT_DIR ==
+        # to the SAME concrete path for the main project agents (where AGENT_DIR ==
         # TEAM_DIR per build_vars). Pre-fix output had ~8 dupes per agent
         # because the verifier loop emitted one row per raw target without
         # resolved-path coalescing. The deploy loop (sync_file_entry) does
@@ -1637,17 +1649,26 @@ def _within_projects(target: Path, projects: list[str]) -> bool:
     return False
 
 
-def _remove_deployed_skill(skill_path: Path, dry_run: bool) -> str:
-    """Remove a sync-deployed skill copy or link. Returns 'REMOVE', 'OK' or 'ERROR'."""
+def _remove_deployed_skill(skill_path: Path, dry_run: bool, master_content: str | None = None) -> str:
+    """Remove a sync-deployed skill copy or link. Returns 'REMOVE', 'OK', 'FOREIGN' or 'ERROR'.
+
+    Only what the catalogue put there goes: a link into the catalogue, or a copied directory whose SKILL.md equals the master.
+    An agent's own skill of the same name (its edits, extra files) is left alone and reported.
+    """
     try:
         if skill_path.is_symlink():
-            if not dry_run:
-                skill_path.unlink()
-            return "REMOVE"
+            if os.path.realpath(str(skill_path)).startswith(os.path.realpath(str(SKILLS_MASTER_DIR)) + os.sep):
+                if not dry_run:
+                    skill_path.unlink()
+                return "REMOVE"
+            return "FOREIGN"
         if skill_path.is_dir():
-            if not dry_run:
-                shutil.rmtree(skill_path)
-            return "REMOVE"
+            copied = skill_path / "SKILL.md"
+            if master_content is not None and copied.is_file() and copied.read_text(encoding="utf-8") == master_content:
+                if not dry_run:
+                    shutil.rmtree(skill_path)
+                return "REMOVE"
+            return "FOREIGN"
         return "OK"
     except OSError as e:
         print(f"  ERROR removing {skill_path}: {e}")
@@ -1865,11 +1886,13 @@ def deploy_skills(teams: dict,
                 if pack and not _within_projects(agent_team_dir, pack_projects):
                     # Pack skill, agent outside every opted-in project: make sure
                     # an earlier global deployment does not linger here.
-                    action = _remove_deployed_skill(agent_skill_path.parent, dry_run)
+                    action = _remove_deployed_skill(agent_skill_path.parent, dry_run, master_content)
                     if action == "REMOVE":
                         print(f"  {agent['name']} [{agent_team_dir}]: REMOVE "
                               f".claude/skills/{skill_name} (pack '{pack}', not opted in)")
                         stats["removed"] += 1
+                    elif action == "FOREIGN":
+                        print(f"  ! {agent['name']} [{agent_team_dir}]: .claude/skills/{skill_name} is not a catalogue copy; left in place")
                     elif action == "ERROR":
                         stats["errors"] += 1
                     continue
@@ -1934,6 +1957,8 @@ def deploy_skills(teams: dict,
             if action in ("CREATE", "UPDATE"):
                 print(f"  host: {action} ~/.claude/skills/{skill_name} -> {skill_dir}")
                 stats["created" if action == "CREATE" else "updated"] += 1
+            elif action == "FOREIGN":
+                print(f"  ! host: ~/.claude/skills/{skill_name} is not a catalogue copy; left in place")
             elif action == "OK":
                 stats["ok"] += 1
             elif action == "ERROR":
@@ -2015,7 +2040,11 @@ def _symlink_skill_dir(src_dir: Path, link_path: Path, dry_run: bool) -> str:
                 link_path.symlink_to(src_dir)
             return "UPDATE"
         elif link_path.is_dir():
-            # Regular directory from old copy-based deploy — replace with symlink
+            # Regular directory from an old copy-based deploy: replace it only when it is that copy (its SKILL.md equals the master).
+            # A skill of the user's own with the same name is theirs; leave it and report it.
+            copied, master = link_path / "SKILL.md", src_dir / "SKILL.md"
+            if not (copied.is_file() and master.is_file() and copied.read_text(encoding="utf-8") == master.read_text(encoding="utf-8")):
+                return "FOREIGN"
             if not dry_run:
                 shutil.rmtree(link_path)
                 link_path.symlink_to(src_dir)
@@ -2342,7 +2371,7 @@ def _presence_channel_names(presences: list[dict], working_directory: str) -> se
 
     Presence passes judge `channel:` conditions by the channels that use
     that cwd, not every channel the agent belongs to. Otherwise a client
-    project presence of an SG-1 agent receives SG-1-only files (Mission.md).
+    project presence of an the main project agent receives the main project-only files (Mission.md).
     """
     target = os.path.normpath(working_directory)
     return {
@@ -2362,7 +2391,7 @@ def _agent_with_dir_override(agent: dict, override_dir: str,
     prefer those over the team-derived defaults, so no other call sites
     need to change. When the override is a canonical
     ``<project>/Team/<agent>`` workspace, also derive ``projectDir`` from it;
-    otherwise a project presence inherits the agent's SG-1 home project and
+    otherwise a project presence inherits the agent's the main project home project and
     renders a misleading Workspace.md on every respawn.
     """
     synth = dict(agent)
@@ -2498,14 +2527,14 @@ def _identity_result(target: Path, canonical: Path | None, kind: str,
         if check_only:
             return {"target": str(target), "action": "DRIFT", "skipped": False, "reason": "CREATE"}
         if not dry_run:
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(desired, encoding="utf-8")
+            write_managed_text(target, desired)
         return {"target": str(target), "action": "CREATE", "skipped": False, "reason": "missing identity"}
 
     existing = target.read_text(encoding="utf-8")
     trimmed = existing.strip()
     managed_pointer = trimmed.startswith(f"@{_ROLES_DIR}")
-    placeholder = bool(re.search(r"No (?:role-specific directives|directives|personality) configured", trimmed, re.I))
+    # A placeholder is the whole file being the fallback text; a hand-written file that merely contains the sentence is the user's.
+    placeholder = bool(re.fullmatch(r"#[ \t]*(?:Personality|Directives)[ \t]*\n+[ \t]*No (?:role-specific directives|directives|personality) configured[^\n]*", trimmed, re.I))
     exact_frozen_copy = canonical_content is not None and trimmed == canonical_content.strip()
     legacy_frozen_copy = _is_legacy_canonical_copy(existing, canonical)
     if existing == desired:
@@ -2516,7 +2545,8 @@ def _identity_result(target: Path, canonical: Path | None, kind: str,
     if check_only:
         return {"target": str(target), "action": "DRIFT", "skipped": False, "reason": "UPDATE"}
     if not dry_run:
-        target.write_text(desired, encoding="utf-8")
+        # Replace the file itself, never write through a link: legacy provisioning linked these to the canonical master.
+        write_managed_text(target, desired)
     return {"target": str(target), "action": "UPDATE", "skipped": False, "reason": "canonical identity pointer"}
 
 
@@ -2672,7 +2702,7 @@ def run_sync(teams: dict,
         filtered_agents = [a for a in agents if a["name"].lower() == agent_filter.lower()]
 
     # Pre-compute _channelNames for each agent from collab-channels.json so
-    # manifest entries can use channel:SG-1,Commander scoping conditions.
+    # manifest entries can use channel:the main project,Commander scoping conditions.
     # Each agent dict gets a set of channel names it belongs to.
     _agent_channels: dict[str, set[str]] = {}
     try:
@@ -2954,7 +2984,7 @@ def _deploy_skills_silent(teams: dict, agents: list[dict],
             for agent_team_dir in skill_target_dirs(teams, agent):
                 target = agent_team_dir / ".claude" / "skills" / skill_name / "SKILL.md"
                 if pack and not _within_projects(agent_team_dir, packs[pack]["projects"]):
-                    _remove_deployed_skill(target.parent, dry_run=False)
+                    _remove_deployed_skill(target.parent, dry_run=False, master_content=master_content)
                     continue
                 action = _copy_skill_file(master_content, target, dry_run=False)
                 if action == "CREATE":
@@ -2980,7 +3010,7 @@ def _deploy_skills_silent(teams: dict, agents: list[dict],
 # ---------------------------------------------------------------------------
 
 def post_drift_alert(drift_count: int) -> None:
-    """Post to SG-1 collab channel when drift is detected (used by cron).
+    """Post to the main project collab channel when drift is detected (used by cron).
 
     Suppresses repeat alerts for the same drift count within a cooldown window
     to prevent channel flooding from repeated cron invocations.
@@ -3295,7 +3325,7 @@ def deploy_hooks(teams: dict,
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="SG-1 Global Scaffolding Sync Engine",
+        description="Global Scaffolding Sync Engine",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--dry-run", action="store_true",
@@ -3422,16 +3452,16 @@ def _main_body(args: argparse.Namespace, state: dict) -> None:
                            dry_run=args.dry_run)
         return
 
-    teams = load_teams()
-    agents = drop_roster_aliases(load_agents(), teams)
-
     # --adapters short-circuits — diagnostic view of adapter registry +
-    # optional agent matching. Pure read on in-memory class data, no I/O.
+    # optional agent matching. The plain listing needs no team or agent, so
+    # they are loaded only for --agent: on a fresh install the setup wizard
+    # asks for the listing before any team exists (D2, README trial 2026-10-31).
     if args.adapters:
         known_models = load_models()
         infos = [a.info() for a in ADAPTER_REGISTRY]
         result: dict = {"adapters": infos}
         if args.agent:
+            agents = drop_roster_aliases(load_agents(), load_teams())
             match = [a for a in agents if a["name"].lower() == args.agent.lower()]
             if not match:
                 print(f"ERROR: Agent '{args.agent}' not found", file=sys.stderr)
@@ -3452,6 +3482,9 @@ def _main_body(args: argparse.Namespace, state: dict) -> None:
             if "matched_families" in result:
                 print(f"\nAgent '{result['agent']}' matches: {', '.join(result['matched_families']) or '(none)'}")
         sys.exit(0)
+
+    teams = load_teams()
+    agents = drop_roster_aliases(load_agents(), teams)
 
     # --manifest short-circuits before deploy logic — strictly the pure
     # decision function. Useful for Broker integration testing.
