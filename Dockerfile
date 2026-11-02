@@ -2,7 +2,7 @@
 # For Mac (Docker Desktop, OrbStack, Colima) and for anyone who prefers a container on Linux. Native install: see the README.
 # The build needs no secrets. Your logins and data live in the /data volume, never in the image.
 FROM qdrant/qdrant@sha256:12364fe851b9f17356fc88189fc06d1b521262e04659ec7345975b00c9246a10 AS memory-database
-FROM node:22-bookworm
+FROM node:26-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         tmux python3 python3-venv python3-pexpect chromium chromium-sandbox libunwind8 git curl socat ca-certificates build-essential \
