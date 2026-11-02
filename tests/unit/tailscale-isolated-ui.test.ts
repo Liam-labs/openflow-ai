@@ -31,3 +31,15 @@ it('shows failed login and releases the button',async()=>{
  await render(); await login(); expect(host.textContent).toContain('Connection lost. Try again.');
  expect(Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Sign in to Tailscale')?.disabled).toBe(false);
 });
+
+it('requires HTTPS for the isolated server without promising an HTTP fallback', async () => {
+ const current = state(true);
+ current.facts.httpsReady = false;
+ current.plan = {ok:false,reason:'Enable HTTPS certificates in your Tailscale account before sharing this server. Owner sign-in requires HTTPS.',fix:'https'};
+ request.mockResolvedValueOnce(reply(current));
+ await render();
+ expect(host.textContent).toContain('Owner sign-in requires HTTPS');
+ expect(host.textContent).not.toContain('will use plain http');
+ expect(host.textContent).not.toContain('sudo tailscale');
+ expect(Array.from(host.querySelectorAll('button')).find(b=>b.textContent==='Switch on remote access')?.disabled).toBe(true);
+});
