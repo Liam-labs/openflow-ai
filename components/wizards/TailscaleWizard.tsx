@@ -9,7 +9,7 @@ import { useWizardRefresh } from './useWizardRefresh';
 import { Check, Copy, Loader2 } from 'lucide-react';
 import { ProofList, StatusPill, WizardFrame, type ProofLine } from '@/components/wizards/WizardFrame';
 
-interface Facts { inContainer: boolean; installed: boolean; version: string | null; state: string | null; dnsName: string | null; httpsReady: boolean; operatorOk: boolean }
+interface Facts { isolatedNode?: boolean; inContainer: boolean; installed: boolean; version: string | null; state: string | null; dnsName: string | null; httpsReady: boolean; operatorOk: boolean }
 type Plan = { ok: true; https: boolean; port: number; url: string } | { ok: false; reason: string; fix?: string };
 interface Active { url: string; port: number; https: boolean }
 interface Visit { secondsAgo: number; device: string; user: string | null; allowed: boolean }
@@ -43,13 +43,14 @@ const FIXES: Record<string, { text: string; command?: string; link?: { href: str
 export function TailscaleWizard() {
   const [state, setState] = useState<State | null>(null);
   const [loadError, setLoadError] = useState('');
-  const [busy, setBusy] = useState<'enable' | 'prove' | 'disable' | null>(null);
+  const [busy, setBusy] = useState<'login' | 'enable' | 'prove' | 'disable' | null>(null);
   const [message, setMessage] = useState<{ ok: boolean; text: string; fix?: string } | null>(null);
   const [proof, setProofRaw] = useState<ProofLine[] | null>(null);
   // Test results appear on the Test step: bump the signal so the dialog moves there by itself.
   const [testSignal, setTestSignal] = useState(0);
   const setProof = (p: ProofLine[] | null) => { setProofRaw(p); if (p) setTestSignal(t => t + 1); };
   const [confirmOff, setConfirmOff] = useState(false);
+  const [loginUrl, setLoginUrl] = useState<string | null>(null);
 
   const apply = (r: Record<string, unknown>) => { if (r.facts) setState(r as unknown as State); };
   const refresh = useCallback(async () => {
@@ -59,6 +60,24 @@ export function TailscaleWizard() {
     } catch { setLoadError('Could not reach the server. Check your connection, then try again.'); }
   }, []);
   useWizardRefresh('tailscale', refresh);
+
+  const login = async () => {
+    setBusy('login'); setMessage(null); setLoginUrl(null);
+    try {
+      const r = await call({ action: 'login' });
+      apply(r);
+      if (!r.success) throw new Error(typeof r.error === 'string' ? r.error : 'Could not start Tailscale sign-in. Try again.');
+      if (r.loginUrl) {
+        const url = new URL(String(r.loginUrl));
+        if (url.protocol !== 'https:' || url.username || url.password) throw new Error('The server returned an invalid approval address. Try again.');
+        setLoginUrl(url.href);
+      } else {
+        await refresh();
+      }
+    } catch (error) {
+      setMessage({ ok: false, text: error instanceof Error ? error.message : 'Could not reach the server. Try again.' });
+    } finally { setBusy(null); }
+  };
 
   const enable = async () => {
     setBusy('enable'); setMessage(null); setProof(null);
@@ -87,7 +106,7 @@ export function TailscaleWizard() {
 
   const f = state?.facts;
   const fix = message?.fix ?? (state && !state.plan.ok ? state.plan.fix : undefined);
-  const fixInfo = !state?.passwordSet ? undefined : fix ? FIXES[fix] : undefined;
+  const fixInfo = !state?.passwordSet || state.facts.isolatedNode ? undefined : fix ? FIXES[fix] : undefined;
   return (
     <WizardFrame
       message={message ?? (loadError ? { ok: false, text: loadError } : null)}
@@ -96,7 +115,7 @@ export function TailscaleWizard() {
       status={state ? <StatusPill tone={state.active ? 'good' : 'idle'}>{state.active ? 'On' : 'Off'}</StatusPill> : <Loader2 className="w-3.5 h-3.5 animate-spin text-white/40" />}
       check={loadError ? <p className="text-xs text-yellow-300">{loadError}</p> : state && f ? (
         <ul className="text-xs text-white/70 flex flex-col gap-1">
-          <li>{f.inContainer ? 'This app is running in a container; Tailscale lives on the computer that hosts it.' : f.installed ? `Tailscale ${f.version ?? ''} is installed.` : 'Tailscale is not installed on this computer.'}</li>
+          <li>{f.isolatedNode ? 'This installation has its own private Tailscale node.' : f.inContainer ? 'This app is running in a container; Tailscale lives on the computer that hosts it.' : f.installed ? `Tailscale ${f.version ?? ''} is installed.` : 'Tailscale is not installed on this computer.'}</li>
           {f.installed && <li>{f.state === 'Running' && f.dnsName ? `Signed in. This computer is ${f.dnsName} on your private network.` : 'Not signed in yet.'}</li>}
           {f.installed && f.state === 'Running' && <li>{f.httpsReady ? 'Your Tailscale network has https certificates on, so the address will use https.' : 'https certificates are off on your Tailscale network, so the address will use plain http. That is still encrypted by Tailscale between your devices; turn on "HTTPS Certificates" in the Tailscale admin page to get https.'}</li>}
           {f.installed && !f.inContainer && !f.operatorOk && <li className="text-yellow-300">This app may not change Tailscale yet. The next step shows the one command that allows it.</li>}
@@ -106,6 +125,12 @@ export function TailscaleWizard() {
       explain={<p className="text-xs text-white/60 leading-relaxed">Runs <code>tailscale serve</code> to share this dashboard with devices on <em>your own</em> Tailscale network only. It is not put on the public internet, and anyone who gets to the address still has to sign in with your password. It adds one Serve entry and changes nothing else in your Tailscale account. Undo removes just that entry.</p>}
       doIt={
         <div className="flex flex-col gap-2">
+          {f?.isolatedNode && f.state !== 'Running' && <div className="flex flex-col gap-3">
+            <p className="text-xs text-white/70">Approve this installation in your Tailscale account. The server’s own network connection stays separate.</p>
+            <button type="button" className="glass-button px-4 py-3 text-sm" disabled={busy !== null || !state?.passwordSet} onClick={() => void login()}>{busy === 'login' ? 'Preparing sign-in…' : loginUrl ? 'Get a new approval link' : 'Sign in to Tailscale'}</button>
+            {loginUrl && <a href={loginUrl} target="_blank" rel="noopener noreferrer" className="text-blue-300 underline break-words">Approve this installation in Tailscale</a>}
+            {loginUrl && <p className="text-xs text-white/60">After approval, this page updates automatically. You can also press Check again.</p>}
+          </div>}
           {fixInfo && (
             <div className="flex flex-col gap-2 rounded-lg border border-yellow-400/20 bg-yellow-400/5 p-3">
               <p className="text-xs text-yellow-200">{fixInfo.text}</p>
@@ -126,7 +151,7 @@ export function TailscaleWizard() {
       prove={
         <div className="flex flex-col gap-3">
           <ProofList lines={proof} busy={busy === 'prove'} />
-          {(state?.active || state?.facts.inContainer) && (
+          {(state?.active || (state?.facts.inContainer && !state.facts.isolatedNode)) && (
             <div className="flex flex-col gap-2">
               <p className="text-xs text-white/60">From the computer that runs the app the address always opens without a password, so it cannot show the sign-in works. The real test is a second device: open the address on your phone or another computer that is signed in to your Tailscale. This page will notice.</p>
               {state.active && <CopyLine text={state.active.url} />}
