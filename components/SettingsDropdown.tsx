@@ -173,9 +173,10 @@ export function SettingsDropdown({ isOpen, onClose, anchorRef, onAddProject }: S
           </div>
 
           <div className="p-2 border-b border-white/5">
-            <Link href="/operations#systems/connections" onClick={onClose} className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm text-blue-300 hover:bg-white/5">
+            {/* Native fragment navigation emits hashchange for the mounted Systems page. */}
+            <a href="/operations#systems/connections" onClick={onClose} className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm text-blue-300 hover:bg-white/5">
               <Globe size={18} aria-hidden="true" />Connections — connect your services
-            </Link>
+            </a>
           </div>
 
           {/* Group: Core Systems */}

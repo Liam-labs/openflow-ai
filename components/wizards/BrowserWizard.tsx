@@ -15,8 +15,12 @@ interface State {
 }
 
 async function call(body?: Record<string, unknown>): Promise<Record<string, unknown>> {
+  try {
   const res = await fetch('/api/wizards/browser', body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : undefined);
   return (await res.json().catch(() => ({ success: false, error: 'The server sent something unreadable.' }))) as Record<string, unknown>;
+  } catch {
+    return { success: false, error: 'Could not reach the server. Check your connection, then try again.' };
+  }
 }
 
 const KIND: Record<string, string> = { chrome: 'Google Chrome', chromium: 'Chromium', edge: 'Microsoft Edge', playwright: 'the Chromium that comes with Playwright' };
@@ -47,17 +51,22 @@ export function BrowserWizard() {
   const [confirm, setConfirm] = useState<'stop' | 'delete' | null>(null);
 
   const apply = (r: Record<string, unknown>) => { if (r.record) setState(r as unknown as State); };
-  const refresh = useCallback(async () => {
-    const r = await call();
-    if (r.success) { apply(r); setLoadError(''); } else setLoadError(typeof r.error === 'string' ? r.error : 'Could not read the browser state. Open this page on the computer that runs the app.');
+  const acceptRead = useCallback((r: Record<string, unknown>) => {
+    if (r.success && r.record) { setState(r as unknown as State); setLoadError(''); }
+    else setLoadError(typeof r.error === 'string' ? r.error : 'Could not read the browser state. Check your connection and try again.');
   }, []);
-  useEffect(() => { void refresh(); }, [refresh]);
+  const refresh = useCallback(async () => { acceptRead(await call()); }, [acceptRead]);
+  useEffect(() => {
+    let cancelled = false;
+    void call().then(r => { if (!cancelled) acceptRead(r); });
+    return () => { cancelled = true; };
+  }, [acceptRead]);
 
   const prove = async () => {
     setBusy('prove');
     const p = await call({ action: 'prove' });
     setBusy(null); apply(p);
-    setProof(Array.isArray(p.steps) ? (p.steps as ProofLine[]) : null);
+    setProof(Array.isArray(p.steps) ? (p.steps as ProofLine[]) : [{ name: 'The test completed', ok: false, detail: typeof p.error === 'string' ? p.error : 'The server did not return a test result. Try again.' }]);
     setExposed(p.exposed === true);
   };
   const start = async () => {
@@ -88,7 +97,7 @@ export function BrowserWizard() {
   const on = !!state?.record.enabled && state.running;
   return (
     <WizardFrame
-      message={message}
+      message={message ?? (loadError ? { ok: false, text: loadError } : null)}
       testSignal={testSignal}
       title="A browser your agents can use"
       status={state ? <StatusPill tone={on ? 'good' : 'idle'}>{on ? 'Running' : 'Off'}</StatusPill> : <Loader2 className="w-3.5 h-3.5 animate-spin text-white/40" />}
@@ -102,9 +111,10 @@ export function BrowserWizard() {
       explain={<p className="text-xs text-white/60 leading-relaxed">Starts a separate browser with its own profile folder (your everyday browser is not touched) so agents can open pages, click and take screenshots, and so sites you sign in to stay signed in for them. Its control port gives full control of every site it is signed in to, so it only listens on this computer and the wizard checks that nothing else can reach it; if anything can, the browser is stopped. Undo stops it; your saved sign-ins stay unless you choose to delete them.</p>}
       doIt={
         <div className="flex flex-col gap-2">
+          {state && !state.windowPossible && <p className="text-xs text-white/70">This browser runs privately on the server, without a visible window. Agents can use public pages; this screen cannot open an interactive website sign-in.</p>}
           {message?.fix === 'install' && (
             <div className="flex flex-col gap-2 rounded-lg border border-yellow-400/20 bg-yellow-400/5 p-3">
-              <p className="text-xs text-yellow-200">Install a browser, then press Start again:</p>
+              <p className="text-xs text-yellow-200">The computer running OpenFlow needs a browser. Installing one on the phone or laptop viewing this page will not fix this. After the server installation is repaired, press Start again:</p>
               <p className="text-[11px] text-white/50">Linux:</p>
               <CopyLine text="sudo apt install chromium" />
               <p className="text-[11px] text-white/50">Mac:</p>
@@ -121,6 +131,7 @@ export function BrowserWizard() {
           )}
           <div className="flex items-center gap-2">
             <button type="button" className="glass-button primary px-4 py-2 text-xs" disabled={busy !== null || on} onClick={() => void start()}>{busy === 'start' ? 'Starting…' : 'Start the browser'}</button>
+            <button type="button" className="glass-button px-3 py-2 text-xs" disabled={busy !== null} onClick={() => void refresh()}>Check again</button>
             <button type="button" className="glass-button px-3 py-2 text-xs" disabled={busy !== null || !on || !!state?.record.mcp} onClick={() => void agent()}>{busy === 'agent' ? 'Adding…' : state?.record.mcp ? 'Agents can use it' : 'Let my agents use it'}</button>
           </div>
           {on && state?.windowPossible && (
