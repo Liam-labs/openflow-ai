@@ -14,6 +14,8 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 
 const REPO = fileURLToPath(new URL('../..', import.meta.url)).replace(/\/$/, '');
+// The hook scripts find each other through DEVFLOW_HOME, else $HOME/DevFlow: point them at this copy of the repo.
+process.env.DEVFLOW_HOME = REPO;
 
 const COUNTER_SH = join(REPO, 'scripts', 'hooks', 'scratch-flush-counter.sh');
 const INIT_SH = join(REPO, 'scripts', 'hooks', 'session-scratch-init.sh');

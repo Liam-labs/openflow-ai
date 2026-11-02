@@ -13,7 +13,7 @@
 import { randomUUID } from 'crypto';
 import { DataPaths } from '@/lib/data-paths';
 import { readJsonFile } from '@/lib/data-io';
-import { appendMessageIfAbsent } from '@/lib/collab-message-io';
+import { appendMessageIfAbsent, readChannelMessages } from '@/lib/collab-message-io';
 import { eventBus } from '@/lib/event-bus';
 import { deliverMessage } from '@/lib/collab-delivery';
 import { enqueueDurableDeliveries } from '@/lib/collab-delivery-ledger';
@@ -25,13 +25,60 @@ export function formatShutdownTime(iso: string): string {
   return date.toLocaleString('en-GB', { timeZoneName: 'short' });
 }
 
-export function buildRestartResumeText(agentName: string, shutdownAt: string): string {
-  return (
+export interface UnansweredMention {
+  from: string;
+  content: string;
+}
+
+/** One message's text as a single trimmed line, so the notice stays short. */
+function oneLine(content: string, max = 160): string {
+  const flat = content.replace(/\s+/g, ' ').trim();
+  return flat.length > max ? flat.slice(0, max - 1).trimEnd() + '…' : flat;
+}
+
+/**
+ * The messages that mention or target this agent but that it never posted after — i.e. @mentions it had not answered
+ * when it died. A message delivered seconds before a crash is marked "delivered", so nothing re-delivers it and the
+ * restarted agent never learns of it (BUG-55). We detect it from the transcript instead of the delivery log: a mention
+ * with no later post from the agent is unanswered. The agent's own messages and earlier restart notices are ignored.
+ * Newest `max` only, oldest first, so the notice is short and in order.
+ */
+export function unansweredMentions(
+  messages: CollabMessage[],
+  participantId: string,
+  max = 5,
+): UnansweredMention[] {
+  let lastOwnPostAt = '';
+  for (const m of messages) {
+    if (m.from?.id === participantId && m.timestamp > lastOwnPostAt) lastOwnPostAt = m.timestamp;
+  }
+  const hits = messages.filter(m => {
+    if (m.from?.id === participantId) return false;                 // not the agent's own messages
+    const targeted = m.mentions?.includes(participantId) || m.recipients?.includes(participantId);
+    if (!targeted) return false;
+    const kind = (m.metadata?.client as { kind?: string } | undefined)?.kind;
+    if (kind === 'devflow.restart-resume') return false;            // not a previous restart notice
+    return m.timestamp > lastOwnPostAt;                             // the agent has not posted since this message
+  });
+  hits.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  return hits.slice(-max).map(m => ({ from: m.from?.name || 'Someone', content: oneLine(m.content) }));
+}
+
+export function buildRestartResumeText(agentName: string, shutdownAt: string, unanswered: UnansweredMention[] = []): string {
+  let text =
     `@${agentName} You were restarted after an unexpected shutdown at ${formatShutdownTime(shutdownAt)}. ` +
     'Your previous session ended mid-work and nothing else will prompt you. ' +
     'Resume your in-progress work now: read logs/handoff.md in your workspace and your in-progress board tasks, ' +
-    'then continue from where you stopped. Do not re-answer channel messages you already handled.'
-  );
+    'then continue from where you stopped. Do not re-answer channel messages you already handled.';
+  if (unanswered.length > 0) {
+    text +=
+      '\n\nThese messages arrived just before you stopped and were probably never answered. ' +
+      'Answer each one you have not already handled. The name in brackets is who to reply to — use it exactly:';
+    // Give the exact reply command so the sender's name is read as a name, not prose. On a fresh install the person's
+    // display name is literally "You", which an agent can misread as the pronoun and reply to the wrong place (BUG-56).
+    for (const m of unanswered) text += `\n- [${m.from}] (reply with: --to "${m.from}"): ${m.content}`;
+  }
+  return text;
 }
 
 /**
@@ -52,6 +99,10 @@ export async function sendRestartResumeNotice(input: {
   if (!channel || !agent?.participantId) return null;
 
   const participant = channel.participants.find(item => item.id === agent.participantId);
+  // @mentions delivered just before the crash are marked delivered, so nothing re-delivers them. Name any the agent
+  // never answered in the notice so it can pick them up (BUG-55).
+  const { messages } = await readChannelMessages(channel.id);
+  const unanswered = unansweredMentions(messages, agent.participantId);
   const now = new Date().toISOString();
   const message: CollabMessage = {
     id: `restart-resume-${randomUUID()}`,
@@ -64,7 +115,7 @@ export async function sendRestartResumeNotice(input: {
       joinedAt: now,
       lastSeen: now,
     },
-    content: buildRestartResumeText(participant?.name || agent.name, input.shutdownAt),
+    content: buildRestartResumeText(participant?.name || agent.name, input.shutdownAt, unanswered),
     timestamp: now,
     mentions: [agent.participantId],
     recipients: [agent.participantId],

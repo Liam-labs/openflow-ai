@@ -5,12 +5,15 @@ import {
   ChevronLeft, ChevronRight,
   LayoutGrid, Server, Activity, Clock, Cpu,
   Shield, Database, Network, HeartPulse, ScrollText,
-  Link2, Layers, Puzzle, Brain, HardDrive, FolderSync, Smartphone, ShieldCheck,
+  Link2, Layers, Puzzle, Brain, HardDrive, FolderSync, Smartphone, ShieldCheck, Inbox, PowerOff, Palette,
 } from 'lucide-react';
 import type { SystemsNavState, SystemsSection } from './systems-types';
 
+// The PA system is not a Systems section: its item opens the same /pa screen as the Settings menu and AgentChat.
+const LIFE_ADMIN_ID = 'life-admin';
+
 interface NavItem {
-  id: SystemsSection;
+  id: SystemsSection | typeof LIFE_ADMIN_ID;
   label: string;
   icon: React.ReactNode;
   badge?: number;
@@ -64,6 +67,17 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { id: 'connections', label: 'Connections', icon: <Link2 size={16} /> },
       { id: 'bridges',     label: 'Bridges',     icon: <Layers size={16} /> },
+    ],
+  },
+  {
+    label: 'Design',
+    items: [
+    ],
+  },
+  {
+    label: 'Personal',
+    items: [
+      { id: LIFE_ADMIN_ID, label: 'PA system', icon: <Inbox size={16} /> },
     ],
   },
   {
@@ -130,12 +144,14 @@ export function SystemsSidebar({
                   key={item.id}
                   className={`systems-sidebar__item${isActive ? ' systems-sidebar__item--active' : ''}`}
                   onClick={() =>
-                    onNavigate({
-                      section: item.id,
-                      entityId: undefined,
-                      entityType: undefined,
-                      tab: undefined,
-                    })
+                    item.id === LIFE_ADMIN_ID
+                      ? window.location.assign('/pa')
+                      : onNavigate({
+                          section: item.id,
+                          entityId: undefined,
+                          entityType: undefined,
+                          tab: undefined,
+                        })
                   }
                   aria-label={item.label}
                   title={collapsed ? item.label : undefined}

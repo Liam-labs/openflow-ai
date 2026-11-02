@@ -11,13 +11,6 @@ xxx.supabase.co          # placeholder shown in the UI
 xyz.supabase.co          # placeholder shown in the UI
 slack.com                # only when you configure it: the Slack bridge (api.slack.com is its API)
 api.slack.com            # links in the Slack setup guide
-graph.microsoft.com      # only when you configure it: the Teams bridge
-login.microsoftonline.com  # only when you configure it: the Teams bridge sign-in
-api.botframework.com     # only when you configure it: Teams bot token check
-smba.trafficmanager.net  # only when you configure it: Teams bot service address allow-list
-sts.windows.net          # only when you configure it: Teams token issuer check
-adaptivecards.io         # a schema address inside Teams card JSON; nothing is fetched
-portal.azure.com         # link in the Teams setup guide
 accounts.google.com      # link
 chatgpt.com              # link in the sign-in help text
 github.com               # links

@@ -26,9 +26,12 @@ import { withFileLock, readJsonFile, writeJsonFile } from './data-io';
 import { DataPaths } from './data-paths';
 import {
   detectIntegrationForModel,
+  setAntigravityRemoteMcp,
+  clearAntigravityRemoteMcp,
   type CapabilitySlug,
   CAPABILITY_SLUGS,
 } from './model-integration-detect';
+import { defaultHost, hostCall, hostState } from './host-executor';
 import type { ModelEntry, ModelIntegration } from './model-registry';
 
 interface ModelsFile {
@@ -91,24 +94,46 @@ export async function runIntegrationDetectionAndPersist(): Promise<DetectionRunR
     const changes: Record<string, 'created' | 'updated' | 'unchanged'> = {};
     let changed = 0;
 
-    for (const entry of file.models) {
-      const fresh = detectIntegrationForModel(entry.agentTypes, ranAt);
-      if (integrationEquivalent(entry.integration, fresh)) {
-        changes[entry.id] = 'unchanged';
-        continue;
+    // BUG-42: Antigravity's MCP folder is on the machine agy runs on. When a desktop host is configured (the server + PC
+    // split), that folder is on the PC, so ask its helper for the facts and feed them to the sync detector; otherwise the
+    // detector would read the server's own empty folder and always report MCP 'none'. A single-machine install has no
+    // host (hostState 'local' or none): leave the detector to read the local folder.
+    const host = defaultHost();
+    const remoteAntigravity = !!host && hostState(host) !== 'local';
+    if (remoteAntigravity) {
+      try {
+        const facts = await hostCall<{ globalMcpValid?: boolean }>(host!, 'antigravity-mcp-facts', {}, 15_000);
+        setAntigravityRemoteMcp({ globalMcpValid: facts?.globalMcpValid === true });
+      } catch {
+        // PC unreachable or an older helper without this op: treat as none rather than reading the server's own folder.
+        setAntigravityRemoteMcp(null);
       }
-      const kind = entry.integration ? 'updated' : 'created';
-      changes[entry.id] = kind;
-      entry.integration = fresh;
-      changed++;
     }
 
-    const totalModels = file.models.length;
-    const unchanged = totalModels - changed;
+    let totalModels = 0;
+    let unchanged = 0;
     let wrote = false;
-    if (changed > 0) {
-      await writeJsonFile(DataPaths.models, file);
-      wrote = true;
+    try {
+      for (const entry of file.models) {
+        const fresh = detectIntegrationForModel(entry.agentTypes, ranAt);
+        if (integrationEquivalent(entry.integration, fresh)) {
+          changes[entry.id] = 'unchanged';
+          continue;
+        }
+        const kind = entry.integration ? 'updated' : 'created';
+        changes[entry.id] = kind;
+        entry.integration = fresh;
+        changed++;
+      }
+
+      totalModels = file.models.length;
+      unchanged = totalModels - changed;
+      if (changed > 0) {
+        await writeJsonFile(DataPaths.models, file);
+        wrote = true;
+      }
+    } finally {
+      if (remoteAntigravity) clearAntigravityRemoteMcp();
     }
 
     return { ranAt, totalModels, changed, unchanged, wrote, changes };

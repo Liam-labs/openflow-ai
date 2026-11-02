@@ -191,6 +191,7 @@ async function handleCreate(body: CronActionRequest): Promise<NextResponse<CronA
     apiUrl: body.apiUrl,
     apiMethod: body.apiMethod,
     apiHeaders: body.apiHeaders,
+    apiAuthEnv: body.apiAuthEnv,
     apiBody: body.apiBody,
     reminderChannelId: body.reminderChannelId,
     reminderParticipantId: body.reminderParticipantId,
@@ -241,6 +242,7 @@ async function handleUpdate(body: CronActionRequest): Promise<NextResponse<CronA
     if (body.apiUrl !== undefined) job.apiUrl = body.apiUrl;
     if (body.apiMethod !== undefined) job.apiMethod = body.apiMethod;
     if (body.apiHeaders !== undefined) job.apiHeaders = body.apiHeaders;
+    if (body.apiAuthEnv !== undefined) job.apiAuthEnv = body.apiAuthEnv;
     if (body.apiBody !== undefined) job.apiBody = body.apiBody;
     if (body.reminderChannelId !== undefined) job.reminderChannelId = body.reminderChannelId;
     if (body.reminderParticipantId !== undefined) job.reminderParticipantId = body.reminderParticipantId;

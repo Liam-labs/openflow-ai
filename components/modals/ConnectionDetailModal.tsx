@@ -16,10 +16,10 @@ const CATEGORY_ICONS: Record<string, string> = {
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 
 const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-  active:                { label: 'Active',          color: '#22c55e', bg: 'rgba(34,197,94,0.1)'  },
-  configured:            { label: 'Configured',      color: '#eab308', bg: 'rgba(234,179,8,0.1)'  },
-  configured_not_active: { label: 'Not Active',      color: '#71717a', bg: 'rgba(113,113,122,0.1)'},
-  pending:               { label: 'Pending',         color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
+  active:                { label: 'Active',          color: 'var(--tx-22c55e)', bg: 'rgba(34,197,94,0.1)'  },
+  configured:            { label: 'Configured',      color: 'var(--tx-eab308)', bg: 'rgba(234,179,8,0.1)'  },
+  configured_not_active: { label: 'Not Active',      color: 'var(--tx-71717a)', bg: 'rgba(113,113,122,0.1)'},
+  pending:               { label: 'Pending',         color: 'var(--tx-3b82f6)', bg: 'rgba(59,130,246,0.1)' },
 };
 
 // ─── Section Heading ──────────────────────────────────────────────────────────
@@ -27,11 +27,11 @@ const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '16px 0 10px' }}>
-      <div style={{ height: 1, flex: 1, background: 'rgba(255,255,255,0.06)' }} />
-      <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
+      <div style={{ height: 1, flex: 1, background: 'rgba(var(--ink-ch), 0.06)' }} />
+      <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--tx-71717a)', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
         {children}
       </span>
-      <div style={{ height: 1, flex: 1, background: 'rgba(255,255,255,0.06)' }} />
+      <div style={{ height: 1, flex: 1, background: 'rgba(var(--ink-ch), 0.06)' }} />
     </div>
   );
 }
@@ -88,8 +88,8 @@ export function ConnectionDetailModal({ connection, isMcp, onClose }: Connection
   const copyToClipboard = (text: string) => navigator.clipboard.writeText(text);
 
   const panelStyle: React.CSSProperties = {
-    background: '#0a1628',
-    border: '1px solid rgba(255,255,255,0.08)',
+    background: 'var(--bg-0a1628)',
+    border: '1px solid rgba(var(--ink-ch), 0.08)',
     borderRadius: 16,
     width: '100%',
     maxWidth: 540,
@@ -101,16 +101,16 @@ export function ConnectionDetailModal({ connection, isMcp, onClose }: Connection
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'rgba(var(--shade-ch), 0.6)', backdropFilter: 'blur(4px)' }}
       onClick={e => e.target === e.currentTarget && onClose()}
     >
       <div style={panelStyle}>
 
         {/* ── Header ── */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 20px', borderBottom: '1px solid rgba(var(--ink-ch), 0.06)', flexShrink: 0 }}>
           <span style={{ fontSize: '1.4rem', lineHeight: 1 }}>{icon}</span>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#f4f4f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--tx-f4f4f5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {connection.name}
             </div>
           </div>
@@ -119,7 +119,7 @@ export function ConnectionDetailModal({ connection, isMcp, onClose }: Connection
           </span>
           <button
             onClick={onClose}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: 'none', background: 'rgba(255,255,255,0.06)', color: '#71717a', cursor: 'pointer', flexShrink: 0 }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: 'none', background: 'rgba(var(--ink-ch), 0.06)', color: 'var(--tx-71717a)', cursor: 'pointer', flexShrink: 0 }}
           >
             <X size={14} />
           </button>
@@ -130,21 +130,21 @@ export function ConnectionDetailModal({ connection, isMcp, onClose }: Connection
 
           {/* About */}
           <SectionHeading>About</SectionHeading>
-          <p style={{ fontSize: '0.8rem', color: '#a1a1aa', lineHeight: 1.5, margin: '0 0 10px' }}>
+          <p style={{ fontSize: '0.8rem', color: 'var(--tx-a1a1aa)', lineHeight: 1.5, margin: '0 0 10px' }}>
             {connection.purpose}
           </p>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {!isMcp && (connection as Connection).category && (
-              <span style={{ fontSize: '0.7rem', color: '#71717a', background: 'rgba(113,113,122,0.12)', border: '1px solid rgba(113,113,122,0.2)', borderRadius: 4, padding: '2px 7px' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--tx-71717a)', background: 'rgba(113,113,122,0.12)', border: '1px solid rgba(113,113,122,0.2)', borderRadius: 4, padding: '2px 7px' }}>
                 {(connection as Connection).category}
               </span>
             )}
             {isMcp && (
-              <span style={{ fontSize: '0.7rem', color: '#fbbf24', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 4, padding: '2px 7px' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--tx-fbbf24)', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 4, padding: '2px 7px' }}>
                 MCP Server
               </span>
             )}
-            <span style={{ fontSize: '0.7rem', color: '#71717a', background: 'rgba(113,113,122,0.12)', border: '1px solid rgba(113,113,122,0.2)', borderRadius: 4, padding: '2px 7px' }}>
+            <span style={{ fontSize: '0.7rem', color: 'var(--tx-71717a)', background: 'rgba(113,113,122,0.12)', border: '1px solid rgba(113,113,122,0.2)', borderRadius: 4, padding: '2px 7px' }}>
               {connection.connection_type.replace(/_/g, ' ')}
             </span>
           </div>
@@ -157,8 +157,8 @@ export function ConnectionDetailModal({ connection, isMcp, onClose }: Connection
                 {connection.env_vars.map(varName => {
                   const isSet = envCheck ? envCheck.envVars[varName] : null;
                   return (
-                    <div key={varName} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '6px 10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 6 }}>
-                      <code style={{ fontSize: '0.72rem', color: '#a1a1aa', fontFamily: 'monospace', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div key={varName} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '6px 10px', background: 'rgba(var(--ink-ch), 0.03)', border: '1px solid rgba(var(--ink-ch), 0.05)', borderRadius: 6 }}>
+                      <code style={{ fontSize: '0.72rem', color: 'var(--tx-a1a1aa)', fontFamily: 'monospace', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {varName}
                       </code>
                       <span style={{ fontSize: '0.68rem', fontWeight: 600, flexShrink: 0,
@@ -180,13 +180,13 @@ export function ConnectionDetailModal({ connection, isMcp, onClose }: Connection
           {connection.endpoint && (
             <>
               <SectionHeading>Endpoint</SectionHeading>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 6 }}>
-                <code style={{ fontSize: '0.72rem', color: '#a1a1aa', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'monospace' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'rgba(var(--ink-ch), 0.03)', border: '1px solid rgba(var(--ink-ch), 0.05)', borderRadius: 6 }}>
+                <code style={{ fontSize: '0.72rem', color: 'var(--tx-a1a1aa)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'monospace' }}>
                   {connection.endpoint}
                 </code>
                 <button
                   onClick={() => copyToClipboard(connection.endpoint!)}
-                  style={{ fontSize: '0.68rem', color: '#71717a', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 4, padding: '2px 7px', cursor: 'pointer' }}
+                  style={{ fontSize: '0.68rem', color: 'var(--tx-71717a)', background: 'rgba(var(--ink-ch), 0.04)', border: '1px solid rgba(var(--ink-ch), 0.06)', borderRadius: 4, padding: '2px 7px', cursor: 'pointer' }}
                 >
                   Copy
                 </button>
@@ -198,7 +198,7 @@ export function ConnectionDetailModal({ connection, isMcp, onClose }: Connection
           {(connection as Connection).service_account && (
             <>
               <SectionHeading>Service Account</SectionHeading>
-              <code style={{ fontSize: '0.72rem', color: '#a1a1aa', display: 'block', padding: '8px 10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 6, wordBreak: 'break-all' }}>
+              <code style={{ fontSize: '0.72rem', color: 'var(--tx-a1a1aa)', display: 'block', padding: '8px 10px', background: 'rgba(var(--ink-ch), 0.03)', border: '1px solid rgba(var(--ink-ch), 0.05)', borderRadius: 6, wordBreak: 'break-all' }}>
                 {(connection as Connection).service_account}
               </code>
             </>
@@ -210,7 +210,7 @@ export function ConnectionDetailModal({ connection, isMcp, onClose }: Connection
               <SectionHeading>Used In</SectionHeading>
               <ul style={{ margin: 0, padding: '0 0 0 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {(connection as Connection).used_in!.map(item => (
-                  <li key={item} style={{ fontSize: '0.78rem', color: '#a1a1aa', lineHeight: 1.4 }}>{item}</li>
+                  <li key={item} style={{ fontSize: '0.78rem', color: 'var(--tx-a1a1aa)', lineHeight: 1.4 }}>{item}</li>
                 ))}
               </ul>
             </>
@@ -220,7 +220,7 @@ export function ConnectionDetailModal({ connection, isMcp, onClose }: Connection
           {(connection as Connection).notes && (
             <>
               <SectionHeading>Notes</SectionHeading>
-              <p style={{ fontSize: '0.78rem', color: '#71717a', lineHeight: 1.5, margin: 0 }}>
+              <p style={{ fontSize: '0.78rem', color: 'var(--tx-71717a)', lineHeight: 1.5, margin: 0 }}>
                 {(connection as Connection).notes}
               </p>
             </>
@@ -236,7 +236,7 @@ export function ConnectionDetailModal({ connection, isMcp, onClose }: Connection
                   {testResult.latencyMs !== undefined && ` · ${testResult.latencyMs}ms`}
                 </span>
                 {testResult.message && (
-                  <span style={{ fontSize: '0.72rem', color: '#71717a', marginLeft: 8 }}>{testResult.message}</span>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--tx-71717a)', marginLeft: 8 }}>{testResult.message}</span>
                 )}
               </div>
             </>
@@ -244,13 +244,13 @@ export function ConnectionDetailModal({ connection, isMcp, onClose }: Connection
         </div>
 
         {/* ── Footer ── */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, padding: '12px 20px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, padding: '12px 20px', borderTop: '1px solid rgba(var(--ink-ch), 0.06)', flexShrink: 0 }}>
           {(connection as Connection).docs && (
             <a
               href={(connection as Connection).docs}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.78rem', color: '#71717a', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 6, padding: '6px 12px', textDecoration: 'none', marginRight: 'auto' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.78rem', color: 'var(--tx-71717a)', background: 'rgba(var(--ink-ch), 0.04)', border: '1px solid rgba(var(--ink-ch), 0.06)', borderRadius: 6, padding: '6px 12px', textDecoration: 'none', marginRight: 'auto' }}
             >
               <ExternalLink size={12} />
               Docs
@@ -259,7 +259,7 @@ export function ConnectionDetailModal({ connection, isMcp, onClose }: Connection
           <button
             onClick={handleTest}
             disabled={testing}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.78rem', fontWeight: 600, color: testing ? '#52525b' : '#a1a1aa', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 6, padding: '6px 14px', cursor: testing ? 'not-allowed' : 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.78rem', fontWeight: 600, color: testing ? '#52525b' : '#a1a1aa', background: 'rgba(var(--ink-ch), 0.04)', border: '1px solid rgba(var(--ink-ch), 0.06)', borderRadius: 6, padding: '6px 14px', cursor: testing ? 'not-allowed' : 'pointer' }}
           >
             {testing ? (
               <span style={{ display: 'inline-block', width: 10, height: 10, border: '1.5px solid #52525b', borderTopColor: '#a1a1aa', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
@@ -268,7 +268,7 @@ export function ConnectionDetailModal({ connection, isMcp, onClose }: Connection
           </button>
           <button
             onClick={onClose}
-            style={{ fontSize: '0.78rem', fontWeight: 600, color: '#e4e4e7', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '6px 16px', cursor: 'pointer' }}
+            style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--tx-e4e4e7)', background: 'rgba(var(--ink-ch), 0.08)', border: '1px solid rgba(var(--ink-ch), 0.1)', borderRadius: 6, padding: '6px 16px', cursor: 'pointer' }}
           >
             Close
           </button>

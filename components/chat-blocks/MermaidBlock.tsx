@@ -23,7 +23,7 @@ async function getMermaid() {
         lineColor: '#4b5563',
         secondaryColor: '#0a1428',
         tertiaryColor: '#0f2040',
-        background: '#080e1c',
+        background: 'var(--bg-080e1c)',
         mainBkg: '#0a1428',
         nodeBorder: '#3b82f6',
         clusterBkg: '#0f2040',

@@ -39,7 +39,7 @@ const COLS: ColumnDef<PortRow>[] = [
     align: 'right',
     getValue: r => r.port,
     render: r => (
-      <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#60a5fa', fontSize: '12.5px' }}>
+      <span style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--tx-60a5fa)', fontSize: '12.5px' }}>
         {r.port}
       </span>
     ),
@@ -73,7 +73,7 @@ const COLS: ColumnDef<PortRow>[] = [
           </div>
         )}
         {r.conflict && !r.registeredName && (
-          <div style={{ fontSize: '11px', color: '#ef4444', fontFamily: 'monospace' }}>
+          <div style={{ fontSize: '11px', color: 'var(--tx-ef4444)', fontFamily: 'monospace' }}>
             PM2 expects: {r.conflictWith}
           </div>
         )}
@@ -87,7 +87,7 @@ const COLS: ColumnDef<PortRow>[] = [
     width: '120px',
     getValue: r => r.registeredCategory ?? '',
     render: r => r.registeredCategory
-      ? <span style={{ fontSize: '11.5px', color: '#94a3b8', textTransform: 'capitalize' }}>{r.registeredCategory}</span>
+      ? <span style={{ fontSize: '11.5px', color: 'var(--tx-94a3b8)', textTransform: 'capitalize' }}>{r.registeredCategory}</span>
       : <span style={{ color: 'var(--muted)' }}>—</span>,
   },
   {
@@ -238,7 +238,7 @@ export function PortRegistrySection() {
       {/* Header with inline stat pills */}
       <div className="systems-section__header">
         <div className="systems-section__header-left">
-          <Network size={16} style={{ color: '#06b6d4', flexShrink: 0 }} />
+          <Network size={16} style={{ color: 'var(--tx-06b6d4)', flexShrink: 0 }} />
           <h2 className="systems-section__title">Port Registry</h2>
           <span className="systems-stat-pill systems-stat-pill--info">
             <span className="systems-stat-pill__value">{rows.length}</span> detected

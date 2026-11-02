@@ -412,7 +412,7 @@ export function SupabaseConfigPanel({ onClose }: SupabaseConfigPanelProps) {
     >
       <div
         className="max-w-2xl w-full mx-4 glass-card rounded-2xl flex flex-col overflow-hidden"
-        style={{ background: 'rgba(8, 14, 28, 0.97)', backdropFilter: 'none', maxHeight: '85vh' }}
+        style={{ background: 'rgba(var(--deep-ch), 0.97)', backdropFilter: 'none', maxHeight: '85vh' }}
       >
         {/* Header */}
         <div className="flex items-start justify-between px-6 py-5 border-b border-white/8 flex-shrink-0">

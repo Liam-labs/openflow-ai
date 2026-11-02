@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import { requireAuthOrLocal, validateApiToken, hasPermission, isLocalRequest, isCloudflaredRequest } from '@/lib/api-auth';
+import { requestHasSession } from '@/lib/dashboard-auth';
 import { tracked } from '@/lib/api-tracking';
 import {
   createTeam,
@@ -77,7 +78,7 @@ export const POST = tracked('/api/teams', async (request: NextRequest) => {
             error: "Scope 'write' required for this action",
           }, { status: 403 });
         }
-      } else if (!isLocalRequest(request) && !isCloudflaredRequest(request)) {
+      } else if (!isLocalRequest(request) && !isCloudflaredRequest(request) && !(await requestHasSession(request))) {
         // Non-local, non-tunnel, no valid token — reject
         return NextResponse.json<TeamsActionResponse>({
           success: false,

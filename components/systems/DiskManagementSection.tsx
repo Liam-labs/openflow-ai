@@ -13,6 +13,8 @@ interface ScanResponse {
   totalBytes: number;
   totalHuman: string;
   scanMs: number;
+  partial?: boolean;
+  warning?: string;
 }
 
 interface ContextMenuState {
@@ -41,8 +43,9 @@ export function DiskManagementSection() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path: targetPath }),
       });
-      const json = await res.json();
+      const json = await res.json().catch(() => { throw new Error(`Disk scan returned an unreadable response (HTTP ${res.status}). Please retry.`); });
       if (!res.ok) throw new Error(json.error ?? 'Scan failed');
+      if (!Array.isArray(json.entries)) throw new Error('Disk scan returned an invalid response. Please retry.');
       setData(json as ScanResponse);
       setPath(targetPath);
     } catch (err) {
@@ -125,7 +128,7 @@ export function DiskManagementSection() {
             <span
               className="disk-size-cell__bar"
               style={{
-                width: `${data ? Math.min(100, (entry.sizeBytes / (data.entries[0]?.sizeBytes || 1)) * 100) : 0}%`,
+                width: `${data ? Math.min(100, ((entry.sizeBytes ?? 0) / (data.entries[0]?.sizeBytes || 1)) * 100) : 0}%`,
               }}
               aria-hidden="true"
             />
@@ -133,7 +136,7 @@ export function DiskManagementSection() {
           <span className="disk-size-cell__label">{entry.sizeHuman}</span>
         </div>
       ),
-      getValue: (entry) => entry.sizeBytes,
+      getValue: (entry) => entry.sizeBytes ?? -1,
     },
     {
       key: 'type',
@@ -159,7 +162,7 @@ export function DiskManagementSection() {
             <span className="systems-section__count">{data.entries.length} entries</span>
           )}
           {data && (
-            <span className="disk-total-size">{data.totalHuman} total · scanned in {data.scanMs}ms</span>
+            <span className="disk-total-size">{data.totalHuman} {data.partial ? 'measured (incomplete)' : 'total'} · scanned in {data.scanMs}ms</span>
           )}
         </div>
         <button
@@ -205,6 +208,8 @@ export function DiskManagementSection() {
           </React.Fragment>
         ))}
       </nav>
+
+      {data?.warning && <p role="status" className="systems-section__desc">{data.warning}</p>}
 
       {/* Table */}
       {loading && !data ? (
@@ -268,7 +273,7 @@ function RightClickCapture({
   onContextMenu: (entry: DiskEntry, x: number, y: number) => void;
 }) {
   const entriesRef = useRef(entries);
-  entriesRef.current = entries;
+  React.useEffect(() => { entriesRef.current = entries; }, [entries]);
 
   React.useEffect(() => {
     const el = containerRef.current;

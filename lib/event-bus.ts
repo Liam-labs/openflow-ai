@@ -37,6 +37,12 @@ export type SSEEventType =
   | 'collab:typing'        // Typing/working indicator update
   | 'collab:task'          // Task board change (created/claimed/completed)
   | 'collab:delivery_failure' // Message delivery failure event
+  // Connection wizards: something a wizard screen shows may have changed ({ wizard }); the screen reads the current state again. No data travels with it.
+  | 'wizard:changed'
+  // Approvals (the bar in project chat, lib/approvals.ts)
+  | 'approval:change'      // A request was filed, answered, used or expired on the PC gate ({ id, status }); '*' after a full refresh
+  // API credit estimate (lib/api-spend.ts): published only after the ledger is written
+  | 'api-spend:change'     // The API spend estimate changed ({ reason, summary? }); totals only, see lib/api-spend-summary.ts
   // Ralph loops
   | 'loops:status'         // Loop status change
   // Port monitoring
@@ -173,6 +179,9 @@ export const EVENT_DOMAINS: Record<string, SSEEventType[]> = {
   pm2: ['pm2:status'],
   health: ['health:status'],
   collab: ['collab:message', 'collab:participant', 'collab:typing', 'collab:task', 'collab:delivery_failure'],
+  approvals: ['approval:change'],
+  wizards: ['wizard:changed'],
+  spend: ['api-spend:change'],
   loops: ['loops:status'],
   ports: ['ports:change'],
   sessions: ['sessions:change'],

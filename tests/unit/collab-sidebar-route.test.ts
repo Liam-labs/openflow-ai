@@ -42,6 +42,7 @@ vi.mock('@/app/api/collab/_collab-shared', () => ({
   cleanupStaleParticipants: vi.fn(),
   migrateMessagesToSeparateFiles: vi.fn().mockResolvedValue(undefined),
   getCachedUnreadCounts: vi.fn().mockReturnValue(null),
+  getCachedMentionCounts: vi.fn().mockReturnValue(null),
   getCachedLastMessageAt: vi.fn(),
   getCachedLastMessagePreview: vi.fn(),
   setCachedUnreadCounts: mocks.setCachedUnreadCounts,
@@ -124,6 +125,7 @@ describe('GET /api/collab sidebar metadata', () => {
       expect.any(Map),
       '2026-07-18T09:00:00.000Z',
       'Jack: build is green',
+      expect.any(Map),
     );
   });
 });

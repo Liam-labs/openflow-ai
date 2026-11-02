@@ -13,6 +13,7 @@ import {
   renewDelivery,
   requeueDelivery,
   quarantineChannelNonTerminalDeliveries,
+  recoverIngestedDelivery,
   quarantineStalePendingDeliveries,
   settleTimedOutDelivery,
   transitionDelivery,
@@ -197,7 +198,7 @@ describe('durable collab delivery ledger', () => {
     expect(await fs.readFile(path.join(appDataDir, 'collab-delivery-ledger.json'), 'utf-8')).not.toContain(message.content);
   });
 
-  it('reclaims a submitted delivery after its lease expires', async () => {
+  it('does not replay a submitted delivery after its lease expires: it goes to transcript recovery', async () => {
     const { channel, message } = fixture();
     await enqueueDurableDeliveries(message.from.id, message, channel);
     const first = await claimDelivery({
@@ -211,18 +212,18 @@ describe('durable collab delivery ledger', () => {
       leaseId: first!.lease!.id,
       ownerId: 'wrapper-a',
       state: 'submitted',
+      transcriptPath: '/tmp/owned-rollout.jsonl',
+      transcriptByte: 5,
     });
     await new Promise(resolve => setTimeout(resolve, 110));
 
-    const reclaimed = await claimDelivery({
-      channelId: channel.id,
-      participantId: 'roster-architect',
-      ownerId: 'wrapper-b',
-    });
-
-    expect(reclaimed?.state).toBe('leased');
-    expect(reclaimed?.lease?.ownerId).toBe('wrapper-b');
-    expect(reclaimed?.attempts).toBe(2);
+    // A restarted wrapper is a new owner: it must not be handed the turn again.
+    expect(await claimDelivery({ channelId: channel.id, participantId: 'roster-architect', ownerId: 'wrapper-b' })).toBeNull();
+    const recovered = await recoverIngestedDelivery({ channelId: channel.id, participantId: 'roster-architect', ownerId: 'wrapper-b' });
+    expect(recovered?.id).toBe(first!.id);
+    expect(recovered?.state).toBe('ingested');
+    expect(recovered?.transcriptPath).toBe('/tmp/owned-rollout.jsonl');
+    expect(recovered?.attempts).toBe(1);
   });
 
   it('renews a submitted lease while a delayed Codex turn awaits transcript ingestion', async () => {
@@ -596,6 +597,18 @@ describe('queued message bundling', () => {
     expect(afterExpiry?.message.content.match(/second/g)).toHaveLength(1);
   });
 
+  it('counts a folded message as an attempt, so a failing carrier cannot re-fold it past the ceiling', async () => {
+    const channel = await queue(['A', 'B', 'C', 'D']);
+    const turns: Record<string, number> = {};
+    for (let i = 0; i < 40; i += 1) {
+      const claim = await claimFor(channel.id, `wrapper-${i}`, 1);
+      if (!claim) break;
+      for (const id of [claim.messageId, ...(claim.bundle?.recordIds ?? [])]) turns[id] = (turns[id] ?? 0) + 1;
+      await new Promise(resolve => setTimeout(resolve, 3));
+    }
+    for (const count of Object.values(turns)) expect(count).toBeLessThanOrEqual(MAX_DELIVERY_ATTEMPTS);
+  });
+
   it('dead-letters folded messages with their carrier', async () => {
     const channel = await queue(['first', 'second']);
     const claim = await claimFor(channel.id);
@@ -651,5 +664,32 @@ describe('delivery ledger snapshot cache', () => {
     const records = await getDeliveryRecords({ channelId: 'channel-1' });
     expect(records.map(record => record.id)).toContain('external-record');
     expect((await getDeliveryRecords({ recordId: 'external-record' }))[0]?.messageId).toBe('message-2');
+  });
+});
+
+describe('cross-process ledger lock', () => {
+  it('keeps a slow mutation\'s lock alive, so a second process cannot steal it', async () => {
+    const { channel, message } = fixture();
+    const lockPath = path.join(appDataDir, 'collab-delivery-ledger.json.lock');
+    // A live holder: fresh mtime. A waiter must wait for it, not delete it.
+    await fs.mkdir(appDataDir, { recursive: true });
+    await fs.writeFile(lockPath, '1\nother-token\n');
+    setTimeout(() => { void fs.unlink(lockPath).catch(() => undefined); }, 150);
+    const started = Date.now();
+    await enqueueDurableDeliveries(message.from.id, message, channel);
+    expect(Date.now() - started).toBeGreaterThanOrEqual(120);
+  });
+
+  it('takes over a lock whose holder stopped, and never deletes a lock it does not own', async () => {
+    const { channel, message } = fixture();
+    const lockPath = path.join(appDataDir, 'collab-delivery-ledger.json.lock');
+    await fs.mkdir(appDataDir, { recursive: true });
+    await fs.writeFile(lockPath, '1\ndead-token\n');
+    const old = new Date(Date.now() - 60_000);
+    await fs.utimes(lockPath, old, old);
+    const created = await enqueueDurableDeliveries(message.from.id, message, channel);
+    expect(created.length).toBeGreaterThan(0);
+    await expect(fs.stat(lockPath)).rejects.toThrow();   // released by its own token
+    expect((await fs.readdir(appDataDir)).filter(name => name.includes('.lock.stale.'))).toEqual([]);
   });
 });

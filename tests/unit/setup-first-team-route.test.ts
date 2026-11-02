@@ -7,7 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
-const { root, createChannel, getChannel, provision } = vi.hoisted(() => {
+const { root, createChannel, getChannel, findChannelsByProject, provision } = vi.hoisted(() => {
   const fs = require('node:fs') as typeof import('node:fs');
   const path = require('node:path') as typeof import('node:path');
   const os = require('node:os') as typeof import('node:os');
@@ -23,14 +23,14 @@ const { root, createChannel, getChannel, provision } = vi.hoisted(() => {
   fs.writeFileSync(path.join(root, 'data', 'roles', 'roles.json'), JSON.stringify({
     roles: [{ id: 'r-research', slug: 'researcher' }, { id: 'r-backend', slug: 'backend-dev' }],
   }));
-  return { root, createChannel: vi.fn(), getChannel: vi.fn(), provision: vi.fn() };
+  return { root, createChannel: vi.fn(), getChannel: vi.fn(), findChannelsByProject: vi.fn(), provision: vi.fn() };
 });
 
 vi.mock('@/lib/api-auth', () => ({ requireAuthOrLocal: vi.fn(async () => null) }));
 vi.mock('@/lib/api-tracking', () => ({ tracked: (_n: string, h: unknown) => h }));
 vi.mock('@/lib/app-paths', () => ({ appPath: (...s: string[]) => require('node:path').join(root, ...s) }));
 vi.mock('@/lib/home-dir', () => ({ getHomeDir: () => root }));
-vi.mock('@/app/api/agent/actions/collab', () => ({ createChannel, getChannel }));
+vi.mock('@/app/api/agent/actions/collab', () => ({ createChannel, getChannel, findChannelsByProject }));
 vi.mock('@/app/api/agent/actions/roster', () => ({ provision }));
 
 import { GET, POST } from '@/app/api/setup/first-team/route';
@@ -43,6 +43,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   createChannel.mockResolvedValue({ channel: { id: 'chan-1' } });
   getChannel.mockResolvedValue({ channel: { id: 'chan-1', roster: { agents: [] } }, found: true });
+  findChannelsByProject.mockResolvedValue([]);
   provision.mockResolvedValue({ spawned: true });
 });
 
@@ -102,6 +103,25 @@ describe('/api/setup/first-team', () => {
     expect(provision).toHaveBeenCalledTimes(1);
     expect(provision.mock.calls[0][0].name).toBe('Mason');
     expect(json.agents[0]).toEqual({ name: 'Scout', started: true });
+  });
+
+  it('reuses the wizard channel for the same folder instead of making a second one (BUG-53)', async () => {
+    // No channelId passed (a fresh "Start my team" after a reload), but the wizard already made a channel here, with Scout.
+    findChannelsByProject.mockResolvedValue([{ id: 'chan-1' }]);
+    getChannel.mockResolvedValue({ channel: { id: 'chan-1', roster: { agents: [{ name: 'Scout' }] } }, found: true });
+    const json = await (await post({ agentType: 'claude' })).json();
+    expect(createChannel).not.toHaveBeenCalled();
+    expect(findChannelsByProject).toHaveBeenCalledWith(expect.stringContaining('first-project'), 'Created by the first-run wizard');
+    expect(json.channelId).toBe('chan-1');
+    expect(provision).toHaveBeenCalledTimes(1);            // Scout already present; only Mason started
+    expect(provision.mock.calls[0][0].name).toBe('Mason');
+  });
+
+  it('still creates a channel when none exists for the folder', async () => {
+    findChannelsByProject.mockResolvedValue([]);
+    await post({ agentType: 'claude' });
+    expect(createChannel).toHaveBeenCalledTimes(1);
+    expect(createChannel.mock.calls[0][0]).toMatchObject({ description: 'Created by the first-run wizard' });
   });
 
   it('refuses callers that are not authorised', async () => {

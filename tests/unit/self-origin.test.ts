@@ -24,10 +24,10 @@ describe('server code does not call itself on a fixed port 3000', () => {
     }
     return out;
   }
-  it('no fetch( or request to http://localhost:3000 in app/ lib/ slack-integration/ teams-integration/', () => {
+  it('no fetch( or request to http://localhost:3000 in app/ lib/ slack-integration/', () => {
     const root = path.resolve(__dirname, '..', '..');
     const offenders: string[] = [];
-    for (const dir of ['app', 'lib', 'slack-integration', 'teams-integration']) {
+    for (const dir of ['app', 'lib', 'slack-integration']) {
       let files: string[] = [];
       try { files = walk(path.join(root, dir)); } catch { continue; }
       for (const f of files) {

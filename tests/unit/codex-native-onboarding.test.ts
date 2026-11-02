@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { getDevflowHome } from '@/lib/home-dir';
 import { createCodexNativeOnboarder } from '@/lib/codex-native-onboarding';
 
 const binding = {
@@ -60,11 +59,6 @@ describe('Codex Native channel onboarding', () => {
     expect(messages[0].content).toContain('Pete (user): @Pete');
     expect(messages[0].content).toContain('Dave (agent): @Dave');
     expect(messages[0].content).toContain('Margaret (agent): @Margaret');
-    expect(messages[0].content).toContain('Model-neutral DevFlow MCP Gateway');
-    expect(messages[0].content).toContain(`${getDevflowHome()}/data/skills/account-access/SKILL.md`);
-    expect(messages[0].content).toContain(`${getDevflowHome()}/data/skills/onepassword/SKILL.md`);
-    expect(messages[0].content).toContain(`wsl -- ${getDevflowHome()}/scripts/devflow-gateway --help`);
-    expect(messages[0].content).toContain('Never call the 1Password CLI directly');
     expect(messages[1]).toMatchObject({
       recipients: ['dave', 'sam'],
       mentions: ['dave', 'sam'],

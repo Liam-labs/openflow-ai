@@ -21,7 +21,7 @@ function CpuBar({ value }: { value: number }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
       <div style={{
-        flex: 1, height: 3, background: 'rgba(255,255,255,0.06)',
+        flex: 1, height: 3, background: 'rgba(var(--ink-ch), 0.06)',
         borderRadius: 2, overflow: 'hidden', minWidth: 40,
       }}>
         <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 2, transition: 'width 0.4s ease' }} />
@@ -136,7 +136,7 @@ function buildColumns(
             </button>
             <button
               className="svc-action-btn"
-              style={{ color: '#60a5fa' }}
+              style={{ color: 'var(--tx-60a5fa)' }}
               onClick={() => onAction(r, 'restart')}
               title="Restart"
               aria-label="Restart"
@@ -259,7 +259,7 @@ export function ProcessesSection({ onEntitySelect, onProcessCountChange }: Proce
             </span>
           )}
           {totalCpu > 0 && (
-            <span className="svc-stat-inline" style={{ color: totalCpu > 80 ? '#f87171' : 'rgba(255,255,255,0.45)' }}>
+            <span className="svc-stat-inline" style={{ color: totalCpu > 80 ? '#f87171' : 'rgba(var(--ink-ch), 0.45)' }}>
               · {totalCpu.toFixed(1)}% CPU · {fmtMem(totalMem)}
             </span>
           )}

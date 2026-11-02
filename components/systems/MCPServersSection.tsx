@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { Plug, RefreshCw, CheckCircle2, XCircle, Circle, Cloud, Terminal, Radio, ExternalLink, Cpu, Power, RotateCw } from 'lucide-react';
 
 import { getHomeDir } from '@/lib/home-dir';
-import { PRODUCT_NAME } from '@/lib/brand';
 interface McpServer {
   name: string;
   transport: 'stdio' | 'http' | 'sse';
@@ -165,10 +164,10 @@ export function MCPServersSection() {
       <header className="mcp-header">
         <div>
           <div className="mcp-eyebrow">Systems · MCP Gateway</div>
-          <h1 className="mcp-title"><Plug size={18} /> Model-neutral {PRODUCT_NAME} MCP Gateway</h1>
+          <h1 className="mcp-title"><Plug size={18} /> Model-neutral DevFlow MCP Gateway</h1>
           <p className="mcp-sub">
             One shared capability contract for every AgentChat runtime, with provider-specific servers,
-            credentials, and workers kept behind {PRODUCT_NAME}. Manage the gateway&apos;s current MCP connections here.
+            credentials, and workers kept behind DevFlow. Manage the gateway&apos;s current MCP connections here.
           </p>
         </div>
         <button className="mcp-btn-ghost" onClick={refresh} disabled={loading}>
@@ -331,7 +330,7 @@ export function MCPServersSection() {
       </section>
 
       <div className="mcp-tip">
-        <ExternalLink size={12} /> Pattern guide: <code>~/DevFlow/data/central-knowledge-base/platform/shared-mcp-pattern.md</code>
+        <ExternalLink size={12} /> Pattern guide: <code>docs/guides/add-an-mcp-server.md</code>
       </div>
 
       <style jsx>{`
@@ -340,12 +339,12 @@ export function MCPServersSection() {
         .mcp-eyebrow { font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--df-text-muted, #71717a); font-weight: 600; }
         .mcp-title { display: flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 600; margin: 4px 0 6px; color: var(--df-text); letter-spacing: -0.3px; }
         .mcp-sub { font-size: 13px; color: var(--df-text-secondary, #a1a1aa); max-width: 720px; line-height: 1.5; margin: 0; }
-        .mcp-btn-ghost { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; background: transparent; border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.15)); border-radius: 8px; color: var(--df-text-secondary); font-size: 12px; cursor: pointer; transition: all 140ms ease; }
-        .mcp-btn-ghost:hover { background: var(--df-accent-10, rgba(59,130,246,0.1)); color: var(--df-text); }
+        .mcp-btn-ghost { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; background: transparent; border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.15)); border-radius: 8px; color: var(--df-text-secondary); font-size: 12px; cursor: pointer; transition: all 140ms ease; }
+        .mcp-btn-ghost:hover { background: var(--df-accent-10, rgba(var(--glow-ch), 0.1)); color: var(--df-text); }
         .mcp-btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .mcp-stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 16px 0 28px; }
-        .mcp-stat { padding: 14px 16px; background: var(--df-bg-glass, rgba(15,25,50,0.4)); border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.1)); border-radius: 10px; }
+        .mcp-stat { padding: 14px 16px; background: var(--df-bg-glass, rgba(var(--deep-ch), 0.4)); border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.1)); border-radius: 10px; }
         .mcp-stat-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--df-text-muted); font-weight: 600; margin-bottom: 6px; }
         .mcp-stat-value { font-size: 20px; font-weight: 600; color: var(--df-text); font-family: var(--font-mono, monospace); }
         .mcp-stat-suffix { font-size: 13px; color: var(--df-text-muted); margin-left: 4px; }
@@ -354,12 +353,12 @@ export function MCPServersSection() {
         .mcp-block-title { font-size: 13px; font-weight: 600; color: var(--df-text); margin: 0 0 10px; letter-spacing: -0.2px; }
         .mcp-block-hint { font-weight: 400; color: var(--df-text-muted); font-size: 12px; }
 
-        .mcp-table { background: var(--df-bg-glass, rgba(15,25,50,0.3)); border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.1)); border-radius: 10px; overflow: hidden; }
-        .mcp-row { display: grid; grid-template-columns: 56px 1.4fr 0.9fr 2fr 0.6fr 1fr 0.9fr 0.7fr 0.7fr 0.7fr; gap: 12px; padding: 10px 14px; align-items: center; font-size: 12px; border-top: 1px solid var(--df-border-subtle, rgba(59,130,246,0.06)); cursor: pointer; transition: background 120ms ease; }
+        .mcp-table { background: var(--df-bg-glass, rgba(var(--deep-ch), 0.3)); border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.1)); border-radius: 10px; overflow: hidden; }
+        .mcp-row { display: grid; grid-template-columns: 56px 1.4fr 0.9fr 2fr 0.6fr 1fr 0.9fr 0.7fr 0.7fr 0.7fr; gap: 12px; padding: 10px 14px; align-items: center; font-size: 12px; border-top: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.06)); cursor: pointer; transition: background 120ms ease; }
         .mcp-row:first-child { border-top: none; }
-        .mcp-row:hover { background: var(--df-accent-8, rgba(59,130,246,0.05)); }
-        .mcp-row--head { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--df-text-muted); font-weight: 600; cursor: default; background: rgba(0,0,0,0.2); }
-        .mcp-row--head:hover { background: rgba(0,0,0,0.2); }
+        .mcp-row:hover { background: var(--df-accent-8, rgba(var(--glow-ch), 0.05)); }
+        .mcp-row--head { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--df-text-muted); font-weight: 600; cursor: default; background: rgba(var(--shade-ch), 0.2); }
+        .mcp-row--head:hover { background: rgba(var(--shade-ch), 0.2); }
         .mcp-row--stdio { grid-template-columns: 56px 1fr 1fr 2fr 1fr; cursor: default; }
         .mcp-row--stdio:hover { background: transparent; }
 
@@ -370,37 +369,37 @@ export function MCPServersSection() {
         .mcp-muted { color: var(--df-text-muted); font-style: italic; }
 
         .mcp-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; }
-        .mcp-badge--ok { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
-        .mcp-badge--fail { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
-        .mcp-badge--neutral { background: rgba(161,161,170,0.1); color: var(--df-text-muted); border: 1px solid rgba(161,161,170,0.2); }
+        .mcp-badge--ok { background: rgba(34,197,94,0.15); color: var(--tx-4ade80); border: 1px solid rgba(34,197,94,0.3); }
+        .mcp-badge--fail { background: rgba(239,68,68,0.15); color: var(--tx-f87171); border: 1px solid rgba(239,68,68,0.3); }
+        .mcp-badge--neutral { background: rgba(var(--txc-161-161-170), 0.1); color: var(--df-text-muted); border: 1px solid rgba(var(--txc-161-161-170), 0.2); }
 
         .mcp-pm2-status { padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; }
-        .mcp-pm2-status--online { background: rgba(34,197,94,0.15); color: #4ade80; }
-        .mcp-pm2-status--stopped { background: rgba(239,68,68,0.15); color: #f87171; }
-        .mcp-pm2-status--errored { background: rgba(239,68,68,0.15); color: #f87171; }
+        .mcp-pm2-status--online { background: rgba(34,197,94,0.15); color: var(--tx-4ade80); }
+        .mcp-pm2-status--stopped { background: rgba(239,68,68,0.15); color: var(--tx-f87171); }
+        .mcp-pm2-status--errored { background: rgba(239,68,68,0.15); color: var(--tx-f87171); }
 
         .mcp-actions { display: flex; gap: 6px; }
         .mcp-icon-btn { background: transparent; border: 1px solid var(--df-border-subtle); border-radius: 6px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; color: var(--df-text-secondary); cursor: pointer; transition: all 140ms ease; }
         .mcp-icon-btn:hover { background: var(--df-accent-10); color: var(--df-text); border-color: var(--df-accent, #3b82f6); }
-        .mcp-icon-btn--danger:hover { background: rgba(239,68,68,0.1); color: #f87171; border-color: rgba(239,68,68,0.4); }
+        .mcp-icon-btn--danger:hover { background: rgba(239,68,68,0.1); color: var(--tx-f87171); border-color: rgba(239,68,68,0.4); }
         .mcp-icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        .mcp-detail { padding: 14px 18px; background: rgba(0,0,0,0.25); border-top: 1px solid var(--df-border-subtle); font-size: 12px; }
+        .mcp-detail { padding: 14px 18px; background: rgba(var(--shade-ch), 0.25); border-top: 1px solid var(--df-border-subtle); font-size: 12px; }
         .mcp-detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px 24px; }
         .mcp-detail-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--df-text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
 
         .mcp-empty { padding: 18px; text-align: center; color: var(--df-text-muted); font-size: 12px; }
-        .mcp-error { padding: 12px 16px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; color: #f87171; font-size: 12px; margin-bottom: 16px; }
-        .mcp-gateway-card { padding: 16px; margin: 0 0 24px; border-radius: 10px; background: var(--df-bg-glass, rgba(15,25,50,0.4)); border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.15)); }
+        .mcp-error { padding: 12px 16px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; color: var(--tx-f87171); font-size: 12px; margin-bottom: 16px; }
+        .mcp-gateway-card { padding: 16px; margin: 0 0 24px; border-radius: 10px; background: var(--df-bg-glass, rgba(var(--deep-ch), 0.4)); border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.15)); }
         .mcp-gateway-card--ready { border-color: rgba(34,197,94,0.25); }
         .mcp-gateway-card--down { border-color: rgba(239,68,68,0.3); }
         .mcp-gateway-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px 24px; font-size: 12px; }
         .mcp-capabilities { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--df-border-subtle); }
-        .mcp-capabilities code { padding: 3px 7px; border-radius: 5px; background: rgba(59,130,246,0.1); color: var(--df-text-secondary); font-family: var(--font-mono); font-size: 10px; }
-        .mcp-ready-text { color: #4ade80; }
-        .mcp-down-text { color: #f87171; font-size: 11px; margin-top: 8px; }
+        .mcp-capabilities code { padding: 3px 7px; border-radius: 5px; background: rgba(var(--glow-ch), 0.1); color: var(--df-text-secondary); font-family: var(--font-mono); font-size: 10px; }
+        .mcp-ready-text { color: var(--tx-4ade80); }
+        .mcp-down-text { color: var(--tx-f87171); font-size: 11px; margin-top: 8px; }
         .mcp-tip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; background: var(--df-accent-8); border: 1px solid var(--df-border-subtle); border-radius: 8px; color: var(--df-text-secondary); font-size: 11px; margin-top: 8px; }
-        .mcp-tip code { font-family: var(--font-mono); color: var(--df-text); background: rgba(0,0,0,0.3); padding: 1px 5px; border-radius: 3px; font-size: 10px; }
+        .mcp-tip code { font-family: var(--font-mono); color: var(--df-text); background: rgba(var(--shade-ch), 0.3); padding: 1px 5px; border-radius: 3px; font-size: 10px; }
 
         .mcp-spin { animation: mcp-spin 1s linear infinite; }
         @keyframes mcp-spin { to { transform: rotate(360deg); } }
@@ -408,7 +407,7 @@ export function MCPServersSection() {
         .mcp-row--disabled { opacity: 0.55; }
         .mcp-row--disabled .mcp-name { color: var(--df-text-muted); }
 
-        .mcp-toggle { position: relative; width: 36px; height: 20px; border-radius: 999px; background: rgba(161,161,170,0.25); border: 1px solid rgba(161,161,170,0.3); cursor: pointer; transition: all 180ms ease; padding: 0; flex-shrink: 0; }
+        .mcp-toggle { position: relative; width: 36px; height: 20px; border-radius: 999px; background: rgba(var(--txc-161-161-170), 0.25); border: 1px solid rgba(var(--txc-161-161-170), 0.3); cursor: pointer; transition: all 180ms ease; padding: 0; flex-shrink: 0; }
         .mcp-toggle--on { background: rgba(34,197,94,0.45); border-color: rgba(34,197,94,0.6); }
         .mcp-toggle--busy { opacity: 0.5; cursor: wait; }
         .mcp-toggle-knob { position: absolute; top: 1px; left: 1px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
@@ -419,12 +418,12 @@ export function MCPServersSection() {
         .mcp-projects-title { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--df-text-muted); font-weight: 600; }
         .mcp-projects-count { font-size: 10px; color: var(--df-text-muted); }
         .mcp-project-list { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; padding-right: 4px; }
-        .mcp-project-row { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 6px 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--df-border-subtle); border-radius: 6px; font-size: 11px; }
+        .mcp-project-row { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 6px 10px; background: rgba(var(--shade-ch), 0.2); border: 1px solid var(--df-border-subtle); border-radius: 6px; font-size: 11px; }
         .mcp-project-path { font-family: var(--font-mono); color: var(--df-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .mcp-project-state { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 500; }
-        .mcp-project-state--enabled { background: rgba(34,197,94,0.15); color: #4ade80; }
-        .mcp-project-state--disabled { background: rgba(239,68,68,0.12); color: #f87171; }
-        .mcp-project-state--unset { background: rgba(161,161,170,0.1); color: var(--df-text-muted); }
+        .mcp-project-state--enabled { background: rgba(34,197,94,0.15); color: var(--tx-4ade80); }
+        .mcp-project-state--disabled { background: rgba(239,68,68,0.12); color: var(--tx-f87171); }
+        .mcp-project-state--unset { background: rgba(var(--txc-161-161-170), 0.1); color: var(--df-text-muted); }
       `}</style>
     </div>
   );

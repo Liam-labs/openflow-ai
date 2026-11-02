@@ -85,6 +85,9 @@ function buildSample(processes: PM2Process[]): CpuMemorySample {
   return { timestamp: Date.now(), cpu, memory };
 }
 
+/** Module-level so the useEventStream polling effect keeps the same dependency between renders (an inline function restarted it on every render). */
+const asPm2Response = (r: unknown) => r as PM2Response;
+
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
 /**
@@ -121,7 +124,7 @@ export function useMetricsBuffer(): MetricsBufferResult {
   const { data: pm2Data } = useEventStream<PM2Response>('pm2:status', {
     fallbackUrl: '/api/pm2',
     fallbackInterval: 10000,
-    fallbackTransform: (r) => r as PM2Response,
+    fallbackTransform: asPm2Response,
   });
 
   useEffect(() => {

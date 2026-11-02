@@ -116,6 +116,11 @@ export async function POST(request: NextRequest) {
               ...(report.window !== undefined ? { window: report.window } : {}),
               ...(report.source !== undefined ? { source: report.source } : {}),
             };
+            // A lower reading after /compact was sent means the compaction finished.
+            if (agent.compacting && Date.parse(report.reportedAt) > Date.parse(agent.compacting.since)
+              && (agent.compacting.startPercent === null || report.percent < agent.compacting.startPercent)) {
+              delete agent.compacting;
+            }
             await saveChannels(data);
           }
         }
@@ -156,6 +161,8 @@ export async function GET(request: NextRequest) {
       name: agent.name,
       participantId: agent.participantId,
       lastContextHealth: agent.lastContextHealth ?? null,
+      // Set while a Compact Context is running. Dropped after 10 minutes so a compaction that never reports cannot stick.
+      compacting: agent.compacting && Date.now() - Date.parse(agent.compacting.since) < 10 * 60 * 1000 ? agent.compacting : null,
       // True when there is no reading or it is too old to show (the UI hides such a reading).
       stale: !isFreshContextHealth(agent.lastContextHealth),
       // Include recent history from in-memory buffer if available

@@ -61,6 +61,16 @@ except ImportError:  # ships next to this script; a stray copy without it only l
     def format_reply_context(reply_to):
         return ""
 
+try:
+    from skill_router_hint import SkillHintClient
+except ImportError:  # ships next to this script; a stray copy without it only loses the skill hint
+    class SkillHintClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def hint_for(self, message_id):
+            return ""
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -387,7 +397,8 @@ def _api_call(endpoint: str, method: str = "GET", data: dict | None = None) -> d
 
 def _format_message(sender: str, content: str, channel_id: str,
                     reply_to: dict | None, mentions: list,
-                    participant_id: str, participant_name: str) -> str:
+                    participant_id: str, participant_name: str,
+                    skill_hint: str = "") -> str:
     """Format a collab message for injection into Codex's input."""
     # Determine if this agent is @mentioned
     is_mentioned = False
@@ -415,6 +426,8 @@ def _format_message(sender: str, content: str, channel_id: str,
         prompt = f"[Channel message from {sender} in {channel_id}] {reply_line}: {content}"
     else:
         prompt = f"[Channel message from {sender} in {channel_id}]: {content}"
+    if skill_hint:  # the skill router's one-line hint, on its own line after the message (scripts/skill_router_hint.py)
+        prompt += f"\n\n{skill_hint}"
 
     if is_mentioned:
         prompt += "\n(@you)"
@@ -883,7 +896,12 @@ class CodexWSWrapper:
                         except Exception:
                             pass
 
+                    # Blocking HTTP, so off the event loop; fails open to "" on any problem.
+                    if not hasattr(self, "_skill_hint_client"):
+                        self._skill_hint_client = SkillHintClient(DEVFLOW_URL, self.participant_id or "", log=debug)
+                    skill_hint = await asyncio.to_thread(self._skill_hint_client.hint_for, msg_id)
                     prompt = _format_message(
+                        skill_hint=skill_hint,
                         sender=sender_name,
                         content=msg.get("content", ""),
                         channel_id=self.channel_name or self.channel_id or "",

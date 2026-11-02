@@ -51,7 +51,7 @@ export function MemoryChart({ from, to }: MemoryChartProps) {
       axisTick:  { show: false },
       splitLine: { show: false },
       axisLabel: {
-        color:       'rgba(255,255,255,0.25)',
+        color:       'rgba(var(--ink-ch), 0.25)',
         fontSize:    9,
         hideOverlap: true,
         formatter:   (val: number) => {
@@ -73,18 +73,18 @@ export function MemoryChart({ from, to }: MemoryChartProps) {
       axisTick:  { show: false },
       splitLine: { show: false },
       axisLabel: {
-        color:    'rgba(255,255,255,0.2)',
+        color:    'rgba(var(--ink-ch), 0.2)',
         fontSize: 9,
         formatter: (val: number) => val === 0 ? '' : `${val}%`,
       },
     },
     tooltip: {
       trigger:     'axis' as const,
-      axisPointer: { type: 'line' as const, lineStyle: { color: 'rgba(255,255,255,0.15)', width: 1 } },
-      backgroundColor: 'rgba(8,14,28,0.92)',
-      borderColor:     'rgba(255,255,255,0.1)',
+      axisPointer: { type: 'line' as const, lineStyle: { color: 'rgba(var(--ink-ch), 0.15)', width: 1 } },
+      backgroundColor: 'rgba(var(--deep-ch), 0.92)',
+      borderColor:     'rgba(var(--ink-ch), 0.1)',
       borderWidth:     1,
-      textStyle: { color: 'rgba(255,255,255,0.8)', fontSize: 11 },
+      textStyle: { color: 'rgba(var(--ink-ch), 0.8)', fontSize: 11 },
       formatter: (params: Array<{ value: [number, number]; axisValue: number }>) => {
         if (!params[0]) return '';
         const pt = points.find(p => new Date(p.ts).getTime() === params[0].axisValue);

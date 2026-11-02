@@ -62,10 +62,10 @@ export function UptimeBarChart({ processes, height = 200, maxItems = 8 }: Uptime
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'none' },
-        backgroundColor: 'rgba(8,16,36,0.92)',
+        backgroundColor: 'rgba(var(--deep-ch), 0.92)',
         borderColor: 'rgba(59,130,246,0.3)',
         borderWidth: 1,
-        textStyle: { color: 'rgba(255,255,255,0.88)', fontSize: 11 },
+        textStyle: { color: 'rgba(var(--ink-ch), 0.88)', fontSize: 11 },
         formatter: (params: { name: string; value: number }[]) => {
           const p = params[0];
           return `<b>${p.name}</b><br/>Uptime: <b>${formatUptime(p.value)}</b>`;
@@ -76,7 +76,7 @@ export function UptimeBarChart({ processes, height = 200, maxItems = 8 }: Uptime
         axisLine: { show: false },
         axisTick: { show: false },
         axisLabel: {
-          color: 'rgba(255,255,255,0.3)',
+          color: 'rgba(var(--ink-ch), 0.3)',
           fontSize: 9,
           formatter: (v: number) => v >= 24 ? `${Math.floor(v / 24)}d` : `${Math.round(v)}h`,
         },
@@ -89,7 +89,7 @@ export function UptimeBarChart({ processes, height = 200, maxItems = 8 }: Uptime
         axisLine: { show: false },
         axisTick: { show: false },
         axisLabel: {
-          color: 'rgba(255,255,255,0.7)',
+          color: 'rgba(var(--ink-ch), 0.7)',
           fontSize: 11,
           width: 110,
           overflow: 'truncate',
@@ -105,7 +105,7 @@ export function UptimeBarChart({ processes, height = 200, maxItems = 8 }: Uptime
             show: true,
             position: 'right',
             formatter: (p: { value: number }) => formatUptime(p.value),
-            color: 'rgba(255,255,255,0.45)',
+            color: 'rgba(var(--ink-ch), 0.45)',
             fontSize: 9,
           },
           emphasis: { itemStyle: { opacity: 0.85 } },

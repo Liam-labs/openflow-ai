@@ -11,9 +11,9 @@ module.exports = {
   apps: [
     {
       name: 'openflow',
-      script: './scripts/start-server.sh',
+      script: 'npm',
+      args: 'start',            // next start on 127.0.0.1 (DEVFLOW_BIND_HOST changes that); run `npm run build` first
       cwd: DEVFLOW_HOME,
-      interpreter: '/bin/bash',
       instances: 1,
       autorestart: true,
       watch: false,
@@ -21,6 +21,7 @@ module.exports = {
       exp_backoff_restart_delay: 1000,
       max_restarts: 10,
       min_uptime: '10s',
+      stop_exit_codes: [78],   // 78 = refused to start: reachable from other computers with no sign-in password (lib/exposure-guard.ts); do not loop
       env: {
         NODE_ENV: 'production',
         PORT: 3000,

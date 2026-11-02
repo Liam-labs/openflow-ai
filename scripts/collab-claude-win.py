@@ -33,7 +33,7 @@ A1 changes vs Jan version:
   7. Binary path: `.local\\bin\\claude.exe` is primary (verified live path on
      claude.exe 2.1.117); old `%LOCALAPPDATA%\\Programs\\claude-code` demoted
      to fallback.
-  8. Env block: DISABLE_AUTOUPDATER + PYTHONIOENCODING + OTEL telemetry
+  8. Env block: DISABLE_AUTOUPDATER + PYTHONIOENCODING
      vars ported from WSL wrapper L2590-2620.
 """
 
@@ -111,16 +111,16 @@ except Exception:  # a stray copy without it only loses the reply line
     def format_reply_context(reply_to):
         return ""
 
+# The skill router's one-line hint, asked for just before the message is typed (scripts/skill_router_hint.py).
+try:
+    from skill_router_hint import fetch_hint
+except Exception:  # a stray copy without it only loses the skill hint
+    def fetch_hint(participant_id, message_id, base_url=None, log=None):
+        return None
+
 # ---- Runtime env (set before any spawn) ----------------------------------
 os.environ.setdefault('PYTHONIOENCODING', 'utf-8')
 os.environ.setdefault('DISABLE_AUTOUPDATER', '1')
-os.environ.setdefault('CLAUDE_CODE_ENABLE_TELEMETRY', '1')
-os.environ.setdefault('OTEL_METRICS_EXPORTER', 'otlp')
-os.environ.setdefault('OTEL_LOGS_EXPORTER', 'otlp')
-os.environ.setdefault('OTEL_EXPORTER_OTLP_PROTOCOL', 'grpc')
-os.environ.setdefault('OTEL_EXPORTER_OTLP_ENDPOINT', 'http://localhost:4317')
-os.environ.setdefault('OTEL_LOG_TOOL_DETAILS', '1')
-os.environ.setdefault('OTEL_METRICS_INCLUDE_SESSION_ID', 'true')
 
 # Configuration
 DEVFLOW_URL = os.environ.get("DEVFLOW_URL", "http://localhost:3000").rstrip("/")
@@ -1150,7 +1150,7 @@ class CollabClaudeWrapper:
                 return True
         return False
 
-    def _format_inject_prompt(self, sender, content, reply_to, mentions, channel_id, is_append=False):
+    def _format_inject_prompt(self, sender, content, reply_to, mentions, channel_id, is_append=False, msg_id=None):
         """Build the injected prompt string with channel context + reply-to + mention annotation.
 
         Matches the WSL wrapper's inject pipeline at scripts/collab-claude.py:1500-1613.
@@ -1167,6 +1167,9 @@ class CollabClaudeWrapper:
             prompt = f"{prefix}[Channel message from {sender} in {ch}] {reply_line}: {content}"
         else:
             prompt = f"{prefix}[Channel message from {sender} in {ch}]: {content}"
+        skill_hint = fetch_hint(getattr(self, "participant_id", "") or "", msg_id, DEVFLOW_URL, debug)
+        if skill_hint:
+            prompt += f"\n\n{skill_hint}"
 
         is_mentioned = self._is_mentioned(mentions, content)
         if is_mentioned:
@@ -1210,7 +1213,7 @@ class CollabClaudeWrapper:
             if self.pending_enter:
                 try:
                     append_prompt, _ = self._format_inject_prompt(
-                        sender, content, reply_to, mentions, channel_id, is_append=True
+                        sender, content, reply_to, mentions, channel_id, is_append=True, msg_id=msg_id
                     )
                     with self.pty_lock:
                         self.proc.write(append_prompt)
@@ -1238,7 +1241,7 @@ class CollabClaudeWrapper:
                 debug(f"Long message ({original_length} chars) spilled to {msg_file.name}")
 
             prompt, is_mentioned = self._format_inject_prompt(
-                sender, content, reply_to, mentions, channel_id, is_append=False
+                sender, content, reply_to, mentions, channel_id, is_append=False, msg_id=msg_id
             )
             debug(f"Injecting (mentioned={is_mentioned}): {prompt[:120]}")
 
@@ -1827,14 +1830,6 @@ class CollabClaudeWrapper:
         self.proc = PtyProcess.spawn([claude_path] + self.claude_args, dimensions=(rows, cols))
         self.claude_pid = self.proc.pid
         debug(f"Claude spawned with PID: {self.claude_pid}")
-        # Set OTEL resource attributes now that we have agent name + channel.
-        if self.participant_name:
-            project = get_project_name()
-            os.environ['OTEL_RESOURCE_ATTRIBUTES'] = (
-                f"agent.name={self.participant_name},"
-                f"project={project},"
-                f"collab.channel={self.channel_id or ''}"
-            )
 
     def run(self):
         _reject_unc_cwd()  # Fatal early-exit if CWD is \\wsl$\ or \\wsl.localhost\

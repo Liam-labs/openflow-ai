@@ -195,7 +195,7 @@ async function createCronJob(config: KeepAliveConfig): Promise<string> {
       jobType: 'api-call',
       apiUrl: `${selfOrigin()}/api/agent`,
       apiMethod: 'POST',
-      apiHeaders: { 'Authorization': `Bearer ${token}` },
+      apiAuthEnv: 'DEVFLOW_API_TOKEN',   // resolved when the job runs; the token is never written into cron-jobs.json
       apiBody: JSON.stringify({
         action: 'roster.keepAlive',
         mode: 'ping',

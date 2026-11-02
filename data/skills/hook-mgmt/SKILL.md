@@ -30,6 +30,12 @@ the durable scaffold, not in per-message injections.
 | `PreCompact` | preserve concise active state | `pre-compact-write.sh` |
 | `Stop` | finish session log/handoff bookkeeping | `write-session-end.sh` |
 
+One scoped exception: a `PreToolUse` hook for the Outlook email tools
+(`data/email-rules/email-rules-hook.py`, wired in `agent_lifecycle_hooks.py`). It fires only
+when an agent calls `send_email`, `reply_email`, `forward_email`, `create_draft` or `send_draft`,
+adds the email rules and the right signature as context, and never blocks. Switch it off with
+`data/email-rules/disabled`. See `data/email-rules/DEPLOY.md`.
+
 Wrappers that lack a native event may perform the equivalent action once at
 session start or stop. They should not run a behavioural subprocess before each
 message.
