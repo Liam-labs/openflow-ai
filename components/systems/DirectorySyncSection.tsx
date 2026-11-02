@@ -562,7 +562,7 @@ export function DirectorySyncSection() {
                         {pair.lastError && (
                           <div style={{ gridColumn: 'span 2' }}>
                             <span className="ds-detail-label">Last error</span>
-                            <div className="ds-detail-value" style={{ color: '#f87171' }}>{pair.lastError}</div>
+                            <div className="ds-detail-value" style={{ color: 'var(--tx-f87171)' }}>{pair.lastError}</div>
                           </div>
                         )}
                       </div>
@@ -722,7 +722,7 @@ export function DirectorySyncSection() {
         /* ── Buttons ──────────────────────────────────────── */
         .ds-btn-primary {
           display: inline-flex; align-items: center; gap: 6px;
-          padding: 7px 14px; background: var(--df-accent); color: #fff;
+          padding: 7px 14px; background: var(--df-accent); color: var(--tx-ffffff);
           border: none; border-radius: 6px; font-size: 12px; font-weight: 600;
           cursor: pointer; transition: all 140ms ease;
         }
@@ -743,14 +743,14 @@ export function DirectorySyncSection() {
           display: inline-flex; align-items: center; gap: 6px;
           padding: 7px 14px;
           background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3);
-          border-radius: 6px; color: #f87171; font-size: 12px; font-weight: 600;
+          border-radius: 6px; color: var(--tx-f87171); font-size: 12px; font-weight: 600;
           cursor: pointer; transition: all 140ms ease;
         }
         .ds-btn-danger:hover { background: rgba(239,68,68,0.25); }
 
         /* ── Stat Row ──────────────────────────────────────── */
         .ds-stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 16px 0 28px; }
-        .ds-stat { padding: 14px 16px; background: rgba(15,25,50,0.4); border: 1px solid var(--df-border-subtle); border-radius: 8px; }
+        .ds-stat { padding: 14px 16px; background: rgba(var(--deep-ch), 0.4); border: 1px solid var(--df-border-subtle); border-radius: 8px; }
         .ds-stat-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--df-text-muted); font-weight: 600; margin-bottom: 6px; }
         .ds-stat-value { font-size: 20px; font-weight: 600; color: var(--df-text); font-family: var(--font-mono, monospace); }
         .ds-stat-suffix { font-size: 13px; color: var(--df-text-muted); margin-left: 4px; }
@@ -764,10 +764,10 @@ export function DirectorySyncSection() {
           transition: all 140ms ease;
         }
         .ds-icon-btn:hover { background: var(--df-accent-10); color: var(--df-text); border-color: var(--df-accent); }
-        .ds-icon-btn--danger:hover { background: rgba(239,68,68,0.1); color: #f87171; border-color: rgba(239,68,68,0.4); }
+        .ds-icon-btn--danger:hover { background: rgba(239,68,68,0.1); color: var(--tx-f87171); border-color: rgba(239,68,68,0.4); }
         .ds-icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        .ds-error { padding: 12px 16px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; color: #f87171; font-size: 12px; margin-bottom: 16px; }
+        .ds-error { padding: 12px 16px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; color: var(--tx-f87171); font-size: 12px; margin-bottom: 16px; }
 
         /* ── Empty State ──────────────────────────────────── */
         .ds-empty-state { text-align: center; padding: 64px 24px; }
@@ -778,7 +778,7 @@ export function DirectorySyncSection() {
         /* ── Cards ────────────────────────────────────────── */
         .ds-cards { display: flex; flex-direction: column; gap: 8px; }
         .ds-card {
-          background: rgba(15,25,50,0.3); border: 1px solid var(--df-border-subtle);
+          background: rgba(var(--deep-ch), 0.3); border: 1px solid var(--df-border-subtle);
           border-radius: 8px; overflow: hidden;
           transition: border-color 150ms ease;
         }
@@ -812,26 +812,26 @@ export function DirectorySyncSection() {
           padding: 1px 5px; border-radius: 3px;
           background: var(--df-accent-8); color: var(--df-text-secondary); flex-shrink: 0;
         }
-        .ds-path-tag--win { background: rgba(59,130,246,0.18); color: #60a5fa; }
-        .ds-path-tag--wslunc { background: rgba(59,130,246,0.18); color: #60a5fa; }
-        .ds-path-tag--wslm { background: rgba(34,197,94,0.15); color: #4ade80; }
-        .ds-path-tag--wsl { background: rgba(168,85,247,0.18); color: #c084fc; }
+        .ds-path-tag--win { background: rgba(var(--glow-ch), 0.18); color: var(--tx-60a5fa); }
+        .ds-path-tag--wslunc { background: rgba(var(--glow-ch), 0.18); color: var(--tx-60a5fa); }
+        .ds-path-tag--wslm { background: rgba(34,197,94,0.15); color: var(--tx-4ade80); }
+        .ds-path-tag--wsl { background: rgba(168,85,247,0.18); color: var(--tx-c084fc); }
 
         .ds-card-badges { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
         .ds-mode-badge {
           display: inline-flex; align-items: center; gap: 4px;
           padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: 500;
         }
-        .ds-mode-badge--watch { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
-        .ds-mode-badge--periodic { background: rgba(59,130,246,0.12); color: #60a5fa; border: 1px solid rgba(59,130,246,0.25); }
+        .ds-mode-badge--watch { background: rgba(34,197,94,0.12); color: var(--tx-4ade80); border: 1px solid rgba(34,197,94,0.25); }
+        .ds-mode-badge--periodic { background: rgba(var(--glow-ch), 0.12); color: var(--tx-60a5fa); border: 1px solid rgba(var(--glow-ch), 0.25); }
 
         .ds-status-badge {
           display: inline-flex; align-items: center; gap: 4px;
           padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: 500;
         }
-        .ds-status-badge--idle { background: rgba(161,161,170,0.1); color: var(--df-text-secondary); border: 1px solid rgba(161,161,170,0.2); }
-        .ds-status-badge--syncing { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
-        .ds-status-badge--error { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+        .ds-status-badge--idle { background: rgba(var(--txc-161-161-170), 0.1); color: var(--df-text-secondary); border: 1px solid rgba(var(--txc-161-161-170), 0.2); }
+        .ds-status-badge--syncing { background: rgba(var(--glow-ch), 0.15); color: var(--tx-60a5fa); border: 1px solid rgba(var(--glow-ch), 0.3); }
+        .ds-status-badge--error { background: rgba(239,68,68,0.12); color: var(--tx-f87171); border: 1px solid rgba(239,68,68,0.3); }
 
         .ds-card-last { display: flex; flex-direction: column; gap: 1px; }
         .ds-last-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--df-text-muted); }
@@ -843,34 +843,34 @@ export function DirectorySyncSection() {
         .ds-chevron--open { transform: rotate(90deg); }
 
         /* ── Detail Panel ─────────────────────────────────── */
-        .ds-detail { padding: 16px 18px; background: rgba(0,0,0,0.25); border-top: 1px solid var(--df-border-subtle); }
+        .ds-detail { padding: 16px 18px; background: rgba(var(--shade-ch), 0.25); border-top: 1px solid var(--df-border-subtle); }
         .ds-detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px 24px; margin-bottom: 20px; }
         .ds-detail-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--df-text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
         .ds-detail-value { font-size: 12px; color: var(--df-text); }
-        .ds-detail-value code { font-family: var(--font-mono, monospace); font-size: 11px; color: var(--df-text-secondary); background: rgba(0,0,0,0.3); padding: 1px 5px; border-radius: 3px; }
+        .ds-detail-value code { font-family: var(--font-mono, monospace); font-size: 11px; color: var(--df-text-secondary); background: rgba(var(--shade-ch), 0.3); padding: 1px 5px; border-radius: 3px; }
 
         .ds-detail-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
-        .ds-stat-card { padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--df-border-subtle); border-radius: 6px; text-align: center; }
+        .ds-stat-card { padding: 12px; background: rgba(var(--shade-ch), 0.2); border: 1px solid var(--df-border-subtle); border-radius: 6px; text-align: center; }
         .ds-stat-card-value { font-size: 18px; font-weight: 600; color: var(--df-text); font-family: var(--font-mono, monospace); }
         .ds-stat-card-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--df-text-muted); margin-top: 4px; }
 
         .ds-events-title { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--df-text-muted); font-weight: 600; margin-bottom: 8px; }
-        .ds-event-row { display: flex; align-items: center; gap: 10px; padding: 6px 10px; font-size: 11px; color: var(--df-text-secondary); border-top: 1px solid rgba(255,255,255,0.03); }
+        .ds-event-row { display: flex; align-items: center; gap: 10px; padding: 6px 10px; font-size: 11px; color: var(--df-text-secondary); border-top: 1px solid rgba(var(--ink-ch), 0.03); }
         .ds-event-row:first-child { border-top: none; }
         .ds-event-time { font-family: var(--font-mono, monospace); font-size: 10px; color: var(--df-text-muted); width: 70px; flex-shrink: 0; }
         .ds-event-msg { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .ds-event-badge { font-size: 9px; font-weight: 600; padding: 1px 6px; border-radius: 3px; text-transform: uppercase; flex-shrink: 0; }
-        .ds-event-badge--sync { background: rgba(34,197,94,0.12); color: #4ade80; }
-        .ds-event-badge--dry-run { background: rgba(59,130,246,0.12); color: #60a5fa; }
-        .ds-event-badge--error { background: rgba(239,68,68,0.12); color: #f87171; }
-        .ds-event-badge--progress { background: rgba(59,130,246,0.12); color: #60a5fa; }
-        .ds-event-badge--toggle { background: rgba(161,161,170,0.1); color: var(--df-text-muted); }
+        .ds-event-badge--sync { background: rgba(34,197,94,0.12); color: var(--tx-4ade80); }
+        .ds-event-badge--dry-run { background: rgba(var(--glow-ch), 0.12); color: var(--tx-60a5fa); }
+        .ds-event-badge--error { background: rgba(239,68,68,0.12); color: var(--tx-f87171); }
+        .ds-event-badge--progress { background: rgba(var(--glow-ch), 0.12); color: var(--tx-60a5fa); }
+        .ds-event-badge--toggle { background: rgba(var(--txc-161-161-170), 0.1); color: var(--df-text-muted); }
         .ds-no-events { padding: 10px; color: var(--df-text-muted); font-size: 11px; font-style: italic; }
 
         /* ── Live sync progress ─────────────────────────────── */
         .ds-live-progress {
           margin-bottom: 20px; padding: 16px;
-          background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.2);
+          background: rgba(var(--glow-ch), 0.06); border: 1px solid rgba(var(--glow-ch), 0.2);
           border-radius: 8px;
         }
         .ds-live-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
@@ -880,11 +880,11 @@ export function DirectorySyncSection() {
         .ds-live-count-value { font-size: 28px; font-weight: 600; color: var(--df-accent); font-family: var(--font-mono, monospace); letter-spacing: -0.5px; }
         .ds-live-count-label { font-size: 12px; color: var(--df-text-secondary); }
         .ds-live-count-total { font-size: 12px; color: var(--df-text-muted); }
-        .ds-progress-bar { height: 4px; background: rgba(59,130,246,0.12); border-radius: 2px; overflow: hidden; }
+        .ds-progress-bar { height: 4px; background: rgba(var(--glow-ch), 0.12); border-radius: 2px; overflow: hidden; }
         .ds-progress-fill { height: 100%; background: var(--df-accent); border-radius: 2px; transition: width 500ms cubic-bezier(0.16, 1, 0.3, 1); }
 
         /* ── Forms ─────────────────────────────────────────── */
-        .ds-form-overlay { margin-bottom: 12px; background: var(--df-surface, rgba(15,25,50,0.5)); border: 1px solid var(--df-border); border-radius: 10px; padding: 20px; }
+        .ds-form-overlay { margin-bottom: 12px; background: var(--df-surface, rgba(var(--deep-ch), 0.5)); border: 1px solid var(--df-border); border-radius: 10px; padding: 20px; }
         .ds-form-title { font-size: 15px; font-weight: 600; color: var(--df-text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
         .ds-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
         .ds-form-field { display: flex; flex-direction: column; gap: 4px; }
@@ -892,7 +892,7 @@ export function DirectorySyncSection() {
         .ds-form-label { font-size: 11px; font-weight: 500; color: var(--df-text-secondary); display: flex; align-items: center; gap: 8px; }
         .ds-form-input {
           height: 32px; padding: 0 10px;
-          background: var(--df-surface-input, rgba(10,20,40,0.4));
+          background: var(--df-surface-input, rgba(var(--deep-ch), 0.4));
           border: 1px solid var(--df-border-subtle); border-radius: 6px;
           color: var(--df-text); font-size: 12px; font-family: var(--font-mono, monospace);
           transition: border-color 150ms ease;
@@ -913,11 +913,11 @@ export function DirectorySyncSection() {
         /* ── Modal ─────────────────────────────────────────── */
         .ds-modal-backdrop {
           position: fixed; inset: 0; z-index: 100;
-          background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+          background: rgba(var(--shade-ch), 0.6); backdrop-filter: blur(4px);
           display: flex; align-items: center; justify-content: center;
         }
         .ds-modal {
-          background: var(--df-surface, #18181d); border: 1px solid var(--df-border);
+          background: var(--df-surface, var(--bg-18181d)); border: 1px solid var(--df-border);
           border-radius: 10px; padding: 24px; max-width: 400px; width: 90%;
           box-shadow: 0 16px 48px rgba(0,0,0,0.6);
         }
@@ -930,7 +930,7 @@ export function DirectorySyncSection() {
         @keyframes ds-spin { to { transform: rotate(360deg); } }
 
         /* ── Toggle ────────────────────────────────────────── */
-        .ds-toggle { position: relative; width: 36px; height: 20px; border-radius: 999px; background: rgba(161,161,170,0.25); border: 1px solid rgba(161,161,170,0.3); cursor: pointer; transition: all 180ms ease; padding: 0; flex-shrink: 0; }
+        .ds-toggle { position: relative; width: 36px; height: 20px; border-radius: 999px; background: rgba(var(--txc-161-161-170), 0.25); border: 1px solid rgba(var(--txc-161-161-170), 0.3); cursor: pointer; transition: all 180ms ease; padding: 0; flex-shrink: 0; }
         .ds-toggle--on { background: rgba(34,197,94,0.45); border-color: rgba(34,197,94,0.6); }
         .ds-toggle--busy { opacity: 0.5; cursor: wait; }
         .ds-toggle-knob { position: absolute; top: 1px; left: 1px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 1px 3px rgba(0,0,0,0.4); }

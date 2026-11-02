@@ -696,6 +696,7 @@ export interface CollabParticipant {
   sessionId?: string;            // Claude Code session ID (for /ask command routing)
   color?: string;                // UI color for message attribution
   unreadCount?: number;          // Computed: messages since lastRead (not persisted)
+  mentionCount?: number;         // Computed: unread messages from an agent that @mention this participant (not persisted). Drives the sidebar's Needs you list
   status?: CollabPresenceStatus; // Computed: online/offline based on lastSeen (not persisted). 'away' = active in another channel (persisted)
   activityStatus?: CollabActivityStatus; // Real-time: idle/typing/working (broadcast by wrapper/task board)
   activityDetail?: string | null; // Human-readable label: "Reading file...", "Thinking...", etc. null = no detail
@@ -830,12 +831,14 @@ export interface CollabChannel {
     callerName?: string;
   }>;
   pinnedAt?: string;             // ISO timestamp — pinned channels sort to top of channel list
+  icon?: string;                 // Channel picture: one emoji, or a small data:image URL (square, <= 24 KB). Missing -> coloured initials
   protected?: boolean;           // If true, channel cannot be deleted
   projectPath?: string;          // Filesystem path of the project this channel is associated with
   settings: {
     autoRespond: boolean;        // Auto-spawn browser agent when terminal posts
     respondingAgentName?: string; // Name for auto-spawned agent (default: "Assistant")
     reminderPausedUntil?: string; // ISO timestamp — sprint reminders are suppressed until this time
+    ragIngest?: boolean;          // false = nothing from this channel's project folder or sprint summaries goes into RAG (default on)
     category?: string;           // ChannelGroup id for the sidebar group; missing → the home group ('work'), unknown → the first group
   };
 }
@@ -981,16 +984,17 @@ export interface CollabChannelActionRequest {
   settings?: CollabChannel['settings']; // For 'update_settings'
   teamLeadId?: string;           // For 'update_settings'
   pinned?: boolean;              // For 'update_settings' — pin/unpin channel to top
+  icon?: string | null;          // For 'update_settings' — channel picture (emoji or small data:image URL); null/'' resets
   projectPath?: string;          // For 'update_settings' or 'rename' — associate/move the channel project directory
   status?: CollabPresenceStatus; // For 'heartbeat'
   activityStatus?: CollabActivityStatus; // For 'heartbeat' - typing/working/idle
   activityDetail?: string | null; // For 'heartbeat' - human-readable label ("Reading file...", "Thinking...", etc)
-  host?: CollabHostReport;       // For 'heartbeat' - wrapper-reported host facts
+  host?: CollabHostReport;       // For 'heartbeat' and 'join' - wrapper-reported host facts
   block?: boolean;               // For 'leave' - add to blocked list (default true for non-roster agents; false = remove without blocking)
   permanent?: boolean;           // For 'delete' - if true, skip archive and permanently delete (default: false = soft-delete)
   archiveId?: string;            // For 'restore' and 'permanently_delete' - the archive entry ID
   includeSubChannels?: boolean;  // For 'list_archived' - include sub-channel archive entries
-  metadata?: Record<string, unknown>; // For 'message' - extra metadata (e.g. Teams bridge echo prevention)
+  metadata?: Record<string, unknown>; // For 'message' - extra metadata (e.g. bridge echo prevention)
   isHidden?: boolean;                // For 'message' - hide in the human feed; preserve normal agent delivery
   silent?: boolean;                  // For 'message' - if true, store in silent-messages (not main feed)
 }
@@ -1002,6 +1006,7 @@ export interface CollabChannelActionResponse {
   messageId?: string;
   deduplicated?: boolean;          // True when message was dropped as duplicate
   message?: { id: string };        // Original message ID when deduplicated
+  duplicate?: boolean;             // 409 on join/heartbeat: another copy of this agent already runs (lib/wrapper-holders.ts); the wrapper stops
   channel?: CollabChannel;       // Returned on create/join for immediate use
   tab?: ChannelTab;              // Returned on create_tab
   channelTabs?: ChannelTab[];    // Returned on create_tab — full tab list
@@ -1166,6 +1171,12 @@ export interface AgentRosterEntry {
   deliveryProtocol?: 'ledger-v1'; // Persisted wrapper capability for stopped-agent delivery
   spawnMode?: 'wsl' | 'powershell'; // Execution environment (default: 'wsl' = tmux, 'powershell' = claude.exe per-message)
   harnessHealth?: { credentialId: string; state: 'needs_login' | 'limit_reached'; detail: string; resetsAt?: string; since: string; reportedAt?: string }; // Present only while the agent's harness login is broken or at its limit. Written by POST /api/system/harness-auth/report (lib/harness-auth); hide it when reportedAt is older than 15 minutes (watcher down)
+  stoppedOnPurpose?: boolean;        // Set when a person or an agent stops it (roster_kill); cleared on start. A mention never wakes an agent stopped on purpose (lib/wake-on-mention.ts)
+  wakeHome?: 'desktop' | 'server';   // The machine the agent belongs on, remembered while a wake has moved it to the other one
+  placement?: 'home-only' | 'flexible'; // flexible = a wake may start it on the other machine when its usual one is short of memory. Default home-only
+  keepOnline?: boolean;              // false = never restore this agent automatically after a crash or reboot (lib/agent-drops.ts). Default: restore it when it was running.
+  authMode?: 'max' | 'api-key';      // How a Claude agent pays: 'max' (default; the API key is scrubbed from its env) or 'api-key' (the key saved in the Logins dialog, per-token billing). Takes effect at the agent's next start. lib/claude-spawn-env.ts, lib/claude-auth-switch.ts
+  lastExit?: { at: string; reason: string; machine: 'desktop' | 'server'; detail?: string }; // Why the agent last went down, written once per drop (lib/agent-drops.ts)
   runLocation?: 'server'; // Machine the agent runs on: unset = the owner's desktop (WSL or PowerShell per spawnMode), 'server' = DevFlow server. Drives the generated Runtime-Location.md note.
   psWorkingDirectory?: string;       // Windows-native working directory when spawnMode = 'powershell' (e.g. C:\Users\<windows-user>\Team\Agent)
   effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max' | 'ultra';  // Reasoning effort. Codex applies changes live; other runtimes use it on spawn.
@@ -1197,6 +1208,9 @@ export interface AgentRosterEntry {
     source?: string;    // who measured it, e.g. 'transcript-sampler'
   };
 
+  // Set while the agent is compacting its context (Compact Context menu item). Cleared when the agent reports a lower reading.
+  compacting?: { since: string; startPercent: number | null };
+
   // Meta
   createdAt: string;
   lastStartedAt?: string;
@@ -1208,7 +1222,7 @@ export interface AgentRosterEntry {
 // Collaboration Task Board Types
 // ============================================
 
-export type CollabTaskStatus = 'todo' | 'in_progress' | 'done';
+export type CollabTaskStatus = 'todo' | 'in_progress' | 'done' | 'cancelled';
 export type CollabTaskPriority = 'low' | 'normal' | 'high';
 
 // Sprint and Phase hierarchy types
@@ -1227,6 +1241,7 @@ export interface CollabSprint {
   updatedAt: string;
   sortOrder: number;               // Position in sprint list
   activatedAt?: string;            // ISO timestamp — when sprint was last set to active (idle clock floor)
+  backlog?: boolean;               // Parking sprint for work that has no sprint yet; never nudged or swept as stale
   // Sprint-stall reminder fields (Sprint 61)
   reminderSnoozeUntil?: string;    // ISO timestamp — reminders suppressed until this time
   reminderSnoozeReason?: string;   // Human-readable reason for snooze
@@ -1259,14 +1274,33 @@ export interface CollabTask {
   createdAt: string;               // ISO timestamp
   assigneeId?: string;             // Participant ID assigned to task
   assignedAt?: string;             // When assignment happened
+  assignedBy?: string;             // Participant ID who handed the task over (tasks.assign); absent when the owner claimed it
   completedAt?: string;            // When marked done
   updatedAt: string;               // Last modification
   tags?: string[];                 // Optional tags for categorization
   notes?: string;                  // Free-form progress notes from the claimer
   resolution?: string;             // Final outcome / what was actually shipped
+  howItWorks?: string;             // 3 to 8 plain sentences on what the finished work does and how a person uses it (lib/task-how-it-works.ts); Close and Summarize joins them
   // Hierarchy fields (optional for backward compatibility)
   sprintId?: string;               // Parent sprint (null = unassigned)
   phaseId?: string;                // Parent phase (null = unassigned)
+  // Closing without finishing (lib/task-closure.ts): set by the cancel and carry actions only
+  cancelReason?: string;           // Why the task was cancelled (required, never empty)
+  cancelledAt?: string;            // ISO timestamp
+  cancelledBy?: string;            // Participant ID
+  carriedFrom?: {                  // Where a carried task came from (it now lives in sprintId)
+    sprintId: string;
+    sprintName: string;
+    at: string;
+    by: string;
+  };
+  // Quiet-task reminders already sent (lib/task-nudge.ts); `since` is the updatedAt they were measured from, so any update resets them
+  nudge?: {
+    since: string;
+    owner?: string;                // ISO timestamp the owner was reminded
+    lead?: string;                 // ISO timestamp the Team Lead was told
+    human?: string;                // ISO timestamp the owner of the channel was told
+  };
 }
 
 export interface CollabTasksData {
@@ -1297,7 +1331,7 @@ export interface CollabTasksResponse {
 }
 
 export interface CollabTaskActionRequest {
-  action: 'create' | 'update' | 'claim' | 'unclaim' | 'complete' | 'delete' | 'reorder' | 'create-sprint' | 'create-phase' | 'update-sprint' | 'delete-sprint';
+  action: 'create' | 'update' | 'claim' | 'unclaim' | 'complete' | 'cancel' | 'carry' | 'assign' | 'delete' | 'reorder' | 'create-sprint' | 'create-phase' | 'update-sprint' | 'delete-sprint';
   channelId: string;
   taskId?: string;                 // Required for update, claim, unclaim, complete, delete, reorder
   participantId: string;           // Who is performing the action
@@ -1308,7 +1342,8 @@ export interface CollabTaskActionRequest {
   tags?: string[];                 // For create/update
   notes?: string;                  // For update — claimer's progress notes
   resolution?: string;             // For update — final outcome
-  assigneeId?: string;             // For update — admin reassignment ('' or null clears)
+  howItWorks?: string;             // For update and complete — the how-it-works note ('' clears it)
+  assigneeId?: string;             // For assign — the member who will own the task; for update — admin reassignment ('' or null clears)
   sortOrder?: number;              // For reorder - new position
   targetStatus?: CollabTaskStatus; // For reorder - move to different column
   // Sprint/Phase fields
@@ -1323,6 +1358,8 @@ export interface CollabTaskActionRequest {
   expectedAssigneeId?: string | null; // null = expect the task to be unassigned
   expectedUpdatedAt?: string;         // the task's updatedAt as read by the caller
   idempotencyKey?: string;            // same key + same request = replay the recorded result
+  reason?: string;                    // For cancel — why the task is being cancelled (required)
+  targetSprintId?: string;            // For carry — the sprint (same channel, not finished) that takes the task
 }
 
 export interface CollabTaskActionResponse {
@@ -1354,7 +1391,11 @@ export interface CollabTaskActionResponse {
  * - write: Create, update, delete most resources
  * - admin: Manage tokens, delete channels, full access
  */
-export type ApiTokenScope = 'read' | 'write' | 'admin';
+/** 'agent': write-level for agents' own work, refused by every route and action that runs commands (lib/agent-token-scope.ts). */
+export type ApiTokenScope =
+  | 'read'
+  | 'write'
+  | 'admin';
 
 /**
  * Individual API token record
@@ -1482,6 +1523,8 @@ export interface ApiTokenValidationResult {
   code?: AgentApiErrorCode;
   /** Set with code RATE_LIMITED: seconds until the token (or the blocked address) may try again. */
   retryAfterSeconds?: number;
+  /** A valid agent token on a route or action it may not use: answer 403, never fall back to "this machine" or a session. */
+  agentRefused?: boolean;
 }
 
 /**
@@ -1662,7 +1705,9 @@ export interface FeatureDoc {
   sprintNames: string[];               // Sprint names for display
   taskCount: number;                   // Total tasks summarized
   generatedAt: string;                 // ISO timestamp
-  exportPath?: string;                 // Filesystem path where .MD was auto-exported (if channel has projectPath)
+  exportPath?: string;                 // Filesystem path of the article .MD (the file RAG indexes)
+  indexedAt?: string;                  // ISO timestamp — when the article was put into Qdrant
+  articleFormat?: string;              // 'feature-v2': one how-it-works article per sprint (older docs are task summaries)
 }
 
 export interface FeatureDocsData {
@@ -1671,7 +1716,7 @@ export interface FeatureDocsData {
 }
 
 export interface FeatureDocActionRequest {
-  action: 'generate' | 'list' | 'get' | 'delete' | 'backfill';
+  action: 'generate' | 'list' | 'get' | 'delete' | 'backfill' | 'index-sweep';
   channelId?: string;                  // Required for generate/list
   docId?: string;                      // Required for get/delete
   clearSprints?: boolean;              // For generate — archive sprints after summarization
@@ -1679,8 +1724,11 @@ export interface FeatureDocActionRequest {
 
 export interface FeatureDocActionResponse {
   success: boolean;
-  doc?: FeatureDoc;
-  docs?: FeatureDoc[];
+  doc?: FeatureDoc;                    // First article written (kept for the board button)
+  docs?: FeatureDoc[];                 // generate: one article per closed sprint; list: all
+  archived?: Array<{ sprintId: string; sprintName: string; archiveFile: string; tasks: number }>;
+  skipped?: Array<{ sprintId: string; sprintName: string; reason: string; openTasks?: number }>;
+  failures?: Array<{ sprintId?: string; sprintName?: string; step: string; error: string }>;
   error?: string;
 }
 
@@ -1864,7 +1912,8 @@ export interface CronJob {
   tmuxText?: string;                   // For 'tmux-send': text to send (Enter appended automatically)
   apiUrl?: string;                     // For 'api-call': full URL
   apiMethod?: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  apiHeaders?: Record<string, string>; // For 'api-call': custom headers
+  apiHeaders?: Record<string, string>; // For 'api-call': custom headers; a value may hold ${SECRET_NAME}, filled in at run time (lib/cron-secrets.ts)
+  apiAuthEnv?: string;                 // For 'api-call': name of the secret (env or ~/.secrets) sent as 'Authorization: Bearer <value>'; never store the token itself in the job
   apiBody?: string;                    // For 'api-call': request body (JSON string)
   reminderChannelId?: string;          // For 'agent-reminder': exact channel UUID
   reminderParticipantId?: string;      // For 'agent-reminder': exact roster participant ID
@@ -1940,6 +1989,7 @@ export interface CronActionRequest {
   apiUrl?: string;
   apiMethod?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   apiHeaders?: Record<string, string>;
+  apiAuthEnv?: string;
   apiBody?: string;
   reminderChannelId?: string;
   reminderParticipantId?: string;
@@ -2271,19 +2321,21 @@ export interface WhatsAppBridgeStatus {
 
 // ─── Connections Panel Types ─────────────────────────────────────────────────
 
-export type ConnectionStatus = 'active' | 'configured' | 'configured_not_active' | 'pending';
+export type ConnectionStatus = 'active' | 'configured' | 'configured_not_active' | 'pending' | 'needs_attention' | 'needs_login' | 'not_configured' | 'retired';
 
 export type ConnectionCategory =
   | 'ai' | 'infrastructure' | 'database' | 'google' | 'seo'
   | 'media' | 'payments' | 'ecommerce' | 'automation' | 'design'
-  | 'creative' | 'email' | 'security' | 'productivity' | 'backup';
+  | 'creative' | 'email' | 'security' | 'productivity' | 'backup'
+  | (string & {});   // v2: cloud, comms, business, data, geo, drone
 
 export type ConnectionType =
   | 'api_key' | 'api_token' | 'oauth' | 'oauth_service_account'
   | 'service_account' | 'pat_and_ssh' | 'url_and_keys' | 'local_http'
   | 'credentials' | 'api_key_local' | 'personal_access_token'
   | 'access_token' | 'api_key_and_webhook' | 'local_credentials'
-  | 'encryption_key' | 'stdio' | 'websocket' | 'local';
+  | 'encryption_key' | 'stdio' | 'websocket' | 'local'
+  | (string & {});   // v2 of connections.json adds subscription, account, http, sse and more
 
 export interface Connection {
   id: string;
@@ -2300,7 +2352,18 @@ export interface Connection {
   mcp_server?: boolean;
   service_account?: string;
   project_id?: string;
+  // v2 (22 Oct 2026): how it signs in, where it runs, what the status means and when it was last checked
+  kind?: string;
+  auth?: ConnectionAuth;
+  runs_on?: string;
+  status_note?: string;
+  verified?: { on: string; how: string };
+  mcp?: string[];
+  /** A DevFlow page for this connection, for example /whatsapp. The detail view shows a link to it. */
+  page?: string;
 }
+
+export interface ConnectionAuth { method?: string; stored_in?: string }
 
 export interface McpServerEntry {
   id: string;
@@ -2311,6 +2374,12 @@ export interface McpServerEntry {
   purpose: string;
   status: ConnectionStatus;
   pm2_process?: string;
+  scope?: string;
+  auth?: ConnectionAuth;
+  status_note?: string;
+  used_in?: string[];
+  serves?: string;
+  verified?: { on: string; how: string };
 }
 
 export interface ConnectionsData {

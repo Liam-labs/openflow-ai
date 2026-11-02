@@ -27,33 +27,33 @@ const CATEGORY_ICONS: Record<string, string> = {
 // ─── Connection type badge ───────────────────────────────────────────────────
 
 const TYPE_BADGE: Record<ConnectionType | string, { label: string; color: string; bg: string }> = {
-  api_key:                { label: 'API Key',          color: '#60a5fa', bg: 'rgba(59,130,246,0.12)' },
-  api_token:              { label: 'API Token',        color: '#60a5fa', bg: 'rgba(59,130,246,0.12)' },
-  personal_access_token:  { label: 'PAT',              color: '#60a5fa', bg: 'rgba(59,130,246,0.12)' },
-  access_token:           { label: 'Token',            color: '#60a5fa', bg: 'rgba(59,130,246,0.12)' },
-  oauth:                  { label: 'OAuth',            color: '#c084fc', bg: 'rgba(168,85,247,0.12)' },
-  oauth_service_account:  { label: 'OAuth SA',         color: '#c084fc', bg: 'rgba(168,85,247,0.12)' },
-  service_account:        { label: 'Service Account',  color: '#818cf8', bg: 'rgba(99,102,241,0.12)' },
-  local_http:             { label: 'Local HTTP',       color: '#34d399', bg: 'rgba(16,185,129,0.12)' },
-  api_key_local:          { label: 'Local API',        color: '#34d399', bg: 'rgba(16,185,129,0.12)' },
-  pat_and_ssh:            { label: 'PAT + SSH',        color: '#22d3ee', bg: 'rgba(6,182,212,0.12)'  },
-  url_and_keys:           { label: 'URL + Keys',       color: '#38bdf8', bg: 'rgba(14,165,233,0.12)' },
-  credentials:            { label: 'Credentials',      color: '#fb923c', bg: 'rgba(249,115,22,0.12)' },
-  stdio:                  { label: 'stdio',            color: '#fbbf24', bg: 'rgba(245,158,11,0.12)' },
-  websocket:              { label: 'WebSocket',        color: '#fbbf24', bg: 'rgba(245,158,11,0.12)' },
-  local:                  { label: 'Local',            color: '#fbbf24', bg: 'rgba(245,158,11,0.12)' },
-  local_credentials:      { label: 'Local Creds',     color: '#a1a1aa', bg: 'rgba(113,113,122,0.12)' },
-  encryption_key:         { label: 'Encryption Key',  color: '#a1a1aa', bg: 'rgba(113,113,122,0.12)' },
-  api_key_and_webhook:    { label: 'API + Webhook',   color: '#60a5fa', bg: 'rgba(59,130,246,0.12)' },
+  api_key:                { label: 'API Key',          color: 'var(--tx-60a5fa)', bg: 'rgba(59,130,246,0.12)' },
+  api_token:              { label: 'API Token',        color: 'var(--tx-60a5fa)', bg: 'rgba(59,130,246,0.12)' },
+  personal_access_token:  { label: 'PAT',              color: 'var(--tx-60a5fa)', bg: 'rgba(59,130,246,0.12)' },
+  access_token:           { label: 'Token',            color: 'var(--tx-60a5fa)', bg: 'rgba(59,130,246,0.12)' },
+  oauth:                  { label: 'OAuth',            color: 'var(--tx-c084fc)', bg: 'rgba(168,85,247,0.12)' },
+  oauth_service_account:  { label: 'OAuth SA',         color: 'var(--tx-c084fc)', bg: 'rgba(168,85,247,0.12)' },
+  service_account:        { label: 'Service Account',  color: 'var(--tx-818cf8)', bg: 'rgba(99,102,241,0.12)' },
+  local_http:             { label: 'Local HTTP',       color: 'var(--tx-34d399)', bg: 'rgba(16,185,129,0.12)' },
+  api_key_local:          { label: 'Local API',        color: 'var(--tx-34d399)', bg: 'rgba(16,185,129,0.12)' },
+  pat_and_ssh:            { label: 'PAT + SSH',        color: 'var(--tx-22d3ee)', bg: 'rgba(6,182,212,0.12)'  },
+  url_and_keys:           { label: 'URL + Keys',       color: 'var(--tx-38bdf8)', bg: 'rgba(14,165,233,0.12)' },
+  credentials:            { label: 'Credentials',      color: 'var(--tx-fb923c)', bg: 'rgba(249,115,22,0.12)' },
+  stdio:                  { label: 'stdio',            color: 'var(--tx-fbbf24)', bg: 'rgba(245,158,11,0.12)' },
+  websocket:              { label: 'WebSocket',        color: 'var(--tx-fbbf24)', bg: 'rgba(245,158,11,0.12)' },
+  local:                  { label: 'Local',            color: 'var(--tx-fbbf24)', bg: 'rgba(245,158,11,0.12)' },
+  local_credentials:      { label: 'Local Creds',     color: 'var(--tx-a1a1aa)', bg: 'rgba(113,113,122,0.12)' },
+  encryption_key:         { label: 'Encryption Key',  color: 'var(--tx-a1a1aa)', bg: 'rgba(113,113,122,0.12)' },
+  api_key_and_webhook:    { label: 'API + Webhook',   color: 'var(--tx-60a5fa)', bg: 'rgba(59,130,246,0.12)' },
 };
 
 // ─── Status dot ─────────────────────────────────────────────────────────────
 
 const STATUS_DOT: Record<string, { color: string; pulse: boolean }> = {
-  active:                { color: '#22c55e', pulse: true  },
-  configured:            { color: '#eab308', pulse: false },
+  active:                { color: 'var(--tx-22c55e)', pulse: true  },
+  configured:            { color: 'var(--tx-eab308)', pulse: false },
   configured_not_active: { color: '#52525b', pulse: false },
-  pending:               { color: '#3b82f6', pulse: false },
+  pending:               { color: 'var(--tx-3b82f6)', pulse: false },
 };
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -74,7 +74,7 @@ export function ConnectionCard({ connection, isMcp = false, onOpenModal }: Conne
   const icon = CATEGORY_ICONS[isMcp ? 'mcp' : category] || '🔗';
   const typeBadge = TYPE_BADGE[connection.connection_type] || {
     label: connection.connection_type,
-    color: '#a1a1aa',
+    color: 'var(--tx-a1a1aa)',
     bg: 'rgba(113,113,122,0.12)',
   };
   const dotCfg = STATUS_DOT[connection.status] || STATUS_DOT.configured;
@@ -105,8 +105,8 @@ export function ConnectionCard({ connection, isMcp = false, onOpenModal }: Conne
     <div
       onClick={() => onOpenModal(connection, isMcp)}
       style={{
-        background: 'rgba(12,26,46,0.8)',
-        border: '1px solid rgba(255,255,255,0.07)',
+        background: 'rgba(var(--deep-ch), 0.8)',
+        border: '1px solid rgba(var(--ink-ch), 0.07)',
         borderRadius: 12,
         padding: '12px 12px 10px',
         cursor: 'pointer',
@@ -117,11 +117,11 @@ export function ConnectionCard({ connection, isMcp = false, onOpenModal }: Conne
         userSelect: 'none',
       }}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.14)';
+        (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(var(--ink-ch), 0.14)';
         (e.currentTarget as HTMLDivElement).style.background = 'rgba(20,40,80,0.6)';
       }}
       onMouseLeave={e => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.07)';
+        (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(var(--ink-ch), 0.07)';
         (e.currentTarget as HTMLDivElement).style.background = 'rgba(12,26,46,0.8)';
       }}
     >
@@ -145,7 +145,7 @@ export function ConnectionCard({ connection, isMcp = false, onOpenModal }: Conne
       <div style={{
         fontSize: '0.8rem',
         fontWeight: 600,
-        color: '#e4e4e7',
+        color: 'var(--tx-e4e4e7)',
         lineHeight: 1.2,
         overflow: 'hidden',
         display: '-webkit-box',
@@ -174,7 +174,7 @@ export function ConnectionCard({ connection, isMcp = false, onOpenModal }: Conne
           <span style={{
             fontSize: '0.62rem',
             fontWeight: 600,
-            color: '#fbbf24',
+            color: 'var(--tx-fbbf24)',
             background: 'rgba(245,158,11,0.1)',
             border: '1px solid rgba(245,158,11,0.2)',
             borderRadius: 4,
@@ -190,7 +190,7 @@ export function ConnectionCard({ connection, isMcp = false, onOpenModal }: Conne
       {/* Purpose */}
       <div style={{
         fontSize: '0.72rem',
-        color: '#71717a',
+        color: 'var(--tx-71717a)',
         lineHeight: 1.4,
         overflow: 'hidden',
         display: '-webkit-box',
@@ -202,7 +202,7 @@ export function ConnectionCard({ connection, isMcp = false, onOpenModal }: Conne
       </div>
 
       {/* Divider */}
-      <div style={{ height: 1, background: 'rgba(255,255,255,0.05)', margin: '0 -2px' }} />
+      <div style={{ height: 1, background: 'rgba(var(--ink-ch), 0.05)', margin: '0 -2px' }} />
 
       {/* Test button + result */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -213,8 +213,8 @@ export function ConnectionCard({ connection, isMcp = false, onOpenModal }: Conne
             fontSize: '0.68rem',
             fontWeight: 600,
             color: testing ? '#52525b' : '#71717a',
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: 'rgba(var(--ink-ch), 0.04)',
+            border: '1px solid rgba(var(--ink-ch), 0.06)',
             borderRadius: 4,
             padding: '3px 8px',
             cursor: testing ? 'not-allowed' : 'pointer',
@@ -227,12 +227,12 @@ export function ConnectionCard({ connection, isMcp = false, onOpenModal }: Conne
           onMouseEnter={e => {
             if (!testing) {
               (e.currentTarget as HTMLButtonElement).style.color = '#e4e4e7';
-              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.12)';
+              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(var(--ink-ch), 0.12)';
             }
           }}
           onMouseLeave={e => {
             (e.currentTarget as HTMLButtonElement).style.color = '#71717a';
-            (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.06)';
+            (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(var(--ink-ch), 0.06)';
           }}
         >
           {testing ? (

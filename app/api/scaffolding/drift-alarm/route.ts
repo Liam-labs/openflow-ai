@@ -21,7 +21,7 @@
  * Auth: requireAuthOrLocal('write') — cron calls from localhost pass.
  *
  * Channel target: env `SCAFFOLDING_ALERT_CHANNEL_ID`. Defaults to the
- * SG-1 Commander channel (3b994a27-0a17-46a9-99eb-03e38b6832e6). The
+ * the main project Commander channel (3b994a27-0a17-46a9-99eb-03e38b6832e6). The
  * alert is posted as a synthetic system participant (no roster ID needed,
  * same pattern as sprints.reminder).
  *

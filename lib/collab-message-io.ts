@@ -39,6 +39,15 @@ const MAX_ACTIVE_MESSAGES = 200;
 const ARCHIVE_BATCH_SIZE = 100;
 
 /**
+ * True when an error only says the messages folder does not exist yet. A fresh install has no folder until the first
+ * message is written, so the start-up backup and archive rotation have nothing to do (D2, README trial 2026-10-31).
+ */
+function isMissingMessagesDir(error: unknown): boolean {
+  const e = error as NodeJS.ErrnoException;
+  return e?.code === 'ENOENT' && e.path === MESSAGES_DIR;
+}
+
+/**
  * Ensure the collab-messages directory exists
  */
 export async function ensureMessagesDir(): Promise<void> {
@@ -520,6 +529,7 @@ export async function backupMessageFiles(): Promise<void> {
       // Pruning is best-effort
     }
   } catch (error) {
+    if (isMissingMessagesDir(error)) return;
     console.error('[collab-message-io] Backup failed:', error);
   }
 }
@@ -636,7 +646,7 @@ export async function rotateMessageArchives(): Promise<{ deleted: number; archiv
       console.log(`[collab-message-io] Archive rotation: deleted ${deleted} old archives, archived ${archived} stale messages`);
     }
   } catch (error) {
-    console.error('[collab-message-io] Archive rotation failed:', error);
+    if (!isMissingMessagesDir(error)) console.error('[collab-message-io] Archive rotation failed:', error);
   }
 
   return { deleted, archived };

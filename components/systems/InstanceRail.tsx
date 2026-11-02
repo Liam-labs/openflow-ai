@@ -123,6 +123,12 @@ function InstanceRow({
 
   const checkedLabel = formatChecked(health.checkedAt ?? instance.lastCheckedAt);
 
+  // Why this row has its status, in plain words: the live check's answer, else the registry's last recorded reason.
+  // The full text is the tooltip, so nothing is lost when the row clamps it.
+  const liveError = !health.checking ? health.error : null;
+  const detailText = liveError ?? instance.statusDetail ?? '';
+  const failed = !!liveError || instance.status === 'error' || instance.status === 'offline';
+
   return (
     <div
       className={`sdb-rail-row${isSelected ? ' sdb-rail-row--active' : ''} sdb-rail-row--${instance.status}`}
@@ -139,9 +145,9 @@ function InstanceRow({
         <div className="sdb-rail-row__info">
           <span className="sdb-rail-row__name">{instance.name}</span>
           <span className="sdb-rail-row__url" title={instance.connection.url}>{urlDisplay}</span>
-          {health.error && !health.checking && (
-            <span className="sdb-rail-row__error" title={health.error}>
-              {health.error.length > 38 ? health.error.slice(0, 36) + '…' : health.error}
+          {detailText && (
+            <span className={failed ? 'sdb-rail-row__error' : 'sdb-rail-row__detail'} title={detailText}>
+              {detailText}
             </span>
           )}
         </div>

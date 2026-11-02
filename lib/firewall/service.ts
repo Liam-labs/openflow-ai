@@ -12,6 +12,7 @@ const SERVER_LABEL = 'Remote server';
 const DESKTOP_LABEL = 'Desktop PC';
 const TTL_MS = 30000;
 const MIN_REFRESH_MS = 5000;
+const STALE_MAX_MS = 10 * 60 * 1000;
 
 const ROUTER_NOTE = "\"Anyone on the internet\" means this machine's own firewall would let such a connection in if it ever arrived. Your router's firewall is a separate first layer that this report cannot see.";
 
@@ -92,15 +93,24 @@ export async function buildFirewallReport(
 interface Slot { at: number; report: FirewallReport }
 const globals = globalThis as unknown as { __devflowFirewall?: { slot?: Slot; inflight?: Promise<FirewallReport> } };
 
-/** Cached for 30 s; `refresh` skips the cache but not more often than every 5 s. Concurrent callers share one run. */
+/**
+ * Cached for 30 s. After that a normal read is answered at once from the last report (up to 10 minutes old) while a fresh one is built in the
+ * background, so the page never sits on "Reading the firewall..." for the 6-8 s a rebuild takes (it did on every second visit). `refresh` waits for
+ * a new report but not more often than every 5 s. Concurrent callers share one run.
+ */
 export async function getFirewallReport(options: { refresh?: boolean } = {}, build: () => Promise<FirewallReport> = buildFirewallReport): Promise<FirewallReport> {
   const state = (globals.__devflowFirewall ??= {});
-  if (state.inflight) return state.inflight;
   const age = state.slot ? Date.now() - state.slot.at : Infinity;
+  const usable = state.slot && !options.refresh && age < STALE_MAX_MS ? state.slot.report : undefined;
+  if (state.inflight) return usable ?? state.inflight;
   if (state.slot && age < (options.refresh ? MIN_REFRESH_MS : TTL_MS)) return state.slot.report;
   const run = build()
     .then(report => { state.slot = { at: Date.now(), report }; return report; })
     .finally(() => { state.inflight = undefined; });
   state.inflight = run;
+  if (usable) {
+    run.catch(() => { /* the stale report keeps serving; the next read tries again */ });
+    return usable;
+  }
   return run;
 }

@@ -79,6 +79,7 @@ export async function create(
     apiUrl: typeof body.apiUrl === 'string' ? body.apiUrl : undefined,
     apiMethod: typeof body.apiMethod === 'string' ? body.apiMethod as CronJob['apiMethod'] : undefined,
     apiHeaders: body.apiHeaders as Record<string, string> | undefined,
+    apiAuthEnv: typeof body.apiAuthEnv === 'string' ? body.apiAuthEnv : undefined,
     apiBody: typeof body.apiBody === 'string' ? body.apiBody : undefined,
     reminderChannelId: typeof body.reminderChannelId === 'string' ? body.reminderChannelId : undefined,
     reminderParticipantId: typeof body.reminderParticipantId === 'string' ? body.reminderParticipantId : undefined,
@@ -140,6 +141,7 @@ export async function update(
     if (body.apiUrl !== undefined) job.apiUrl = body.apiUrl as string;
     if (body.apiMethod !== undefined) job.apiMethod = body.apiMethod as CronJob['apiMethod'];
     if (body.apiHeaders !== undefined) job.apiHeaders = body.apiHeaders as Record<string, string>;
+    if (body.apiAuthEnv !== undefined) job.apiAuthEnv = body.apiAuthEnv as string;
     if (body.apiBody !== undefined) job.apiBody = body.apiBody as string;
     if (body.reminderChannelId !== undefined) job.reminderChannelId = body.reminderChannelId as string;
     if (body.reminderParticipantId !== undefined) job.reminderParticipantId = body.reminderParticipantId as string;

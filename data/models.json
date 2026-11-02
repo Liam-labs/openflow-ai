@@ -311,7 +311,7 @@
       "apiId": "claude-opus-5-5",
       "provider": "anthropic",
       "classification": "opus",
-      "label": "Opus 5.5 \u26a1 1M",
+      "label": "Opus 5.5 \u26a1 1M \u00b7 latest",
       "description": "Latest Claude Opus \u2014 1M context for long-running agentic coding and knowledge work.",
       "tier": "powerful",
       "agentTypes": [
@@ -357,7 +357,7 @@
       "apiId": "claude-sonnet-5-5",
       "provider": "anthropic",
       "classification": "sonnet",
-      "label": "Sonnet 5.5 \u26a1 1M",
+      "label": "Sonnet 5.5 \u26a1 1M \u00b7 latest",
       "description": "Claude Sonnet 5.5 \u2014 1M context, near-Opus coding and agentic quality at Sonnet speed. $2/$10 per MTok.",
       "tier": "balanced",
       "agentTypes": [

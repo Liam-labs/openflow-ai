@@ -5,7 +5,7 @@ import { hostCall } from './host-executor';
 export interface LauncherSpec { launcher: string; args: string[]; env: Record<string, string> }
 
 const LAUNCHERS = new Set([
-  'collab-claude', 'collab-codex', 'collab-grok', 'collab-antigravity',
+  'collab-claude', 'collab-claude-headless', 'collab-claude-headless.py', 'collab-codex', 'collab-grok', 'collab-antigravity',
   'collab-codex.py', 'collab-grok.py', 'collab-grok-acp.py', 'collab-agent.py', 'agy-launch.sh',
 ]);
 
@@ -43,14 +43,14 @@ export function parseLaunchCommand(command: string): LauncherSpec {
 
 export function claudeWrapperSpec(o: {
   agentName: string; channelId: string; skipPermissions: boolean; resumeSessionId?: string;
-  flags: string[]; systemPromptFile?: string;
+  flags: string[]; systemPromptFile?: string; headless?: boolean;
 }): LauncherSpec {
   const args = ['--name', o.agentName, '--channel', o.channelId];
   if (o.skipPermissions) args.push('--dangerously-skip-permissions');
   if (o.resumeSessionId) args.push('--resume', o.resumeSessionId);
   args.push(...o.flags);
   if (o.systemPromptFile) args.push('--system-prompt-file', o.systemPromptFile);
-  return { launcher: 'collab-claude', args, env: {} };
+  return { launcher: o.headless ? 'collab-claude-headless' : 'collab-claude', args, env: {} };
 }
 
 /** Copies a local file's text to the host's scratch folder and returns the path to use there. */
@@ -60,10 +60,12 @@ export async function pushFile(host: string, localText: string, name: string): P
   return r.path;
 }
 
-export async function spawnOnHost(host: string, p: { session: string; cwd: string; spec: LauncherSpec; selfSession?: boolean; replace?: boolean }) {
+/** `keyFile`: path (on the host) of a one-shot file written with pushFile that holds ANTHROPIC_API_KEY for an agent set to the API key. The host's launcher reads and deletes it. */
+export async function spawnOnHost(host: string, p: { session: string; cwd: string; spec: LauncherSpec; selfSession?: boolean; replace?: boolean; keyFile?: string }) {
   return hostCall<{ alive: boolean }>(host, 'spawn', {
     session: p.session, cwd: p.cwd, launcher: p.spec.launcher, args: p.spec.args, env: p.spec.env,
     selfSession: p.selfSession || false,
     replace: p.replace === true,
+    ...(p.keyFile ? { keyFile: p.keyFile } : {}),
   }, 90_000);
 }

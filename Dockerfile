@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # The agent programs. Signing in happens later, inside the dashboard.
 RUN npm install -g @anthropic-ai/claude-code @openai/codex && npm cache clean --force
 
+# uv runs Python-based MCP servers (such as the memory server) without installing anything system-wide. See docs/guides/add-an-mcp-server.md.
+COPY --from=ghcr.io/astral-sh/uv:0.9.0 /uv /uvx /usr/local/bin/
+
 # /data is the volume: made here so it starts owned by the unprivileged user
 RUN mkdir -p /opt/openflow /data && chown node:node /opt/openflow /data
 WORKDIR /opt/openflow

@@ -135,7 +135,7 @@ const COLS: ColumnDef<MemoryEvent>[] = [
     getValue: e => e.type,
     render: e => (
       <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '12px' }}>
-        {e.type === 'earlyoom_kill' ? <Shield size={12} style={{ color: '#ef4444' }} /> : <Brain size={12} style={{ color: '#a855f7' }} />}
+        {e.type === 'earlyoom_kill' ? <Shield size={12} style={{ color: 'var(--tx-ef4444)' }} /> : <Brain size={12} style={{ color: 'var(--tx-a855f7)' }} />}
         {e.type === 'earlyoom_kill' ? 'OOM Kill' : 'Ollama Unload'}
       </span>
     ),
@@ -149,7 +149,7 @@ const COLS: ColumnDef<MemoryEvent>[] = [
     render: e => {
       const val = e.killedProcess || e.model;
       return val
-        ? <span style={{ color: '#60a5fa', fontFamily: 'monospace', fontSize: '11.5px' }}>{val}</span>
+        ? <span style={{ color: 'var(--tx-60a5fa)', fontFamily: 'monospace', fontSize: '11.5px' }}>{val}</span>
         : <span style={{ color: 'var(--muted)' }}>—</span>;
     },
   },
@@ -187,7 +187,7 @@ function buildTopCols(onRestart: (p: ProcInfo) => void): ColumnDef<ProcInfo>[] {
     width: '220px',
     getValue: p => p.comm,
     render: p => (
-      <span style={{ fontFamily: 'monospace', fontSize: '11.5px', color: '#e2e8f0' }}>
+      <span style={{ fontFamily: 'monospace', fontSize: '11.5px', color: 'var(--tx-e2e8f0)' }}>
         {shortName(p)}
       </span>
     ),
@@ -208,7 +208,7 @@ function buildTopCols(onRestart: (p: ProcInfo) => void): ColumnDef<ProcInfo>[] {
     width: '90px',
     align: 'right',
     getValue: p => p.rssKb,
-    render: p => <span style={{ fontVariantNumeric: 'tabular-nums', fontSize: '12px', color: '#60a5fa' }}>{formatKB(p.rssKb)}</span>,
+    render: p => <span style={{ fontVariantNumeric: 'tabular-nums', fontSize: '12px', color: 'var(--tx-60a5fa)' }}>{formatKB(p.rssKb)}</span>,
   },
   {
     key: 'adj',
@@ -262,7 +262,7 @@ function buildTopCols(onRestart: (p: ProcInfo) => void): ColumnDef<ProcInfo>[] {
             display: 'inline-flex', alignItems: 'center', gap: 4,
             background: 'rgba(96, 165, 250, 0.08)',
             border: '1px solid rgba(96, 165, 250, 0.25)',
-            color: '#60a5fa',
+            color: 'var(--tx-60a5fa)',
             fontSize: '11px',
             padding: '3px 8px',
             borderRadius: 4,
@@ -303,7 +303,7 @@ function DefenseLight({ label, active, detail, icon }: { label: string; active: 
         {icon}
       </div>
       <div style={{ minWidth: 0, flex: 1 }}>
-        <div style={{ fontSize: '12px', fontWeight: 600, color: '#e2e8f0' }}>{label}</div>
+        <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--tx-e2e8f0)' }}>{label}</div>
         <div style={{ fontSize: '11px', color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={detail}>
           {detail}
         </div>
@@ -329,8 +329,8 @@ function EmbeddingServerCard({ s, onRestart }: { s: LiveState['embeddingServer']
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Database size={14} style={{ color: '#a855f7' }} />
-          <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#e2e8f0' }}>Embedding Server</span>
+          <Database size={14} style={{ color: 'var(--tx-a855f7)' }} />
+          <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--tx-e2e8f0)' }}>Embedding Server</span>
           <span style={{ fontSize: '11px', color: 'var(--muted)' }}>(rag-qdrant-memory)</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -345,7 +345,7 @@ function EmbeddingServerCard({ s, onRestart }: { s: LiveState['embeddingServer']
               display: 'inline-flex', alignItems: 'center', gap: 4,
               background: 'rgba(168, 85, 247, 0.10)',
               border: '1px solid rgba(168, 85, 247, 0.30)',
-              color: '#c084fc',
+              color: 'var(--tx-c084fc)',
               fontSize: '11px',
               padding: '3px 8px',
               borderRadius: 4,
@@ -360,10 +360,10 @@ function EmbeddingServerCard({ s, onRestart }: { s: LiveState['embeddingServer']
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ fontSize: '13px', fontVariantNumeric: 'tabular-nums', color: '#e2e8f0', minWidth: 110 }}>
+        <span style={{ fontSize: '13px', fontVariantNumeric: 'tabular-nums', color: 'var(--tx-e2e8f0)', minWidth: 110 }}>
           {s.rssMb !== null ? `${s.rssMb} MB` : '—'} / {s.ceilingMb} MB
         </span>
-        <div style={{ flex: 1, height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+        <div style={{ flex: 1, height: 6, background: 'rgba(var(--ink-ch), 0.06)', borderRadius: 3, overflow: 'hidden' }}>
           <div style={{ width: `${Math.min(100, pct)}%`, height: '100%', background: barColor, transition: 'width 0.4s ease' }} />
         </div>
         <span style={{ fontSize: '11.5px', color: barColor, fontVariantNumeric: 'tabular-nums', minWidth: 38, textAlign: 'right' }}>
@@ -495,7 +495,7 @@ export function MemoryProtectionSection() {
       {/* Header */}
       <div className="systems-section__header">
         <div className="systems-section__header-left">
-          <Brain size={16} style={{ color: '#a855f7', flexShrink: 0 }} />
+          <Brain size={16} style={{ color: 'var(--tx-a855f7)', flexShrink: 0 }} />
           <h2 className="systems-section__title">Memory Protection</h2>
           <span className="systems-stat-pill systems-stat-pill--muted">
             <span className="systems-stat-pill__value">{events.length}</span> events
@@ -597,8 +597,8 @@ export function MemoryProtectionSection() {
             Top Memory Consumers (Live)
           </h3>
           <p style={{ fontSize: '11.5px', color: 'var(--muted)', marginBottom: 8 }}>
-            Sorted by RSS. <span style={{ color: '#22c55e' }}>Green</span> oom_score_adj = protected (active agent or pinned infra). {' '}
-            <span style={{ color: '#eab308' }}>Yellow</span> = idle agent. <span style={{ color: '#ef4444' }}>Red</span> = stale, first picked under pressure.
+            Sorted by RSS. <span style={{ color: 'var(--tx-22c55e)' }}>Green</span> oom_score_adj = protected (active agent or pinned infra). {' '}
+            <span style={{ color: 'var(--tx-eab308)' }}>Yellow</span> = idle agent. <span style={{ color: 'var(--tx-ef4444)' }}>Red</span> = stale, first picked under pressure.
           </p>
           <DataTable<ProcInfo>
             columns={topCols}

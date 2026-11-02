@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+// These tests call a handler directly, outside the transaction mutateChannels opens, so saving is stubbed; the handler's change to the data is what they check.
+vi.mock('@/lib/collab-channel-store', async (orig) => ({ ...(await orig<typeof import('@/lib/collab-channel-store')>()), saveChannels: vi.fn() }));
 
 vi.mock('@/lib/data-io', () => ({ readJsonFile: vi.fn(), writeJsonFile: vi.fn() }));
 vi.mock('@/lib/event-bus', () => ({ eventBus: { emitEvent: vi.fn() }, emitCollabError: vi.fn() }));
 vi.mock('@/lib/collab-message-io', () => ({
   getMessagesPaginated: vi.fn(), appendMessages: vi.fn(), deleteChannelMessages: vi.fn(),
 }));
-vi.mock('@/teams-integration/lib/teams-auto-sync', () => ({ onChannelCreated: vi.fn(), onChannelDeleted: vi.fn() }));
 vi.mock('@/slack-integration/lib/slack-auto-sync', () => ({ onChannelCreated: vi.fn(), onChannelDeleted: vi.fn() }));
 vi.mock('@/lib/channels-registry', () => ({
   onChannelCreated: vi.fn(), onChannelArchived: vi.fn(), onChannelRestored: vi.fn(), onChannelDeleted: vi.fn(),

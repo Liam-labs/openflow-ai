@@ -23,12 +23,12 @@
   --cc-warning:          #fbbf24;
   --cc-error:            #f87171;
   --cc-info:             #60a5fa;
-  --cc-border:           rgba(255,255,255,0.06);
+  --cc-border:           rgba(var(--ink-ch), 0.06);
   --cc-border-active:    rgba(34,211,238,0.3);
-  --cc-border-subtle:    rgba(255,255,255,0.03);
+  --cc-border-subtle:    rgba(var(--ink-ch), 0.03);
   --cc-shadow-sm:        0 1px 2px rgba(0,0,0,0.4);
-  --cc-shadow-md:        0 4px 12px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03);
-  --cc-shadow-lg:        0 12px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.05) inset;
+  --cc-shadow-md:        0 4px 12px rgba(0,0,0,0.5), 0 0 0 1px rgba(var(--ink-ch), 0.03);
+  --cc-shadow-lg:        0 12px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(var(--ink-ch), 0.05) inset;
   --cc-radius-sm:        4px;
   --cc-radius-md:        6px;
   --cc-radius-lg:        8px;
@@ -325,7 +325,7 @@
 .aad-agent-card:hover {
   box-shadow: var(--cc-shadow-md);
   background: var(--cc-bg-surface-hover);
-  border-color: rgba(255,255,255,0.1);
+  border-color: rgba(var(--ink-ch), 0.1);
 }
 .aad-agent-card--expanded {
   border-color: var(--cc-accent-border);
@@ -434,7 +434,7 @@
 }
 .aad-feed::-webkit-scrollbar { width: 3px; }
 .aad-feed::-webkit-scrollbar-track { background: transparent; }
-.aad-feed::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 2px; }
+.aad-feed::-webkit-scrollbar-thumb { background: rgba(var(--ink-ch), 0.06); border-radius: 2px; }
 
 .aad-feed-row {
   display: grid;

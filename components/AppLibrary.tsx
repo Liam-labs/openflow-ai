@@ -468,7 +468,7 @@ function ServiceStartOverlay({
             style={{
               background: `linear-gradient(135deg, rgba(${rgb.r},${rgb.g},${rgb.b},0.2) 0%, rgba(${rgb.r},${rgb.g},${rgb.b},0.08) 100%)`,
               border: `1px solid rgba(${rgb.r},${rgb.g},${rgb.b},0.3)`,
-              boxShadow: `0 0 40px rgba(${rgb.r},${rgb.g},${rgb.b},0.15), inset 0 1px 0 rgba(255,255,255,0.05)`,
+              boxShadow: `0 0 40px rgba(${rgb.r},${rgb.g},${rgb.b},0.15), inset 0 1px 0 rgba(var(--ink-ch), 0.05)`,
             }}
           >
             {app.iconType === 'emoji' ? (

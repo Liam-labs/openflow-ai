@@ -154,3 +154,21 @@ describe('approveClaudeTrust', () => {
     expect(await fsp.readFile(file, 'utf8')).toBe('{ not json');
   });
 });
+
+describe('model names that reach a shell command line', () => {
+  const MAP = { haiku: 'h', sonnet: 's', opus: 'o' } as never;
+  const hostile = ["x; touch /tmp/pwned", "x$(id)", "x`id`", "x'y", 'x"y', 'x y', '-rf', '', 'a'.repeat(200), 'x\nid'];
+  it.each(hostile.filter((h) => h !== ''))('validation refuses %j for ollama and grok', (name) => {
+    for (const engine of ['ollama', 'grok'] as const) expect(validateEngineModel(engine, undefined, name, MAP).valid).toBe(false);
+  });
+  it.each(hostile.filter((h) => h !== ''))('the command builder refuses %j too, in case validation is skipped', (name) => {
+    expect(() => buildEngineCommand('ollama', 'sonnet' as never, name, undefined, MAP)).toThrow(/invalid model name/);
+    expect(() => buildEngineCommand('grok', 'sonnet' as never, name, undefined, MAP)).toThrow(/invalid model name/);
+  });
+  it('plain names still work', () => {
+    for (const ok of ['gemma4:26b', 'llama3.1:8b', 'org/model:latest', 'name@sha256', 'grok-4.7']) {
+      expect(validateEngineModel('ollama', undefined, ok, MAP).valid).toBe(true);
+      expect(buildEngineCommand('ollama', 'sonnet' as never, ok, undefined, MAP)).toContain(ok);
+    }
+  });
+});

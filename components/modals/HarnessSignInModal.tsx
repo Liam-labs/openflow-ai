@@ -73,6 +73,12 @@ export function HarnessSignInModal({ credentialId, onClose, onChanged, title, si
     if (credential?.harness === 'codex' && credential.state === 'unknown'
       && !window.confirm('Signing in to Codex first removes its current login on this machine. Agents already running keep working until they restart. Continue?')) return;
     setBusy(true); setError(''); setRestartResult(null);
+    // "Try again" starts from a failed or expired session. Dismiss that one first, so a later cancel of the new session leaves nothing
+    // behind and the modal doesn't reopen on the old "that code didn't work" error (BUG-49, 30 Oct 2026).
+    if (signIn && (signIn.state === 'failed' || signIn.state === 'expired')) {
+      await post('/api/system/harness-auth/sign-in/cancel', { signInId: signIn.id });
+      setLocalSignIn(null);
+    }
     const result = await post('/api/system/harness-auth/sign-in', { credentialId });
     const session = (result.data.signIn as SignInSession | undefined) ?? null;
     if (result.ok || result.data.code === 'SIGN_IN_ACTIVE') {
@@ -130,7 +136,12 @@ export function HarnessSignInModal({ credentialId, onClose, onChanged, title, si
 
   // In the setup wizard the person already pressed "Sign in to ...", so start as soon as the login's state is known.
   useEffect(() => {
-    if (!simple || autoStartedRef.current || !credential || busy || signIn || !canStartSignIn(credential)) return;
+    if (!simple || autoStartedRef.current) return;
+    // The modal opened on a session that already exists (a failed or waiting one): the person is resuming it, not starting fresh. Mark auto-start
+    // done so it never fires now, and never fires later when a cancel clears the session. Otherwise cancelling that session immediately starts a
+    // new one and the cancel looks like it did nothing (BUG-50, 30 Oct 2026).
+    if (signIn) { autoStartedRef.current = true; return; }
+    if (!credential || busy || !canStartSignIn(credential)) return;
     autoStartedRef.current = true;
     void start();
     // eslint-disable-next-line react-hooks/exhaustive-deps

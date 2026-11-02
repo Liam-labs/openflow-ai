@@ -79,13 +79,13 @@ export function ProcessHealthWidget({ onNavigate }: ProcessHealthWidgetProps) {
     return () => clearInterval(id);
   }, [fetch_]);
 
-  // Uptime: approximate from process uptime
-  const uptimeDisplay = summary
+  // Share of the system process limit in use (this cell used to be labelled Uptime).
+  const limitDisplay = summary
     ? (() => {
         const limit = summary.processLimit;
-        const ratio = limit > 0 ? summary.totalProcesses / limit : 0;
-        if (ratio > 0.9) return <span style={{ color: '#ef4444' }}>{summary.totalProcesses}/{limit}</span>;
-        return <span>{summary.totalProcesses.toLocaleString()}/{limit.toLocaleString()}</span>;
+        const pct = limit > 0 ? (summary.totalProcesses / limit) * 100 : 0;
+        const text = `${pct < 10 ? pct.toFixed(1) : Math.round(pct)}%`;
+        return <span title={`${summary.totalProcesses.toLocaleString()} of ${limit.toLocaleString()} processes allowed`} style={pct > 90 ? { color: 'var(--tx-ef4444)' } : undefined}>{text}</span>;
       })()
     : '—';
 
@@ -94,7 +94,7 @@ export function ProcessHealthWidget({ onNavigate }: ProcessHealthWidgetProps) {
         { label: 'Procs',   value: summary.totalProcesses.toLocaleString(), color: summary.totalProcesses > 600 ? '#ef4444' : '#e5e7f6' },
         { label: 'Threads', value: summary.totalThreads.toLocaleString(),   color: summary.totalThreads > 3000 ? '#eab308' : '#e5e7f6' },
         { label: 'Zombies', value: String(summary.zombies),                 color: summary.zombies > 0 ? '#ef4444' : '#e5e7f6' },
-        { label: 'Uptime',  value: uptimeDisplay,                           color: '#69f6b8' },
+        { label: 'Proc limit', value: limitDisplay,                       color: 'var(--tx-69f6b8)' },
       ]
     : null;
 

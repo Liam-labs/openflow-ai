@@ -102,6 +102,9 @@ export function findOfflineMentions(args: {
   for (const [key, entry] of byAgent) {
     if (entry.reachable) continue;
     const roster = channel.roster?.agents.find(a => a.name?.toLowerCase() === key);
+    // A stopped or crashed roster agent belongs to wake on mention, which starts it or tells the sender why not in its own note
+    // (lib/wake-on-mention.ts). This notice ("bring them online yourself") beside "I started it" contradicted it (30 Oct 2026).
+    if (roster && (roster.status === 'stopped' || roster.status === 'crashed') && process.env.DEVFLOW_WAKE_ON_MENTION !== 'off') continue;
     offline.push({
       name: entry.name,
       ...(roster?.id && { agentId: roster.id }),

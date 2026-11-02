@@ -104,9 +104,9 @@ function ThreadHistoryChart({ history }: { history: HistoryEntry[] }) {
     grid: { top: 24, right: 24, bottom: 32, left: 60 },
     tooltip: {
       trigger: 'axis' as const,
-      backgroundColor: 'rgba(8,14,28,0.95)',
-      borderColor: 'rgba(255,255,255,0.08)',
-      textStyle: { color: 'rgba(255,255,255,0.85)', fontSize: 12 },
+      backgroundColor: 'rgba(var(--deep-ch), 0.95)',
+      borderColor: 'rgba(var(--ink-ch), 0.08)',
+      textStyle: { color: 'rgba(var(--ink-ch), 0.85)', fontSize: 12 },
       formatter: (params: { dataIndex: number }[]) => {
         if (!params[0]) return '';
         const h = history[params[0].dataIndex];
@@ -119,8 +119,8 @@ function ThreadHistoryChart({ history }: { history: HistoryEntry[] }) {
       type: 'category' as const,
       data: timestamps,
       boundaryGap: false,
-      axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
-      axisLabel: { color: 'rgba(255,255,255,0.3)', fontSize: 10, interval: Math.floor(history.length / 6) },
+      axisLine: { lineStyle: { color: 'rgba(var(--ink-ch), 0.08)' } },
+      axisLabel: { color: 'rgba(var(--ink-ch), 0.3)', fontSize: 10, interval: Math.floor(history.length / 6) },
       splitLine: { show: false },
     },
     yAxis: {
@@ -129,11 +129,11 @@ function ThreadHistoryChart({ history }: { history: HistoryEntry[] }) {
       max: Math.max(maxThread * 1.1, 35000),
       axisLine: { show: false },
       axisLabel: {
-        color: 'rgba(255,255,255,0.3)',
+        color: 'rgba(var(--ink-ch), 0.3)',
         fontSize: 10,
         formatter: (v: number) => v >= 1000 ? `${(v/1000).toFixed(0)}K` : String(v),
       },
-      splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } },
+      splitLine: { lineStyle: { color: 'rgba(var(--ink-ch), 0.04)' } },
     },
     series: [
       {
@@ -141,7 +141,7 @@ function ThreadHistoryChart({ history }: { history: HistoryEntry[] }) {
         data: threadData,
         smooth: 0.3,
         symbol: 'none',
-        lineStyle: { color: '#3b82f6', width: 2 },
+        lineStyle: { color: 'var(--tx-3b82f6)', width: 2 },
         areaStyle: {
           color: {
             type: 'linear' as const,
@@ -159,13 +159,13 @@ function ThreadHistoryChart({ history }: { history: HistoryEntry[] }) {
           data: [
             {
               yAxis: 10000,
-              lineStyle: { color: '#eab308', width: 1, type: 'dashed' as const },
-              label: { color: '#eab308', formatter: '10K' },
+              lineStyle: { color: 'var(--tx-eab308)', width: 1, type: 'dashed' as const },
+              label: { color: 'var(--tx-eab308)', formatter: '10K' },
             },
             {
               yAxis: 30000,
-              lineStyle: { color: '#ef4444', width: 1, type: 'dashed' as const },
-              label: { color: '#ef4444', formatter: '30K' },
+              lineStyle: { color: 'var(--tx-ef4444)', width: 1, type: 'dashed' as const },
+              label: { color: 'var(--tx-ef4444)', formatter: '30K' },
             },
           ],
         },

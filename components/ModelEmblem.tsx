@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { OPENAI_LOGO_PATH } from '@/lib/platform-logos';
 import { emblemFamily, type EmblemFamily, type EmblemState } from '@/lib/model-emblem';
 
 // The real model logos (public/icons/platforms/*.png), cut into pieces that can move.
@@ -26,10 +27,9 @@ function Logo({ family }: { family: Exclude<EmblemFamily, 'openai'> }) {
   return <image href={href} x={-w / 2} y={-h / 2} width={w} height={h} />;
 }
 
-// OpenAI has no logo file in the app yet (platform-logos.tsx draws a placeholder star),
-// so this animates that same star until the real file is added.
-function OpenAIStar() {
-  return <path transform="translate(-12 -12)" d="M12 2L14.5 8.5L21 11L14.5 13.5L12 20L9.5 13.5L3 11L9.5 8.5L12 2Z" fill="#fff" fillOpacity="0.85" />;
+// Use the same provider mark as chat, including in the animated states.
+function OpenAIMark() {
+  return <path transform="translate(-12 -12) scale(0.833333) translate(2.4 2.4)" d={OPENAI_LOGO_PATH} fill="currentColor" />;
 }
 
 // ---- Claude: 12 wedges, one per ray (angles measured clockwise from straight up) ----
@@ -103,7 +103,13 @@ function Pieces({ family, uid }: { family: EmblemFamily; uid: string }) {
       </g>
     );
   }
-  if (family === 'gemini' || family === 'openai') {
+  if (family === 'openai') {
+    return <g className="me-openai-whole">
+      <g className="me-openai-knot"><OpenAIMark /></g>
+      <g className="me-openai-orbit" aria-hidden="true"><circle r="10.8" fill="none" stroke="currentColor" strokeWidth="0.65" strokeDasharray="12 56" strokeLinecap="round" /></g>
+    </g>;
+  }
+  if (family === 'gemini') {
     return (
       <g className="me-turn">
         <defs>
@@ -111,7 +117,7 @@ function Pieces({ family, uid }: { family: EmblemFamily; uid: string }) {
         </defs>
         {QUARTERS.map((q, i) => (
           <g key={i} className="me-part me-drift" clipPath={`url(#${uid}-q${i})`} style={vars({ '--i': i, '--dx': q.dx, '--dy': q.dy })}>
-            {family === 'gemini' ? <Logo family="gemini" /> : <OpenAIStar />}
+            <Logo family="gemini" />
           </g>
         ))}
       </g>
@@ -175,7 +181,7 @@ export function ModelEmblem({
       data-state={state}
     >
       {state === 'idle'
-        ? (family === 'openai' ? <OpenAIStar /> : family === 'grok' ? <GrokTile><Logo family="grok" /></GrokTile> : <Logo family={family} />)
+        ? (family === 'openai' ? <OpenAIMark /> : family === 'grok' ? <GrokTile><Logo family="grok" /></GrokTile> : <Logo family={family} />)
         : <Pieces family={family} uid={uid} />}
     </svg>
   );

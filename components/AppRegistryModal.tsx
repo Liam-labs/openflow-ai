@@ -105,7 +105,7 @@ const emptyForm: FormData = {
   description: '',
   icon: '\u{1F4E6}',
   iconType: 'emoji',
-  color: '#3B82F6',
+  color: 'var(--tx-3b82f6)',
   category: 'other',
   tags: '',
   url: '',
@@ -591,8 +591,8 @@ export function AppRegistryModal({
         ref={modalRef}
         className="relative w-full max-w-2xl max-h-[85vh] mx-4 rounded-2xl border border-white/[0.08] overflow-hidden"
         style={{
-          background: 'linear-gradient(180deg, rgba(10,18,38,0.97) 0%, rgba(6,10,24,0.98) 100%)',
-          boxShadow: '0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(59,130,246,0.08)',
+          background: 'linear-gradient(180deg, rgba(var(--deep-ch), 0.97) 0%, rgba(var(--deep-ch), 0.98) 100%)',
+          boxShadow: '0 40px 100px rgba(var(--shade-ch), 0.7), 0 0 0 1px rgba(var(--glow-ch), 0.08)',
           animation: 'modalSlideIn 250ms cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >

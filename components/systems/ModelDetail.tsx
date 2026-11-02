@@ -181,9 +181,9 @@ export function ModelDetail({ modelId, tab, onTabChange, onBack }: ModelDetailPr
         <div className="md-error"><AlertCircle size={14} />{error ?? `Model "${modelId}" not found.`}</div>
         <style jsx>{`
           .md-section { padding: 24px 28px 48px; max-width: 1080px; }
-          .md-back { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; min-height: 32px; background: transparent; border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.18)); border-radius: 8px; color: var(--df-text-secondary, #a1a1aa); font-size: 12px; cursor: pointer; margin-bottom: 20px; }
-          .md-back:hover { background: var(--df-accent-10, rgba(59,130,246,0.1)); color: var(--df-text, #fafafa); }
-          .md-error { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; color: #f87171; font-size: 13px; }
+          .md-back { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; min-height: 32px; background: transparent; border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.18)); border-radius: 8px; color: var(--df-text-secondary, #a1a1aa); font-size: 12px; cursor: pointer; margin-bottom: 20px; }
+          .md-back:hover { background: var(--df-accent-10, rgba(var(--glow-ch), 0.1)); color: var(--df-text, #fafafa); }
+          .md-error { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; color: var(--tx-f87171); font-size: 13px; }
         `}</style>
       </div>
     );
@@ -251,8 +251,8 @@ export function ModelDetail({ modelId, tab, onTabChange, onBack }: ModelDetailPr
 
       <style jsx>{`
         .md-section { padding: 24px 28px 48px; max-width: 1080px; }
-        .md-back { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; min-height: 32px; background: transparent; border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.18)); border-radius: 8px; color: var(--df-text-secondary, #a1a1aa); font-size: 12px; cursor: pointer; margin-bottom: 18px; }
-        .md-back:hover { background: var(--df-accent-10, rgba(59,130,246,0.1)); color: var(--df-text, #fafafa); }
+        .md-back { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; min-height: 32px; background: transparent; border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.18)); border-radius: 8px; color: var(--df-text-secondary, #a1a1aa); font-size: 12px; cursor: pointer; margin-bottom: 18px; }
+        .md-back:hover { background: var(--df-accent-10, rgba(var(--glow-ch), 0.1)); color: var(--df-text, #fafafa); }
         .md-back:focus-visible { outline: 2px solid var(--df-accent, #3b82f6); outline-offset: 2px; }
 
         .md-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
@@ -263,16 +263,16 @@ export function ModelDetail({ modelId, tab, onTabChange, onBack }: ModelDetailPr
         .md-header-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; color: var(--df-text-secondary, #a1a1aa); }
         .md-meta-item { display: inline-flex; align-items: center; gap: 6px; }
         .md-meta-label { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--df-text-muted, #71717a); font-weight: 600; }
-        .md-meta-item code { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; padding: 1px 6px; background: rgba(0,0,0,0.3); border-radius: 4px; color: var(--df-text, #fafafa); }
+        .md-meta-item code { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; padding: 1px 6px; background: rgba(var(--shade-ch), 0.3); border-radius: 4px; color: var(--df-text, #fafafa); }
 
-        .md-btn-ghost { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; min-height: 32px; background: transparent; border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.18)); border-radius: 8px; color: var(--df-text-secondary, #a1a1aa); font-size: 12px; cursor: pointer; flex-shrink: 0; }
-        .md-btn-ghost:hover:not(:disabled) { background: var(--df-accent-10, rgba(59,130,246,0.1)); color: var(--df-text, #fafafa); }
+        .md-btn-ghost { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; min-height: 32px; background: transparent; border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.18)); border-radius: 8px; color: var(--df-text-secondary, #a1a1aa); font-size: 12px; cursor: pointer; flex-shrink: 0; }
+        .md-btn-ghost:hover:not(:disabled) { background: var(--df-accent-10, rgba(var(--glow-ch), 0.1)); color: var(--df-text, #fafafa); }
         .md-btn-ghost:focus-visible { outline: 2px solid var(--df-accent, #3b82f6); outline-offset: 2px; }
         .md-btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .md-notice { display: flex; align-items: center; gap: 8px; padding: 10px 14px; margin-bottom: 14px; background: var(--df-accent-8, rgba(59,130,246,0.08)); border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.18)); border-radius: 8px; color: var(--df-text-secondary, #a1a1aa); font-size: 12px; }
+        .md-notice { display: flex; align-items: center; gap: 8px; padding: 10px 14px; margin-bottom: 14px; background: var(--df-accent-8, rgba(var(--glow-ch), 0.08)); border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.18)); border-radius: 8px; color: var(--df-text-secondary, #a1a1aa); font-size: 12px; }
 
-        .md-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--df-border-subtle, rgba(59,130,246,0.12)); margin: 16px 0 20px; }
+        .md-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.12)); margin: 16px 0 20px; }
         .md-tab { padding: 9px 14px; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--df-text-muted, #71717a); font-size: 13px; font-weight: 500; cursor: pointer; transition: color 140ms ease, border-color 140ms ease; min-height: 36px; }
         .md-tab:hover { color: var(--df-text-secondary, #a1a1aa); }
         .md-tab--active { color: var(--df-text, #fafafa); border-bottom-color: var(--df-accent, #3b82f6); }
@@ -282,15 +282,15 @@ export function ModelDetail({ modelId, tab, onTabChange, onBack }: ModelDetailPr
         @keyframes md-spin { to { transform: rotate(360deg); } }
 
         :global(.md-status) { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; }
-        :global(.md-status--full) { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
-        :global(.md-status--partial) { background: rgba(234,179,8,0.15); color: #facc15; border: 1px solid rgba(234,179,8,0.3); }
-        :global(.md-status--none) { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
-        :global(.md-status--unknown) { background: rgba(161,161,170,0.1); color: var(--df-text-muted, #71717a); border: 1px solid rgba(161,161,170,0.25); }
+        :global(.md-status--full) { background: rgba(34,197,94,0.15); color: var(--tx-4ade80); border: 1px solid rgba(34,197,94,0.3); }
+        :global(.md-status--partial) { background: rgba(234,179,8,0.15); color: var(--tx-facc15); border: 1px solid rgba(234,179,8,0.3); }
+        :global(.md-status--none) { background: rgba(239,68,68,0.15); color: var(--tx-f87171); border: 1px solid rgba(239,68,68,0.3); }
+        :global(.md-status--unknown) { background: rgba(var(--txc-161-161-170), 0.1); color: var(--df-text-muted, #71717a); border: 1px solid rgba(var(--txc-161-161-170), 0.25); }
 
         :global(.md-cap) { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0; }
-        :global(.md-cap--full) { background: rgba(34,197,94,0.15); color: #22c55e; }
-        :global(.md-cap--partial) { background: rgba(234,179,8,0.18); color: #eab308; }
-        :global(.md-cap--none) { background: rgba(239,68,68,0.15); color: #ef4444; }
+        :global(.md-cap--full) { background: rgba(34,197,94,0.15); color: var(--tx-22c55e); }
+        :global(.md-cap--partial) { background: rgba(234,179,8,0.18); color: var(--tx-eab308); }
+        :global(.md-cap--none) { background: rgba(239,68,68,0.15); color: var(--tx-ef4444); }
       `}</style>
     </div>
   );
@@ -350,23 +350,23 @@ function OverviewTab({ model }: { model: UIModelEntry }) {
 
       <style jsx>{`
         .md-tab-content { display: flex; flex-direction: column; gap: 16px; }
-        .md-description { font-size: 13.5px; line-height: 1.6; color: var(--df-text-secondary, #a1a1aa); margin: 0; padding: 14px 16px; background: var(--df-bg-glass, rgba(15,25,50,0.3)); border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.1)); border-radius: 10px; max-width: 75ch; }
+        .md-description { font-size: 13.5px; line-height: 1.6; color: var(--df-text-secondary, #a1a1aa); margin: 0; padding: 14px 16px; background: var(--df-bg-glass, rgba(var(--deep-ch), 0.3)); border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.1)); border-radius: 10px; max-width: 75ch; }
 
-        .md-card { padding: 16px 18px; background: var(--df-bg-glass, rgba(15,25,50,0.3)); border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.1)); border-radius: 10px; }
+        .md-card { padding: 16px 18px; background: var(--df-bg-glass, rgba(var(--deep-ch), 0.3)); border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.1)); border-radius: 10px; }
         .md-card-title { font-size: 13px; font-weight: 600; color: var(--df-text, #fafafa); margin: 0 0 12px; letter-spacing: -0.1px; }
 
         .md-dl { display: grid; grid-template-columns: 200px 1fr; gap: 6px 18px; margin: 0; }
         .md-dl-row { display: contents; }
         .md-dl-term { font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--df-text-muted, #71717a); font-weight: 600; padding: 6px 0; align-self: center; }
         .md-dl-def { font-size: 13px; color: var(--df-text, #fafafa); padding: 6px 0; margin: 0; overflow-wrap: break-word; min-width: 0; }
-        .md-dl-def :global(code) { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11.5px; padding: 1px 6px; background: rgba(0,0,0,0.3); border-radius: 4px; }
+        .md-dl-def :global(code) { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11.5px; padding: 1px 6px; background: rgba(var(--shade-ch), 0.3); border-radius: 4px; }
 
         :global(.md-tag-list) { display: inline-flex; flex-wrap: wrap; gap: 4px; }
         :global(.md-badge) { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; }
-        :global(.md-badge--default) { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
-        :global(.md-badge--preview) { background: rgba(234,179,8,0.15); color: #facc15; border: 1px solid rgba(234,179,8,0.3); }
-        :global(.md-badge--yes) { background: rgba(34,197,94,0.12); color: #4ade80; }
-        :global(.md-badge--no) { background: rgba(161,161,170,0.08); color: var(--df-text-muted, #71717a); }
+        :global(.md-badge--default) { background: rgba(var(--glow-ch), 0.15); color: var(--tx-60a5fa); border: 1px solid rgba(var(--glow-ch), 0.3); }
+        :global(.md-badge--preview) { background: rgba(234,179,8,0.15); color: var(--tx-facc15); border: 1px solid rgba(234,179,8,0.3); }
+        :global(.md-badge--yes) { background: rgba(34,197,94,0.12); color: var(--tx-4ade80); }
+        :global(.md-badge--no) { background: rgba(var(--txc-161-161-170), 0.08); color: var(--df-text-muted, #71717a); }
 
         @media (max-width: 640px) {
           .md-dl { grid-template-columns: 1fr; gap: 2px 0; }
@@ -408,7 +408,7 @@ function IntegrationTab({ integration }: { integration: ModelIntegration | undef
         <Info size={14} />
         <span>No integration block detected yet. Run <strong>Re-detect</strong> above to populate.</span>
         <style jsx>{`
-          .md-empty-card { display: flex; align-items: center; gap: 10px; padding: 16px 18px; background: var(--df-bg-glass, rgba(15,25,50,0.3)); border: 1px dashed var(--df-border-subtle, rgba(59,130,246,0.18)); border-radius: 10px; color: var(--df-text-secondary, #a1a1aa); font-size: 13px; }
+          .md-empty-card { display: flex; align-items: center; gap: 10px; padding: 16px 18px; background: var(--df-bg-glass, rgba(var(--deep-ch), 0.3)); border: 1px dashed var(--df-border-subtle, rgba(var(--glow-ch), 0.18)); border-radius: 10px; color: var(--df-text-secondary, #a1a1aa); font-size: 13px; }
           strong { color: var(--df-text, #fafafa); }
         `}</style>
       </div>
@@ -456,7 +456,7 @@ function IntegrationTab({ integration }: { integration: ModelIntegration | undef
 
       <style jsx>{`
         .md-tab-content { display: flex; flex-direction: column; gap: 14px; }
-        .md-card { padding: 16px 18px; background: var(--df-bg-glass, rgba(15,25,50,0.3)); border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.1)); border-radius: 10px; }
+        .md-card { padding: 16px 18px; background: var(--df-bg-glass, rgba(var(--deep-ch), 0.3)); border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.1)); border-radius: 10px; }
         .md-card-title { font-size: 13px; font-weight: 600; color: var(--df-text, #fafafa); margin: 0; letter-spacing: -0.1px; }
 
         .md-int-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
@@ -464,13 +464,13 @@ function IntegrationTab({ integration }: { integration: ModelIntegration | undef
         .md-int-count { display: inline-flex; align-items: center; gap: 5px; }
 
         .md-int-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
-        .md-int-row { padding: 12px 14px; background: rgba(0,0,0,0.18); border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.08)); border-radius: 8px; }
+        .md-int-row { padding: 12px 14px; background: rgba(var(--shade-ch), 0.18); border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.08)); border-radius: 8px; }
         .md-int-row-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
         .md-int-row-name { font-size: 13px; font-weight: 600; color: var(--df-text, #fafafa); flex: 1; min-width: 0; }
         .md-int-row-level { font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--df-text-muted, #71717a); font-weight: 600; }
         .md-int-source { font-size: 11.5px; line-height: 1.5; color: var(--df-text-muted, #71717a); margin: 0; max-width: 75ch; overflow-wrap: break-word; }
 
-        .md-detect-note { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; background: var(--df-accent-8, rgba(59,130,246,0.08)); border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.15)); border-radius: 8px; color: var(--df-text-secondary, #a1a1aa); font-size: 11px; align-self: flex-start; }
+        .md-detect-note { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; background: var(--df-accent-8, rgba(var(--glow-ch), 0.08)); border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.15)); border-radius: 8px; color: var(--df-text-secondary, #a1a1aa); font-size: 11px; align-self: flex-start; }
       `}</style>
     </div>
   );
@@ -553,16 +553,16 @@ function ConfigTab({
 
       <style jsx>{`
         .md-tab-content { display: flex; flex-direction: column; gap: 14px; }
-        .md-card { padding: 16px 18px; background: var(--df-bg-glass, rgba(15,25,50,0.3)); border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.1)); border-radius: 10px; }
+        .md-card { padding: 16px 18px; background: var(--df-bg-glass, rgba(var(--deep-ch), 0.3)); border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.1)); border-radius: 10px; }
         .md-card-title { font-size: 13px; font-weight: 600; color: var(--df-text, #fafafa); margin: 0 0 10px; letter-spacing: -0.1px; }
         .md-count { font-weight: 400; color: var(--df-text-muted, #71717a); font-size: 11px; margin-left: 6px; }
         .md-card-body { font-size: 13px; line-height: 1.55; color: var(--df-text-secondary, #a1a1aa); margin: 0; max-width: 75ch; overflow-wrap: break-word; }
-        .md-card-body code, .md-mono { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11.5px; padding: 1px 6px; background: rgba(0,0,0,0.3); border-radius: 4px; color: var(--df-text, #fafafa); }
+        .md-card-body code, .md-mono { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11.5px; padding: 1px 6px; background: rgba(var(--shade-ch), 0.3); border-radius: 4px; color: var(--df-text, #fafafa); }
         .md-card-body strong { color: var(--df-text, #fafafa); font-weight: 600; }
         .md-muted { color: var(--df-text-muted, #71717a); }
 
         .md-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
-        .md-list-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: rgba(0,0,0,0.18); border: 1px solid var(--df-border-subtle, rgba(59,130,246,0.06)); border-radius: 6px; font-size: 12px; min-width: 0; overflow-wrap: break-word; }
+        .md-list-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: rgba(var(--shade-ch), 0.18); border: 1px solid var(--df-border-subtle, rgba(var(--glow-ch), 0.06)); border-radius: 6px; font-size: 12px; min-width: 0; overflow-wrap: break-word; }
         .md-arrow { color: var(--df-text-muted, #71717a); font-family: var(--font-mono); }
       `}</style>
     </div>

@@ -27,13 +27,13 @@ function deriveStatus(state: WatchdogState): string {
 }
 
 const EVENT_ICON: Record<WatchdogEventType, React.ReactNode> = {
-  restart_attempt: <RotateCw size={13} style={{ color: '#3b82f6' }} />,
-  restart_success: <CheckCircle size={13} style={{ color: '#22c55e' }} />,
-  restart_failed:  <XCircle size={13} style={{ color: '#ef4444' }} />,
-  cooldown_started:<Pause size={13} style={{ color: '#eab308' }} />,
-  cooldown_ended:  <RefreshCw size={13} style={{ color: '#22c55e' }} />,
-  port_conflict:   <AlertTriangle size={13} style={{ color: '#eab308' }} />,
-  circuit_broken:  <AlertTriangle size={13} style={{ color: '#ef4444' }} />,
+  restart_attempt: <RotateCw size={13} style={{ color: 'var(--tx-3b82f6)' }} />,
+  restart_success: <CheckCircle size={13} style={{ color: 'var(--tx-22c55e)' }} />,
+  restart_failed:  <XCircle size={13} style={{ color: 'var(--tx-ef4444)' }} />,
+  cooldown_started:<Pause size={13} style={{ color: 'var(--tx-eab308)' }} />,
+  cooldown_ended:  <RefreshCw size={13} style={{ color: 'var(--tx-22c55e)' }} />,
+  port_conflict:   <AlertTriangle size={13} style={{ color: 'var(--tx-eab308)' }} />,
+  circuit_broken:  <AlertTriangle size={13} style={{ color: 'var(--tx-ef4444)' }} />,
 };
 
 const EVENT_LABEL: Record<WatchdogEventType, string> = {
@@ -72,7 +72,7 @@ function buildServiceCols(
       getValue: r => r.projectId,
       render: r => (
         <span className="wd-service-name">
-          {r.circuitBroken ? <AlertTriangle size={12} style={{ color: '#ef4444', marginRight: 5 }} /> : <Shield size={12} style={{ color: '#22c55e', marginRight: 5, opacity: 0.7 }} />}
+          {r.circuitBroken ? <AlertTriangle size={12} style={{ color: 'var(--tx-ef4444)', marginRight: 5 }} /> : <Shield size={12} style={{ color: 'var(--tx-22c55e)', marginRight: 5, opacity: 0.7 }} />}
           {r.projectId.replace(/-service$/, '')}
         </span>
       ),
@@ -134,11 +134,11 @@ function buildServiceCols(
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {r.circuitBroken ? (
-              <span style={{ color: '#ef4444', fontSize: '11px', display: 'flex', alignItems: 'center', gap: 3 }}>
+              <span style={{ color: 'var(--tx-ef4444)', fontSize: '11px', display: 'flex', alignItems: 'center', gap: 3 }}>
                 <Zap size={11} /> Circuit broken
               </span>
             ) : (
-              <span style={{ color: '#eab308', fontSize: '11px', display: 'flex', alignItems: 'center', gap: 3 }}>
+              <span style={{ color: 'var(--tx-eab308)', fontSize: '11px', display: 'flex', alignItems: 'center', gap: 3 }}>
                 <Clock size={11} /> until {formatTime(r.cooldownUntil!)}
               </span>
             )}
@@ -192,7 +192,7 @@ const EVENT_COLS: ColumnDef<WatchdogEvent>[] = [
     sortable: true,
     width: '140px',
     getValue: e => e.projectId,
-    render: e => <span style={{ color: '#60a5fa' }}>{e.projectId.replace(/-service$/, '')}</span>,
+    render: e => <span style={{ color: 'var(--tx-60a5fa)' }}>{e.projectId.replace(/-service$/, '')}</span>,
   },
   {
     key: 'message',
@@ -281,7 +281,7 @@ export function WatchdogSection() {
       {/* Header */}
       <div className="systems-section__header">
         <div className="systems-section__header-left">
-          <Shield size={16} style={{ color: '#22c55e', flexShrink: 0 }} />
+          <Shield size={16} style={{ color: 'var(--tx-22c55e)', flexShrink: 0 }} />
           <h2 className="systems-section__title">Watchdog</h2>
           <span className="systems-stat-pill systems-stat-pill--success">
             <span className="systems-stat-pill__value">{enabledCount}</span> monitored
@@ -408,7 +408,7 @@ function AddServiceModal({ monitored, onClose, onAdded }: AddServiceModalProps) 
       <div className="systems-modal" onClick={e => e.stopPropagation()}>
         <div className="systems-modal__header">
           <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Shield size={14} style={{ color: '#22c55e' }} />
+            <Shield size={14} style={{ color: 'var(--tx-22c55e)' }} />
             Add Service to Watchdog
           </h3>
           <button className="systems-modal__close" onClick={onClose}>✕</button>

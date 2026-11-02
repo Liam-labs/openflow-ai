@@ -64,7 +64,7 @@ function GaugeBar({
           style={{ width: `${Math.min(100, pct)}%`, background: color }}
         />
       </div>
-      <span className="ssh-gauge__value" style={{ color: 'rgba(255,255,255,0.65)' }}>{value}</span>
+      <span className="ssh-gauge__value" style={{ color: 'rgba(var(--ink-ch), 0.65)' }}>{value}</span>
     </div>
   );
 }

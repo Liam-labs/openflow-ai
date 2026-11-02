@@ -12,6 +12,7 @@
  *   - if a needed folder is not mounted and answering right now, the agent does not start.
  */
 import { execFile } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -75,6 +76,37 @@ export function shq(text: string): string {
   return `'${text.replace(/'/g, `'\\''`)}'`;
 }
 
+/**
+ * Server agents run as their own Linux user, devflow-agent (task 82b8d491, 30 Oct 2026): no sudo, no access to DevFlow's tree, its data or
+ * the approvals relay token. scripts/devflow-agent-launch (installed root-owned at AGENT_LAUNCH, started through one sudoers line) builds
+ * the view and drops to that user. Agents move over one at a time: AGENT_USER_FILE names them, or says all. The file goes once all have moved.
+ */
+export const AGENT_LAUNCH = '/usr/local/lib/devflow/agent-launch';
+export const agentUserFile = (): string => process.env.DEVFLOW_AGENT_USER_FILE || path.join(os.homedir(), '.config', 'devflow', 'agent-user.json');
+
+/** Whether this agent starts as devflow-agent. A missing or unreadable file means nobody does (today's launch). */
+export function runsAsAgentUser(agentName: string, raw: unknown = readAgentUserFile()): boolean {
+  if (!raw || typeof raw !== 'object') return false;
+  const cfg = raw as { all?: unknown; agents?: unknown };
+  if (cfg.all === true) return true;
+  return Array.isArray(cfg.agents) && cfg.agents.some((a) => typeof a === 'string' && a.toLowerCase() === agentName.toLowerCase());
+}
+
+function readAgentUserFile(): unknown {
+  try { return JSON.parse(readFileSync(agentUserFile(), 'utf8')); } catch { return null; }
+}
+
+/**
+ * The launch command for an agent that runs as devflow-agent. The agent's own env file (its agent token) is read inside the view, after the
+ * user change: the token never passes through DevFlow or a command line.
+ */
+export function wrapLaunchAsAgentUser(input: { command: string; roots: string[]; workingDirectory: string; launcher?: string }): string {
+  for (const id of input.roots) if (!ID_RE.test(id)) throw new Error(`bad folder id ${id}`);
+  const shares = input.roots.map((id) => `--share ${id}`).join(' ');
+  const inner = `[ -r "$HOME/.secrets" ] && { set -a; . "$HOME/.secrets"; set +a; }; ${input.command}`;
+  return `exec sudo -n ${input.launcher ?? AGENT_LAUNCH} ${shares} --chdir ${shq(input.workingDirectory)} -- /bin/bash -c ${shq(inner)}`;
+}
+
 /** The launch command with the view around it. `command` is the shell command that would otherwise start the agent (it keeps its own `cd` and `exec`). */
 export function wrapLaunchForView(input: { command: string; roots: string[]; workingDirectory: string; viewScript?: string }): string {
   for (const id of input.roots) if (!ID_RE.test(id)) throw new Error(`bad folder id ${id}`);
@@ -85,9 +117,22 @@ export function wrapLaunchForView(input: { command: string; roots: string[]; wor
 /**
  * Environment the agent needs on this machine: programs the agent machine's PATH has but a service's does not, and Playwright's platform name
  * (Playwright 1.59 has no Chromium build for Ubuntu 26.04, so it is told to use the 24.04 one, which runs here once its libraries are installed).
+ * Temporary files and Claude's scratch folders go to disk: `/tmp` here is a RAM disk, and agents' test copies in it (7 GB on 26 Oct 2026) left
+ * no memory for a DevFlow build, so the kernel killed three builds in a row.
  */
+export const AGENT_TMP_DIR = '$HOME/.cache/devflow-agent-tmp';
 export const LAPTOP_AGENT_ENV_PREFIX =
-  'export DEVFLOW_RUN_LOCATION=server PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64 PATH="$HOME/.local/bin:$HOME/bin:$HOME/.npm-global/bin:$PATH";';
+  'export DEVFLOW_RUN_LOCATION=server PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64 PATH="$HOME/.local/bin:$HOME/bin:$HOME/.npm-global/bin:$PATH"' +
+  ` TMPDIR="${AGENT_TMP_DIR}" CLAUDE_CODE_TMPDIR="${AGENT_TMP_DIR}"; mkdir -p -m 700 "$TMPDIR";`;
+
+/**
+ * Git identity for an agent that runs here: `git commit` in a view otherwise stops with "Please tell me who you are", because this machine has no global
+ * identity. The author is the agent, as on the desktop (commits read "an agent <user@example.com>"). A value the caller already set wins.
+ */
+export const GIT_IDENTITY_SNIPPET =
+  'export GIT_AUTHOR_NAME="${GIT_AUTHOR_NAME:-$DEVFLOW_AGENT_NAME}" GIT_COMMITTER_NAME="${GIT_COMMITTER_NAME:-$DEVFLOW_AGENT_NAME}"; '
+  + 'DEVFLOW_GIT_MAIL="$(printf %s "$DEVFLOW_AGENT_NAME" | tr \'[:upper:] \' \'[:lower:]-\')@devflow.local"; '
+  + 'export GIT_AUTHOR_EMAIL="${GIT_AUTHOR_EMAIL:-$DEVFLOW_GIT_MAIL}" GIT_COMMITTER_EMAIL="${GIT_COMMITTER_EMAIL:-$DEVFLOW_GIT_MAIL}";';
 
 export interface ViewProbe { ok: boolean; message: string }
 export interface LaptopViewDeps {
@@ -95,9 +140,12 @@ export interface LaptopViewDeps {
   /** Runs `devflow-agent-view --roots ids --chdir wd -- /usr/bin/test -d wd -a -w wd` and reports its exit code and stderr. */
   probe: (roots: string[], workingDirectory: string) => Promise<{ code: number; stderr: string }>;
   /** Asks the desktop to share this agent's working folder and memory folder (hostd op "share-agent"). Throws with a plain reason if it cannot. */
-  requestShare?: (input: { agentName: string; workingDirectory: string }) => Promise<void>;
+  /** The answer may carry the REAL folder when the one asked about goes through a link (a project registered under ~/Games/X -> /mnt/e/...). */
+  requestShare?: (input: { agentName: string; workingDirectory: string }) => Promise<{ workingDirectory?: string } | void>;
   sleep?: (ms: number) => Promise<void>;
   now?: () => number;
+  /** Whether the agent starts as devflow-agent (default: the agent-user file). */
+  runsAsAgentUser?: (agentName: string) => boolean;
 }
 
 /** How long to wait, after the desktop accepts a share request, for the folders to be registered here and answering. */
@@ -121,11 +169,13 @@ export const defaultDeps: LaptopViewDeps = {
   requestShare: async ({ agentName, workingDirectory }) => {
     const host = defaultHost();
     if (!host) throw new Error('no desktop host is configured');
-    await hostCall(host, 'share-agent', { agent: agentName, cwd: workingDirectory }, 60_000);
+    const answer = await hostCall(host, 'share-agent', { agent: agentName, cwd: workingDirectory }, 60_000) as { workingDirectory?: unknown } | null;
+    return { workingDirectory: typeof answer?.workingDirectory === 'string' ? answer.workingDirectory : undefined };
   },
 };
 
-export interface LaptopLaunch { roots: string[]; wrap: (command: string) => string }
+/** `workingDirectory` is the folder to start in: the one asked for, or its real folder when that went through a link on the desktop. */
+export interface LaptopLaunch { roots: string[]; wrap: (command: string) => string; workingDirectory: string; asAgentUser?: boolean }
 
 type ViewCheck = { ok: true; ids: string[] } | { ok: false; error: LaptopViewError };
 
@@ -161,13 +211,19 @@ export async function prepareLaptopLaunch(
   input: { workingDirectory: string; projectPath?: string | null; agentName: string },
   deps: LaptopViewDeps = defaultDeps,
 ): Promise<LaptopLaunch> {
-  let result = await checkView(input, deps);
+  let want = input;
+  let result = await checkView(want, deps);
   if (!result.ok && fixableByShare(result.error) && deps.requestShare) {
     const sleep = deps.sleep ?? ((ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms)));
     const now = deps.now ?? Date.now;
     const first = result.error;
     try {
-      await deps.requestShare({ agentName: input.agentName, workingDirectory: input.workingDirectory });
+      const shared = await deps.requestShare({ agentName: input.agentName, workingDirectory: input.workingDirectory });
+      // The desktop shares REAL folders. When the folder asked about went through a link there, everything from here on (the registry match,
+      // the check, the start folder) uses the real one, as the agent's memory is kept under that path too.
+      if (shared && typeof shared.workingDirectory === 'string' && shared.workingDirectory.startsWith('/')) {
+        want = { ...input, workingDirectory: path.posix.normalize(shared.workingDirectory) };
+      }
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       throw new LaptopViewError(`${first.message} (Asking the desktop to share it automatically failed: ${reason})`, first.code);
@@ -175,10 +231,12 @@ export async function prepareLaptopLaunch(
     const deadline = now() + SHARE_WAIT_MS;
     do {
       await sleep(SHARE_POLL_MS);
-      result = await checkView(input, deps);
+      result = await checkView(want, deps);
     } while (!result.ok && now() < deadline && (fixableByShare(result.error) || result.error.code === 'UNAVAILABLE'));
   }
   if (!result.ok) throw result.error;
   const ids = result.ids;
-  return { roots: ids, wrap: command => wrapLaunchForView({ command: `${LAPTOP_AGENT_ENV_PREFIX} ${command}`, roots: ids, workingDirectory: input.workingDirectory }) };
+  const asAgentUser = (deps.runsAsAgentUser ?? runsAsAgentUser)(input.agentName);
+  const wrap = asAgentUser ? wrapLaunchAsAgentUser : wrapLaunchForView;
+  return { roots: ids, workingDirectory: want.workingDirectory, asAgentUser, wrap: command => wrap({ command: `${LAPTOP_AGENT_ENV_PREFIX} export DEVFLOW_AGENT_NAME=${/^[A-Za-z0-9._-]+$/.test(input.agentName) ? input.agentName : shq(input.agentName)}; ${GIT_IDENTITY_SNIPPET} ${command}`, roots: ids, workingDirectory: want.workingDirectory }) };
 }

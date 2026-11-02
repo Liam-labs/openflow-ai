@@ -27,6 +27,9 @@ Do not manufacture edge cases. Test acceptance behaviour plus the failure modes
 justified by security, privacy, money, data loss, migrations, concurrency, or
 production routing. Record other ideas as non-blocking hardening work.
 
+For how to write and run the tests well (fakes, proving a test can fail, safe environments,
+browser tests, flaky tests), load `testing`.
+
 ## Verification
 
 Before reporting completion:

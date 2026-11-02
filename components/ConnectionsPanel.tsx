@@ -47,7 +47,7 @@ export function ConnectionsPanel() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', color: '#71717a', fontSize: '0.8rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', color: 'var(--tx-71717a)', fontSize: '0.8rem' }}>
         Loading connections…
       </div>
     );
@@ -73,12 +73,12 @@ export function ConnectionsPanel() {
       <div>
         {/* Summary row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px 0', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.72rem', color: '#71717a' }}>
-            <span style={{ color: '#22c55e', fontWeight: 600 }}>{activeCount}</span> active
+          <span style={{ fontSize: '0.72rem', color: 'var(--tx-71717a)' }}>
+            <span style={{ color: 'var(--tx-22c55e)', fontWeight: 600 }}>{activeCount}</span> active
             {' · '}
-            <span style={{ color: '#eab308', fontWeight: 600 }}>{configuredCount}</span> configured
+            <span style={{ color: 'var(--tx-eab308)', fontWeight: 600 }}>{configuredCount}</span> configured
             {' · '}
-            <span style={{ color: '#fbbf24', fontWeight: 600 }}>{mcpServers.length}</span> MCP
+            <span style={{ color: 'var(--tx-fbbf24)', fontWeight: 600 }}>{mcpServers.length}</span> MCP
           </span>
         </div>
 
@@ -92,8 +92,8 @@ export function ConnectionsPanel() {
                 fontSize: '0.68rem',
                 fontWeight: 600,
                 color: filter === cat ? '#e4e4e7' : '#71717a',
-                background: filter === cat ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.03)',
-                border: `1px solid ${filter === cat ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)'}`,
+                background: filter === cat ? 'rgba(var(--ink-ch), 0.1)' : 'rgba(var(--ink-ch), 0.03)',
+                border: `1px solid ${filter === cat ? 'rgba(var(--ink-ch), 0.15)' : 'rgba(var(--ink-ch), 0.06)'}`,
                 borderRadius: 4,
                 padding: '3px 8px',
                 cursor: 'pointer',
@@ -126,7 +126,7 @@ export function ConnectionsPanel() {
 
         {/* MCP sub-section */}
         {mcpServers.length > 0 && (
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', margin: '0 16px' }}>
+          <div style={{ borderTop: '1px solid rgba(var(--ink-ch), 0.05)', margin: '0 16px' }}>
             <button
               onClick={() => setMcpExpanded(p => !p)}
               style={{
@@ -138,7 +138,7 @@ export function ConnectionsPanel() {
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                color: '#71717a',
+                color: 'var(--tx-71717a)',
                 fontSize: '0.78rem',
                 fontWeight: 600,
                 textAlign: 'left',

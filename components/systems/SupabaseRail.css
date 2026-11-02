@@ -28,7 +28,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: rgba(255, 255, 255, 0.22);
+  color: rgba(var(--ink-ch), 0.22);
   font-size: 12px;
 }
 
@@ -40,7 +40,7 @@
   width: 260px;
   flex-shrink: 0;
   border-right: 1px solid rgba(var(--sdb-local-rgb), 0.09);
-  background: rgba(5, 8, 20, 0.97);
+  background: rgba(var(--deep-ch), 0.97);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -51,7 +51,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(var(--ink-ch), 0.05);
   flex-shrink: 0;
 }
 
@@ -67,7 +67,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(var(--ink-ch), 0.35);
 }
 
 .sdb-rail__online-count {
@@ -84,7 +84,7 @@
 .sdb-rail__countdown {
   font-size: 9px;
   font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.22);
+  color: rgba(var(--ink-ch), 0.22);
 }
 
 .sdb-rail__auto-btn {
@@ -92,13 +92,13 @@
   font-weight: 500;
   padding: 2px 6px;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(var(--ink-ch), 0.08);
   background: transparent;
-  color: rgba(255, 255, 255, 0.28);
+  color: rgba(var(--ink-ch), 0.28);
   cursor: pointer;
   transition: all 0.15s;
 }
-.sdb-rail__auto-btn:hover { color: rgba(255, 255, 255, 0.55); border-color: rgba(255,255,255,0.18); }
+.sdb-rail__auto-btn:hover { color: rgba(var(--ink-ch), 0.55); border-color: rgba(var(--ink-ch), 0.18); }
 .sdb-rail__auto-btn--on {
   color: rgba(var(--sdb-online-rgb), 0.80);
   border-color: rgba(var(--sdb-online-rgb), 0.22);
@@ -112,9 +112,9 @@
   width: 22px;
   height: 22px;
   border-radius: 5px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(var(--ink-ch), 0.07);
   background: transparent;
-  color: rgba(255, 255, 255, 0.32);
+  color: rgba(var(--ink-ch), 0.32);
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -135,12 +135,12 @@
 }
 .sdb-rail__list::-webkit-scrollbar { width: 3px; }
 .sdb-rail__list::-webkit-scrollbar-track { background: transparent; }
-.sdb-rail__list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 2px; }
+.sdb-rail__list::-webkit-scrollbar-thumb { background: rgba(var(--ink-ch), 0.07); border-radius: 2px; }
 
 .sdb-rail__empty {
   padding: 24px 16px;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(var(--ink-ch), 0.25);
   text-align: center;
 }
 
@@ -156,14 +156,14 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.10em;
-  color: rgba(255, 255, 255, 0.20);
+  color: rgba(var(--ink-ch), 0.20);
   white-space: nowrap;
   flex-shrink: 0;
 }
 .sdb-rail-section__line {
   flex: 1;
   height: 1px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(var(--ink-ch), 0.06);
 }
 
 /* Instance rows */
@@ -174,7 +174,7 @@
   border-left: 2px solid transparent;
   transition: background 0.12s, border-color 0.12s;
 }
-.sdb-rail-row:hover { background: rgba(255, 255, 255, 0.03); }
+.sdb-rail-row:hover { background: rgba(var(--ink-ch), 0.03); }
 .sdb-rail-row--active {
   background: rgba(var(--sdb-local-rgb), 0.07) !important;
   border-left-color: rgba(var(--sdb-local-rgb), 0.55) !important;
@@ -206,7 +206,7 @@
 .sdb-rail-row__name {
   font-size: 12px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(var(--ink-ch), 0.85);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -215,18 +215,24 @@
 .sdb-rail-row__url {
   font-size: 9.5px;
   font-family: monospace;
-  color: rgba(255, 255, 255, 0.28);
+  color: rgba(var(--ink-ch), 0.28);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.sdb-rail-row__error {
+.sdb-rail-row__error,
+.sdb-rail-row__detail {
   font-size: 9.5px;
-  color: rgba(var(--sdb-error-rgb), 0.70);
+  line-height: 1.3;
+  /* Two lines, then an ellipsis. The full sentence is the tooltip. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
+.sdb-rail-row__error { color: rgba(var(--sdb-error-rgb), 0.70); }
+.sdb-rail-row__detail { color: rgba(var(--ink-ch), 0.38); }
 
 .sdb-rail-row__meta {
   display: flex;
@@ -262,14 +268,14 @@
   font-weight: 500;
 }
 .sdb-rail-latency--fast { color: rgba(var(--sdb-online-rgb), 0.70); }
-.sdb-rail-latency--slow { color: rgba(234, 179, 8, 0.75); }
+.sdb-rail-latency--slow { color: rgba(var(--txc-234-179-8), 0.75); }
 
 .sdb-rail-checked {
   display: flex;
   align-items: center;
   gap: 2px;
   font-size: 9px;
-  color: rgba(255, 255, 255, 0.20);
+  color: rgba(var(--ink-ch), 0.20);
 }
 
 /* Row actions (⋯ menu button) */
@@ -289,15 +295,15 @@
   border-radius: 4px;
   border: none;
   background: transparent;
-  color: rgba(255, 255, 255, 0.0);
+  color: rgba(var(--ink-ch), 0.0);
   cursor: pointer;
   transition: color 0.12s, background 0.12s;
 }
-.sdb-rail-row:hover .sdb-rail-ctx-btn { color: rgba(255, 255, 255, 0.30); }
+.sdb-rail-row:hover .sdb-rail-ctx-btn { color: rgba(var(--ink-ch), 0.30); }
 .sdb-rail-ctx-btn:hover,
 .sdb-rail-ctx-btn--open {
-  color: rgba(255, 255, 255, 0.70) !important;
-  background: rgba(255, 255, 255, 0.07);
+  color: rgba(var(--ink-ch), 0.70) !important;
+  background: rgba(var(--ink-ch), 0.07);
 }
 
 /* Rail context menu */
@@ -307,7 +313,7 @@
   right: 4px;
   z-index: 200;
   min-width: 130px;
-  background: rgba(10, 16, 36, 0.98);
+  background: rgba(var(--deep-ch), 0.98);
   border: 1px solid rgba(var(--sdb-local-rgb), 0.18);
   border-radius: 8px;
   padding: 4px;
@@ -326,7 +332,7 @@
   width: 100%;
   padding: 6px 10px;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.70);
+  color: rgba(var(--ink-ch), 0.70);
   background: none;
   border: none;
   border-radius: 5px;
@@ -335,7 +341,7 @@
 }
 .sdb-rail-ctx__item:hover {
   background: rgba(var(--sdb-local-rgb), 0.10);
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(var(--ink-ch), 0.92);
 }
 .sdb-rail-ctx__item--danger:hover {
   background: rgba(var(--sdb-error-rgb), 0.12);
@@ -343,7 +349,7 @@
 }
 .sdb-rail-ctx__sep {
   height: 1px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(var(--ink-ch), 0.06);
   margin: 3px 6px;
 }
 
@@ -374,7 +380,7 @@
 .sdb-rail-pulse--online .sdb-rail-pulse__ring { background: rgba(var(--sdb-online-rgb), 0.30); }
 .sdb-rail-pulse--offline .sdb-rail-pulse__dot,
 .sdb-rail-pulse--error   .sdb-rail-pulse__dot { background: rgba(var(--sdb-error-rgb), 0.80); }
-.sdb-rail-pulse--unknown .sdb-rail-pulse__dot { background: rgba(255, 255, 255, 0.20); }
+.sdb-rail-pulse--unknown .sdb-rail-pulse__dot { background: rgba(var(--ink-ch), 0.20); }
 .sdb-rail-pulse--checking .sdb-rail-pulse__dot { background: rgba(var(--sdb-local-rgb), 0.85); width: 6px; height: 6px; border-radius: 50%; animation: sdb-rail-checking 0.5s ease-in-out infinite alternate; }
 @keyframes sdb-rail-ring    { 0% { transform: scale(0.6); opacity: 0.8; } 100% { transform: scale(1.6); opacity: 0; } }
 @keyframes sdb-rail-checking { from { opacity: 0.4; } to { opacity: 1; } }
@@ -385,7 +391,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgba(var(--ink-ch), 0.05);
   flex-shrink: 0;
 }
 .sdb-rail__action-btn {

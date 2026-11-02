@@ -1,5 +1,5 @@
 #!/bin/bash
-# check-rotate.sh — Startup date-rotation check for SG-1 agents
+# check-rotate.sh — Startup date-rotation check for the main project agents
 # Compatibility date/size rotation helper for legacy hook settings.
 # Rotates today.md → yesterday.md + daily/ archive if the date has changed.
 # It deliberately emits no behavioural prompt text.

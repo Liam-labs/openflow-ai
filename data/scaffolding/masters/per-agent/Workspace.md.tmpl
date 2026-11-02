@@ -9,7 +9,7 @@ Use the personal directory only for agent-owned identity, logs, handoff, memory,
 expertise, and runtime state. Do not place project artefacts there.
 
 Resolve the current target before editing; a project presence may have a different
-PROJECT directory from the agent's default SG-1 home.
+PROJECT directory from the agent's default home.
 
 ## Channel tools
 
@@ -27,7 +27,7 @@ agents and {{OWNER_NAME}} use. {{OWNER_NAME}} opens them from the "Channel tools
       {"name": "Voice Recorder", "description": "Record clips", "whenToUse": "When {{OWNER_NAME}} needs to record voice samples.", "type": "link", "url": "http://localhost:8123"}
 
   - Always include `whenToUse`: one or two plain sentences on when to point {{OWNER_NAME}} to it or use it.
-  - `type` is `link` (`url`: a web address, or a DevFlow page like `/system`), `html` (a static
+  - `type` is `link` (`url`: a web address, or a DevFlow page like `/operations`), `html` (a static
     web app in the folder; `entry` defaults to `index.html`) or `script` (`run`: a command shown
     for {{OWNER_NAME}} to copy; DevFlow never runs it).
   - Optional: `icon` (one emoji), `order` (lower first), `channels` (channel names, when several

@@ -7,7 +7,7 @@
  */
 import { promises as fs } from 'node:fs';
 import { access } from 'node:fs/promises';
-import { execFile } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 
 export type Runner = (file: string, args: string[]) => Promise<string>;
 
@@ -17,6 +17,36 @@ const defaultRunner: Runner = (file, args) =>
   });
 
 const usesProc = (platform: string) => platform === 'linux';
+
+/**
+ * Whether a process exists, synchronously. A process of another user answers EPERM to signal 0: it exists. Server agents run as their own
+ * Linux user (devflow-agent, task 82b8d491), so "any error means dead" read every one of them as crashed.
+ */
+export function pidExists(pid: number): boolean {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === 'EPERM';
+  }
+}
+
+/** The Linux user server agents run as. DevFlow may signal its processes through one sudoers line (one sudoers line allows kill as that user). */
+export const AGENT_USER = 'devflow-agent';
+
+/**
+ * Send a signal to a process, also when it belongs to the agent user (process.kill answers EPERM there). Throws when the process is gone or
+ * cannot be signalled by either route, like process.kill.
+ */
+export function signalPid(pid: number, signal: NodeJS.Signals, run: (file: string, args: string[]) => void = (file, args) => { execFileSync(file, args, { timeout: 5000, stdio: 'ignore' }); }): void {
+  try {
+    process.kill(pid, signal);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'EPERM') throw error;
+    run('sudo', ['-n', '-u', AGENT_USER, '/usr/bin/kill', '-s', signal.replace(/^SIG/, ''), String(pid)]);
+  }
+}
 
 /** True when a process with this id exists (a zombie still counts, as it did with /proc). */
 export async function isPidAlive(pid: number | string, platform: string = process.platform): Promise<boolean> {

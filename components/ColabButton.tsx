@@ -134,7 +134,7 @@ export function ColabButton({
   // Delete a channel
   const handleDeleteChannel = async (channelId: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Don't select channel when deleting
-    if (!confirm('Delete this channel and all messages?')) return;
+    if (!confirm('Archive this channel? It moves to Archived and can be restored later.')) return;
 
     try {
       const res = await fetch('/api/collab', {
@@ -316,9 +316,9 @@ export function ColabButton({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 w-72 border border-white/10 rounded-lg shadow-xl z-50 overflow-hidden" style={{ backgroundColor: '#0a1428' }}>
+        <div className="absolute right-0 top-full mt-1 w-72 border border-white/10 rounded-lg shadow-xl z-50 overflow-hidden" style={{ backgroundColor: 'var(--bg-0a1428)' }}>
           {/* Header */}
-          <div className="flex items-center justify-between px-3 py-2 border-b border-white/10" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+          <div className="flex items-center justify-between px-3 py-2 border-b border-white/10" style={{ backgroundColor: 'rgba(var(--ink-ch), 0.05)' }}>
             <span className="text-sm font-medium">
               {view === 'main' && 'Collaboration'}
               {view === 'agents' && 'Available Agents'}

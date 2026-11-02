@@ -13,11 +13,12 @@ describe('applyClaudeJson', () => {
     expect(next.hasCompletedOnboarding).toBe(true);
     expect(next.theme).toBe('dark');
     expect(next.customApiKeyResponses).toEqual({ approved: [KEY.slice(-20)], rejected: [] });
+    expect(next.fullscreenUpsellSeenCount).toBe(3);
     expect(apiKeyApprovalId(KEY)).toHaveLength(20);
   });
 
   it('never changes an answer the person already gave', () => {
-    const current = { hasCompletedOnboarding: false, theme: 'light', other: 1, customApiKeyResponses: { approved: ['x'], rejected: [KEY.slice(-20)] } };
+    const current = { hasCompletedOnboarding: false, theme: 'light', other: 1, fullscreenUpsellSeenCount: 1, customApiKeyResponses: { approved: ['x'], rejected: [KEY.slice(-20)] } };
     const { next, changed } = applyClaudeJson(current, KEY);
     expect(changed).toBe(false);
     expect(next).toEqual(current);
@@ -37,8 +38,14 @@ describe('applyClaudeJson', () => {
 
 describe('applySettingsJson', () => {
   it('turns the bypass warning off only when unset', () => {
-    expect(applySettingsJson({}).next).toEqual({ skipDangerousModePermissionPrompt: true });
-    expect(applySettingsJson({ skipDangerousModePermissionPrompt: false })).toEqual({ next: { skipDangerousModePermissionPrompt: false }, changed: false });
+    expect(applySettingsJson({}).next).toEqual({ skipDangerousModePermissionPrompt: true, tui: 'fullscreen' });
+    // A person's explicit choices stay; nothing is added when both are already set.
+    expect(applySettingsJson({ skipDangerousModePermissionPrompt: false, tui: 'default' })).toEqual({ next: { skipDangerousModePermissionPrompt: false, tui: 'default' }, changed: false });
+  });
+
+  it('pins the renderer so the fullscreen upsell never appears, keeping any explicit permission choice', () => {
+    expect(applySettingsJson({ skipDangerousModePermissionPrompt: false })).toEqual({ next: { skipDangerousModePermissionPrompt: false, tui: 'fullscreen' }, changed: true });
+    expect(applySettingsJson({ tui: 'default' })).toEqual({ next: { tui: 'default', skipDangerousModePermissionPrompt: true }, changed: true });
   });
 });
 
@@ -66,14 +73,14 @@ describe('ensureClaudeFirstRun', () => {
     const result = await ensureClaudeFirstRun(home, '');
     expect(result).toEqual({ claudeJson: true, settingsJson: true });
     const after = JSON.parse(await fs.readFile(path.join(home, '.claude.json'), 'utf-8'));
-    expect(after).toEqual({ ...signedIn, hasCompletedOnboarding: true, theme: 'dark' });
-    expect(JSON.parse(await fs.readFile(path.join(home, '.claude', 'settings.json'), 'utf-8'))).toEqual({ skipDangerousModePermissionPrompt: true });
+    expect(after).toEqual({ ...signedIn, hasCompletedOnboarding: true, theme: 'dark', fullscreenUpsellSeenCount: 3 });
+    expect(JSON.parse(await fs.readFile(path.join(home, '.claude', 'settings.json'), 'utf-8'))).toEqual({ skipDangerousModePermissionPrompt: true, tui: 'fullscreen' });
   });
 
   it('keeps unrelated settings', async () => {
     await fs.mkdir(path.join(home, '.claude'));
     await fs.writeFile(path.join(home, '.claude', 'settings.json'), JSON.stringify({ model: 'x' }));
     await ensureClaudeFirstRun(home, '');
-    expect(JSON.parse(await fs.readFile(path.join(home, '.claude', 'settings.json'), 'utf-8'))).toEqual({ model: 'x', skipDangerousModePermissionPrompt: true });
+    expect(JSON.parse(await fs.readFile(path.join(home, '.claude', 'settings.json'), 'utf-8'))).toEqual({ model: 'x', skipDangerousModePermissionPrompt: true, tui: 'fullscreen' });
   });
 });

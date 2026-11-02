@@ -55,7 +55,7 @@ function PasswordField({
         setTestState('success');
       } else {
         setTestState('error');
-        setTestError(json.message || 'Connection failed. Check your key.');
+        setTestError(json.error || json.message || 'Connection failed. Check your key.');
       }
     } catch {
       setTestState('error');

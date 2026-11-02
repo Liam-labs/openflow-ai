@@ -52,7 +52,7 @@
   border-radius: 999px;
   font-size: 10px;
   font-weight: 600;
-  color: #eab308;
+  color: var(--tx-eab308);
   background: rgba(234, 179, 8, 0.10);
   border: 1px solid rgba(234, 179, 8, 0.25);
   white-space: nowrap;
@@ -98,7 +98,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--ink-ch), 0.5);
 }
 .jev-note {
   font-size: 11px;
@@ -121,7 +121,7 @@
   white-space: pre-wrap;
   word-break: break-word;
   color: var(--foreground);
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(var(--shade-ch), 0.25);
   border: 1px solid var(--card-border);
   border-radius: 6px;
 }
@@ -132,7 +132,7 @@
   padding: 10px 12px;
   border: 1px solid var(--card-border);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(var(--ink-ch), 0.02);
 }
 .jev-answer--low {
   border-color: rgba(234, 179, 8, 0.4);
@@ -162,7 +162,7 @@
 .jev-bar__track {
   height: 6px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(var(--ink-ch), 0.06);
   overflow: hidden;
 }
 .jev-bar__fill {

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, ChevronUp, ChevronDown, User, Clock, Circle, Check } from 'lucide-react';
+import { X, ChevronUp, ChevronDown, User, Clock, Circle, Check, Ban } from 'lucide-react';
 import type { CollabTask, CollabParticipant } from '@/lib/types';
 
 interface TaskDetailPaneProps {
@@ -173,6 +173,7 @@ export function TaskDetailPane({
     todo: { label: 'To Do', Icon: Circle, cls: 'text-white/80' },
     in_progress: { label: 'In Progress', Icon: Clock, cls: 'text-blue-400' },
     done: { label: 'Done', Icon: Check, cls: 'text-green-400' },
+    cancelled: { label: 'Cancelled', Icon: Ban, cls: 'text-white/50' },
   };
 
   const priorityConfig = {
@@ -254,6 +255,20 @@ export function TaskDetailPane({
             />
           </div>
 
+          {task.status === 'cancelled' && (
+            <div className="rounded-lg border border-white/[0.10] bg-white/[0.03] px-3 py-2.5 text-xs text-white/75" data-testid="task-cancelled-note">
+              <span className="font-semibold text-white/90">Cancelled</span>
+              {task.cancelledAt ? ` on ${fmt(task.cancelledAt)}` : ''}
+              {task.cancelReason ? `: ${task.cancelReason}` : ''}
+              <div className="mt-1 text-white/50">Choose To Do above to reopen it.</div>
+            </div>
+          )}
+          {task.carriedFrom && (
+            <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-xs text-white/60" data-testid="task-carried-note">
+              Carried from {task.carriedFrom.sprintName ? `"${task.carriedFrom.sprintName}"` : 'an earlier sprint'} on {fmt(task.carriedFrom.at)}.
+            </div>
+          )}
+
           {/* Meta grid — Status and Priority are interactive */}
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
@@ -272,6 +287,7 @@ export function TaskDetailPane({
                   <option value="todo">To Do</option>
                   <option value="in_progress">In Progress</option>
                   <option value="done">Done</option>
+                  {task.status === 'cancelled' && <option value="cancelled" disabled>Cancelled</option>}
                 </select>
               </div>
             </div>

@@ -45,7 +45,7 @@ async function sha256(file: string): Promise<string> {
  *
  * Why this exists: the WSL→Windows launch requires these scripts on a Windows
  * drive because the interop-launched pwsh cannot read `\\wsl$` (evidence:
- * SG-1/plans/evidence/codex-powershell/findings.md). Auto-staging keeps the
+ * the main project/plans/evidence/codex-powershell/findings.md). Auto-staging keeps the
  * Windows copy in lockstep with the WSL source so an edit can't silently drift.
  */
 export async function stageCodexWindowsPackage(

@@ -85,7 +85,8 @@ function makeData(): CollabChannelsData {
       participant('u-owner', 'Owner', 'user', -3 * 60 * 60_000),    // human, stale lastSeen
     ],
     roster: {
-      agents: [{ id: 'roster-bob', name: 'Bob', participantId: 'p-bob', channelId: 'ch-1', workingDirectory: '/x', color: '#fff', status: 'stopped' }],
+      // 'running' but not reachable (a hung or lost session): the case this notice covers. Stopped and crashed agents belong to wake on mention.
+      agents: [{ id: 'roster-bob', name: 'Bob', participantId: 'p-bob', channelId: 'ch-1', workingDirectory: '/x', color: '#fff', status: 'running' }],
       lastUpdated: iso(0),
     },
   } as unknown as CollabChannel;
@@ -135,12 +136,24 @@ describe('findOfflineMentions', () => {
     expect(channel.participants).toHaveLength(4);
   });
 
-  it('treats a stopped roster agent with no participant entry as offline', () => {
+  it('treats a roster agent with no participant entry as offline', () => {
     const data = makeData();
     const channel = data.channels[0];
     channel.participants = channel.participants.filter(p => p.id !== 'p-bob');
     const result = findOfflineMentions({ channel, data, sender: channel.participants[0], message: {}, recipients: ['p-bob'], now: NOW });
     expect(result.map(o => o.name)).toEqual(['Bob']);
+  });
+
+  it('leaves a stopped or crashed roster agent to wake on mention (its own note), unless wake on mention is off', () => {
+    for (const status of ['stopped', 'crashed'] as const) {
+      const data = makeData();
+      const channel = data.channels[0];
+      channel.roster!.agents[0].status = status;
+      const run = () => findOfflineMentions({ channel, data, sender: channel.participants[0], message: {}, recipients: ['p-bob'], now: NOW });
+      expect(run()).toEqual([]);
+      vi.stubEnv('DEVFLOW_WAKE_ON_MENTION', 'off');
+      try { expect(run().map(o => o.name)).toEqual(['Bob']); } finally { vi.unstubAllEnvs(); }
+    }
   });
 });
 

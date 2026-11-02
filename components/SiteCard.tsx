@@ -21,6 +21,7 @@ interface DevServerStatus {
 export function SiteCard({ project, healthStatus, onDelete }: SiteCardProps) {
   const [isOpeningClaude, setIsOpeningClaude] = useState(false);
   const [isOpeningFolder, setIsOpeningFolder] = useState(false);
+  const [openError, setOpenError] = useState<string | null>(null);
   const [devServerStatus, setDevServerStatus] = useState<DevServerStatus>({ running: false });
   const [isDevServerLoading, setIsDevServerLoading] = useState(false);
   const [showImageOptimizer, setShowImageOptimizer] = useState(false);
@@ -73,8 +74,15 @@ export function SiteCard({ project, healthStatus, onDelete }: SiteCardProps) {
     }
   };
 
+  // Show a short message under the card's buttons for a few seconds when Claude or Folder could not be opened.
+  const showOpenError = (message: string) => {
+    setOpenError(message);
+    setTimeout(() => setOpenError(null), 8000);
+  };
+
   const handleOpenFolder = async () => {
     setIsOpeningFolder(true);
+    setOpenError(null);
     try {
       const response = await fetch('/api/folder', {
         method: 'POST',
@@ -83,9 +91,12 @@ export function SiteCard({ project, healthStatus, onDelete }: SiteCardProps) {
       });
       if (!response.ok) {
         console.error('Failed to open folder');
+        const data = await response.json().catch(() => ({}));
+        showOpenError(data.error || 'Could not open the folder');
       }
     } catch (error) {
       console.error('Error opening folder:', error);
+      showOpenError('Could not open the folder');
     } finally {
       setTimeout(() => setIsOpeningFolder(false), 1000);
     }
@@ -93,6 +104,7 @@ export function SiteCard({ project, healthStatus, onDelete }: SiteCardProps) {
 
   const handleOpenClaude = async () => {
     setIsOpeningClaude(true);
+    setOpenError(null);
     try {
       const response = await fetch('/api/claude', {
         method: 'POST',
@@ -101,9 +113,12 @@ export function SiteCard({ project, healthStatus, onDelete }: SiteCardProps) {
       });
       if (!response.ok) {
         console.error('Failed to open Claude');
+        const data = await response.json().catch(() => ({}));
+        showOpenError(data.error || 'Could not open Claude');
       }
     } catch (error) {
       console.error('Error opening Claude:', error);
+      showOpenError('Could not open Claude');
     } finally {
       setTimeout(() => setIsOpeningClaude(false), 1000);
     }
@@ -286,6 +301,13 @@ export function SiteCard({ project, healthStatus, onDelete }: SiteCardProps) {
           </div>
         </div>
       </div>
+
+      {openError && (
+        <div className="px-3 py-1.5 bg-red-500/10 border-t border-red-500/20 flex items-center gap-1.5">
+          <AlertTriangle className="w-2.5 h-2.5 text-red-400 shrink-0" />
+          <span className="text-[10px] text-red-400">{openError}</span>
+        </div>
+      )}
 
       {/* Dev Server Status Bar - always at bottom, below all icons */}
       {devServerStatus.running && devServerStatus.port && (

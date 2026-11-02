@@ -7,6 +7,8 @@
  * This is the only honest proof that the sign-in holds: a request from this computer's own tailnet address counts as this computer.
  */
 
+import { emitWizardChanged } from './events';
+
 export interface Visit { at: number; device: string; user: string | null; /** the gate let this request see the pages */ allowed: boolean }
 
 const MAX = 20;
@@ -30,8 +32,13 @@ export function noteTailnetVisit(headers: { get(name: string): string | null }, 
   if (!user && !device) return;
   if (!device || !isTailnetAddress(device)) return;
   const visits = store();
+  const last = visits[visits.length - 1];
   visits.push({ at: now, device, user: user ? user.slice(0, 120) : null, allowed });
   if (visits.length > MAX) visits.splice(0, visits.length - MAX);
+  // Tell the open wizard once per change: a new device, or the same device whose answer changed, or one quiet for over 30 s. Every page
+  // request comes through here, so repeats from the same device are not events. No user name travels with the event.
+  const repeat = last && last.device === device && last.allowed === allowed && now - last.at < 30_000;
+  if (!repeat) emitWizardChanged('tailscale');
 }
 
 /** Visits in the last `withinMs` from a device that is not one of `ownAddresses` (the wizard's own test comes from this computer). */

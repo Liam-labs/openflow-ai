@@ -71,6 +71,9 @@ def collect():
     return rows, problems
 
 
+BRAND_MARKS_NOTE = "Brand marks on the Set up more page are from Simple Icons (CC0 1.0); the marks belong to their owners and identify the product each card connects to."
+
+
 def render(rows):
     lines = ["# Third-party notices", "",
              "This product depends on the open-source packages below. Each is used under its own licence; the licence text ships",
@@ -81,6 +84,7 @@ def render(rows):
         for lic in conditional:
             lines.append("- **%s**: %s." % (lic, CONDITIONS[lic]))
         lines.append("")
+    lines += ["## Brand marks", "", BRAND_MARKS_NOTE, ""]
     lines += ["## Packages", "", "| Package | Version | Licence | Source |", "|---|---|---|---|"]
     for (name, version), (lic, repo) in sorted(rows.items()):
         lines.append("| %s | %s | %s | %s |" % (name, version, lic, repo.replace("git+", "").replace("|", "/")))

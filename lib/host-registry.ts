@@ -79,8 +79,11 @@ export function verifyHostToken(id: string, presented: string | null): boolean {
 export function getHostInfo(id: string) {
   const h = hosts.get(id);
   if (!h) return null;
-  const st = (h.status ?? {}) as { sessions?: string[]; memMB?: { MemTotal?: number; MemAvailable?: number } };
-  return { id, lastSeen: h.lastSeen, fresh: Date.now() - h.lastSeen < 45_000, sessions: st.sessions ?? [], memMB: st.memMB ?? {} };
+  const st = (h.status ?? {}) as { sessions?: string[]; memMB?: { MemTotal?: number; MemAvailable?: number }; bootId?: string | null; tmuxStart?: number | null };
+  return {
+    id, lastSeen: h.lastSeen, fresh: Date.now() - h.lastSeen < 45_000, sessions: st.sessions ?? [], memMB: st.memMB ?? {},
+    bootId: st.bootId ?? undefined, tmuxStart: typeof st.tmuxStart === 'number' ? st.tmuxStart : undefined,
+  };
 }
 
 export function hostIds(): string[] { return [...hosts.keys()]; }
