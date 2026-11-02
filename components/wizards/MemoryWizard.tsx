@@ -13,8 +13,12 @@ type Plan = { ok: true; model: 'light' | 'better'; adopt: boolean } | { ok: fals
 interface State { facts: Facts; plan: Plan; record: { enabled: boolean; skipped: boolean; stage: string; adopted: boolean; model: string | null; mcp: boolean }; models: Record<string, { id: string; label: string; needMB: number; downloadMB: number }> }
 
 async function call(body?: Record<string, unknown>): Promise<Record<string, unknown>> {
+  try {
   const res = await fetch('/api/wizards/memory', body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : undefined);
   return (await res.json().catch(() => ({ success: false, error: 'The server sent something unreadable.' }))) as Record<string, unknown>;
+  } catch {
+    return { success: false, error: 'Could not reach the server. Check your connection, then try again.' };
+  }
 }
 
 function CopyLine({ text }: { text: string }) {
@@ -51,17 +55,22 @@ export function MemoryWizard() {
   const [confirm, setConfirm] = useState<'off' | 'delete' | null>(null);
 
   const apply = (r: Record<string, unknown>) => { if (r.facts) setState(r as unknown as State); };
-  const refresh = useCallback(async () => {
-    const r = await call();
-    if (r.success) { apply(r); setLoadError(''); } else setLoadError(typeof r.error === 'string' ? r.error : 'Could not read the memory state. Open this page on the computer that runs the app.');
+  const acceptRead = useCallback((r: Record<string, unknown>) => {
+    if (r.success && r.facts) { setState(r as unknown as State); setLoadError(''); }
+    else setLoadError(typeof r.error === 'string' ? r.error : 'Could not read the memory state. Check your connection and try again.');
   }, []);
-  useEffect(() => { void refresh(); }, [refresh]);
+  const refresh = useCallback(async () => { acceptRead(await call()); }, [acceptRead]);
+  useEffect(() => {
+    let cancelled = false;
+    void call().then(r => { if (!cancelled) acceptRead(r); });
+    return () => { cancelled = true; };
+  }, [acceptRead]);
 
   const prove = async () => {
     setBusy('prove');
     const p = await call({ action: 'prove' });
     setBusy(null); apply(p);
-    setProof(Array.isArray(p.steps) ? (p.steps as ProofLine[]) : null);
+    setProof(Array.isArray(p.steps) ? (p.steps as ProofLine[]) : [{ name: 'The test completed', ok: false, detail: typeof p.error === 'string' ? p.error : 'The server did not return a test result. Try again.' }]);
     setExposed(p.exposed === true);
   };
   const enable = async () => {
@@ -86,7 +95,7 @@ export function MemoryWizard() {
   const fix = plan && !plan.ok && plan.fix ? FIXES[plan.fix] : undefined;
   return (
     <WizardFrame
-      message={message}
+      message={message ?? (loadError ? { ok: false, text: loadError } : null)}
       testSignal={testSignal}
       title="Shared memory for your agents"
       status={state ? <StatusPill tone={ready ? 'good' : partial ? 'warn' : 'idle'}>{ready ? 'On' : partial ? 'Partly set up' : rec?.skipped ? 'Skipped' : 'Off'}</StatusPill> : <Loader2 className="w-3.5 h-3.5 animate-spin text-white/40" />}
