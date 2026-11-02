@@ -172,6 +172,12 @@ export function SettingsDropdown({ isOpen, onClose, anchorRef, onAddProject }: S
             </div>
           </div>
 
+          <div className="p-2 border-b border-white/5">
+            <Link href="/operations#systems/connections" onClick={onClose} className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm text-blue-300 hover:bg-white/5">
+              <Globe size={18} aria-hidden="true" />Connections — connect your services
+            </Link>
+          </div>
+
           {/* Group: Core Systems */}
           <div className="p-2">
             <div className="px-3 py-2 text-[10px] font-bold text-white/20 uppercase tracking-wider">Environment</div>

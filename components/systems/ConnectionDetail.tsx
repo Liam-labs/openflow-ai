@@ -1,5 +1,7 @@
 'use client';
 
+import { CloudflareWizard } from '@/components/wizards/CloudflareWizard';
+import { TailscaleWizard } from '@/components/wizards/TailscaleWizard';
 import { useEffect, useState, useCallback } from 'react';
 import { Link, CheckCircle2, AlertCircle, Clock, Tag, Globe, FileText, RefreshCw, FlaskConical } from 'lucide-react';
 import { StatusBadge } from './DataTable';
@@ -187,6 +189,8 @@ function HealthTab({ conn, onTest }: {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function ConnectionDetail(props: ConnectionDetailProps) {
+  if (!props.isMcp && props.connectionId === 'cloudflare') return <CloudflareWizard />;
+  if (!props.isMcp && props.connectionId === 'tailscale') return <TailscaleWizard />;
   const provider = !props.isMcp && props.connectionId.startsWith(PROVIDER_PREFIX)
     ? keyProvider(props.connectionId.slice(PROVIDER_PREFIX.length)) : undefined;
   if (provider) return (

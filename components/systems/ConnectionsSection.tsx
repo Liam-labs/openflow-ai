@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { ConnectionLauncher } from './connections/ConnectionLauncher';
 import { keyProvider, PROVIDER_PREFIX } from './connections/provider-link';
 import { Link, RefreshCw, Server, Search, FlaskConical, ChevronDown, ChevronRight as ChevronRightIcon } from 'lucide-react';
 import { DataTable, StatusBadge } from './DataTable';
@@ -217,6 +218,7 @@ export function ConnectionsSection({ onNavigate }: ConnectionsSectionProps) {
   const fetchData = useCallback(async () => {
     try {
       const res = await fetch('/api/connections');
+      if (!res.ok) throw new Error('Could not read saved connections');
       const json = await res.json() as ConnectionsData;
       setData(json);
     } catch {
@@ -245,11 +247,10 @@ export function ConnectionsSection({ onNavigate }: ConnectionsSectionProps) {
     }
   }, []);
 
-  if (isLoading) return <div className="systems-section__loading">Loading connections…</div>;
-  if (!data) return null;
 
-  const apiRows = (data.connections ?? []).map(c => toRow(c, false));
-  const mcpRows = (data.mcp_servers ?? []).map(m => toRow(m, true));
+
+  const apiRows = (data?.connections ?? []).map(c => toRow(c, false));
+  const mcpRows = (data?.mcp_servers ?? []).map(m => toRow(m, true));
   const allRows = [...apiRows, ...mcpRows];
 
   // Filters
@@ -294,6 +295,10 @@ export function ConnectionsSection({ onNavigate }: ConnectionsSectionProps) {
         </button>
       </div>
 
+      <ConnectionLauncher onNavigate={onNavigate} />
+      {isLoading && <p role="status">Loading saved connections…</p>}
+      {!isLoading && !data && <p role="alert">Could not read saved connections. You can still choose a service above. Use Refresh to try again.</p>}
+      <h3 className="systems-section__title">Saved connections</h3>
       {/* Filter bar */}
       <p className="systems-section__desc">API integrations, webhooks, and MCP server connections. Test connectivity and verify environment variable status.</p>
       <div className="systems-filter-bar">
