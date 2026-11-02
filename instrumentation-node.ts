@@ -16,6 +16,20 @@ export async function startSubsystems() {
       console.error('[cloudflare] Could not restore the saved connector; open Connections to retry.');
     }
 
+    try {
+      const { ensureBrowserAtStartup } = await import('./lib/wizards/browser-core');
+      await ensureBrowserAtStartup();
+    } catch {
+      console.error('[browser] Could not restore the saved browser; open Connections to retry.');
+    }
+
+    try {
+      const { restoreManagedMemory } = await import('./lib/wizards/memory-runtime');
+      await restoreManagedMemory();
+    } catch {
+      console.error('[memory] Could not restore the saved database; open Connections to retry.');
+    }
+
     // First run: the starting model list (see lib/seed-data.ts). Never replaces an existing file.
     try {
       const { seedFileIfMissing } = await import('./lib/seed-data');

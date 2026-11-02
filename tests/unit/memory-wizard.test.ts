@@ -224,7 +224,7 @@ describe('choices', () => {
 describe('gatherFacts', () => {
   it('reads Docker, Python, uv, the container and the resources', async () => {
     const { gatherFacts } = memoryModule; const w = world({ uv: true, containers: new Map([['openflow-qdrant', true]]), healthy: true, availableMB: 5000, diskMB: 9000 });
-    expect(await gatherFacts(deps(w))).toEqual({ docker: { installed: true, running: true }, python: { ok: true, version: '3.12' }, uv: true, availableMB: 5000, diskFreeMB: 9000, qdrantUp: true, container: { exists: true, running: true } });
+    expect(await gatherFacts(deps(w))).toEqual({ managedDatabase: false, docker: { installed: true, running: true }, python: { ok: true, version: '3.12' }, uv: true, availableMB: 5000, diskFreeMB: 9000, qdrantUp: true, container: { exists: true, running: true } });
   });
   it('tells a missing Docker from a stopped one, a stopped container from a running one, and rejects Python 3.14 and 3.8', async () => {
     const { gatherFacts } = memoryModule;
@@ -583,6 +583,37 @@ describe('the database runs as the app and "delete my memories" always ends clea
     const r = await disableMemory(deps(w), { deleteData: true });
     expect(r.ok).toBe(false);
     expect(w.cleaned).toBe(false);
+    expect(w.record.enabled).toBe(false);
+  });
+});
+
+
+describe('container-managed memory database', () => {
+  it('sets up without Docker and stops only its own database, keeping data', async () => {
+    const w = world({ dockerInstalled: false, dockerRunning: false });
+    const database = { start: vi.fn(async () => { w.healthy = true; }), stop: vi.fn(async () => { w.healthy = false; }) };
+    const d = deps(w, { database });
+    expect(await memoryModule.enableMemory(d, 'light')).toMatchObject({ ok: true, adopted: false });
+    expect(database.start).toHaveBeenCalledOnce();
+    expect(w.record.stage).toBe('ready');
+    expect(w.cmds.some(c => /^docker (run|pull|start)/.test(c))).toBe(false);
+    expect((await memoryModule.disableMemory(d)).ok).toBe(true);
+    expect(database.stop).toHaveBeenCalledOnce();
+    expect(w.removed).toEqual([]);
+  });
+  it('stops a managed database that fails its private-address proof', async () => {
+    const w = world({ healthy: true, open: new Set(['192.168.1.20']) });
+    w.record = { enabled: true, stage: 'ready', model: 'light' };
+    const database = { start: vi.fn(async () => {}), stop: vi.fn(async () => {}) };
+    expect(await memoryModule.proveMemory(deps(w, { database }), 'test-nonce')).toMatchObject({ ok: false, exposed: true });
+    expect(database.stop).toHaveBeenCalledOnce();
+    expect(w.cmds.some(c => c.startsWith('docker stop'))).toBe(false);
+  });
+  it('stops a failed startup and allows a normal retry', async () => {
+    const w = world({ dockerInstalled: false, healthy: false });
+    const database = { start: vi.fn(async () => {}), stop: vi.fn(async () => {}) };
+    expect(await memoryModule.enableMemory(deps(w, { database }))).toMatchObject({ ok: false });
+    expect(database.stop).toHaveBeenCalledOnce();
     expect(w.record.enabled).toBe(false);
   });
 });

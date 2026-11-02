@@ -61,7 +61,9 @@ def main():
     fallback = json.loads(saved_claim.read_text())['fallbackHost'] if saved_claim.exists() else host
     hosts = list(dict.fromkeys(['localhost', '127.0.0.1', host, fallback]))
     origins = list(dict.fromkeys(['https://' + host, 'https://' + fallback]))
-    service = {'container_name': args.container, 'environment': {
+    service = {'container_name': args.container,
+        'security_opt': ['seccomp=' + str(repo / 'docker/chromium-seccomp.json')],
+        'environment': {
         'DEVFLOW_SERVER_MODE': '1', 'DEVFLOW_REQUIRE_TOKEN': '1', 'OPENFLOW_HOST': host,
         'DEVFLOW_ALLOWED_HOSTS': ','.join(hosts), 'DEVFLOW_ALLOWED_ORIGINS': ','.join(origins),
     }}

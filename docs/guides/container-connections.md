@@ -11,3 +11,10 @@ Tailscale state is inside the existing `/data` volume and survives normal image 
 The local reachability test uses the isolated daemon's loopback-only outbound proxy. It is not proof that a second device can reach the application. Independent acceptance still requires an authorized second device, owner sign-in, a real page, and persistence. Authenticated visits are distinguished from password bypasses.
 
 Implementation references: [Tailscale userspace mode](https://tailscale.com/docs/concepts/userspace-networking), [official Debian packages](https://pkgs.tailscale.com/stable/#debian-bookworm), and [Cloudflare package repository](https://pkg.cloudflare.com/index.html).
+
+
+## Browser and memory runtime
+
+Container images include Chromium, its sandbox, Python venv and the pinned Qdrant binary. Compose uses `docker/chromium-seccomp.json`, the [Playwright Chromium sandbox profile](https://github.com/microsoft/playwright/blob/main/utils/docker/seccomp_profile.json), to allow unprivileged user namespaces while retaining syscall filtering. Chromium runs as the app user with its sandbox enabled. Direct Docker invocations must supply `--security-opt seccomp=/absolute/path/to/docker/chromium-seccomp.json`. No `--privileged`, host Docker socket, or sandbox-disable flag is needed.
+
+The memory wizard starts Qdrant only when requested, binds it to loopback and stores its database in the app data volume. Enabled memory restarts with OpenFlow; undo stops the process and retains data unless deletion is selected. Native installs keep their existing Docker-backed behavior. The source image is the same pinned Qdrant digest used by the native wizard.
