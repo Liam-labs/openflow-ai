@@ -10,6 +10,7 @@
  */
 
 import { spawn } from 'child_process';
+import { clearReplacedContainerLock } from './browser-container-profile';
 import { existsSync, openSync, closeSync, readdirSync, promises as fs } from 'fs';
 import net from 'net';
 import os from 'os';
@@ -281,6 +282,10 @@ export function realCanConnect(host: string, port: number): Promise<boolean> {
 }
 
 export async function realSpawn(exe: string, args: string[]): Promise<number | null> {
+  const profile = path.join(path.dirname(DataPaths.browserUse), 'chrome-profile');
+  if (args.includes(`--user-data-dir=${profile}`)) {
+    await clearReplacedContainerLock(profile, process.env.OPENFLOW_CONTAINER === '1');
+  }
   const out = openSync(DataPaths.browserLog, 'w', 0o600);
   try {
     const child = spawn(exe, args, { detached: true, stdio: ['ignore', out, out] });
