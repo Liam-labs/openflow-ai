@@ -16,7 +16,6 @@ import type { CodexNativeBinding } from '@/lib/codex-native-store';
 import type { CollabChannel, CollabMessage, CollabParticipant } from '@/lib/types';
 import { HUMAN_ROUTING_NAME } from '@/lib/human-identity';
 
-import { getDevflowHome } from '@/lib/home-dir';
 import { PRODUCT_NAME } from '@/lib/brand';
 const ALL_ARCHIVES_CURSOR = '9999-12-31T23:59:59.999Z';
 
@@ -141,12 +140,6 @@ export function createCodexNativeOnboarder(
         '',
         'Use these exact mention handles whenever you address someone. Mentions control delivery, so include only the intended recipient or recipients:',
         mentionMap,
-        '',
-        `This native Codex chat does not inherit AgentChat's normal rules and skills. Before any task that needs ${HUMAN_ROUTING_NAME}'s account, sign-in, credential, API key, or authenticated browser session, load the canonical account-access instructions and resolve the exact account through the Model-neutral ${PRODUCT_NAME} MCP Gateway. Use gateway MCP tools when available; otherwise use the same contract through WSL:`,
-        `\`wsl -- cat -- ${getDevflowHome()}/data/skills/account-access/SKILL.md\``,
-        `\`wsl -- cat -- ${getDevflowHome()}/data/skills/onepassword/SKILL.md\``,
-        `\`wsl -- ${getDevflowHome()}/scripts/devflow-gateway --help\``,
-        'Never call the 1Password CLI directly or expose a password/token. The native browser harness changes only how the selected action runs; it does not replace account planning, exact resource selection, receipts, or approval boundaries.',
         '',
         peers.length > 0
           ? `If you have not already introduced yourself in this channel, do so now in one concise message addressed to ${introductionTargets}. Explain that you run natively in Codex Desktop and can use its native harnesses. If you already introduced yourself, do not repeat it. Do not send an acknowledgement-only reply.`

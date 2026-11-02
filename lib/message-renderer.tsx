@@ -21,6 +21,47 @@ const BlockFallback = ({ label }: { label: string }) => (
   </div>
 );
 
+function CodeBlockCopyButton({ text }: { text: string }) {
+  const [status, setStatus] = React.useState<'idle' | 'copied' | 'error'>('idle');
+
+  React.useEffect(() => {
+    if (status === 'idle') return;
+    const timer = window.setTimeout(() => setStatus('idle'), 2000);
+    return () => window.clearTimeout(timer);
+  }, [status]);
+
+  async function copy() {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Keep copying available on local HTTP connections without Clipboard API.
+        const previousFocus = document.activeElement;
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.cssText = 'position:fixed;left:-9999px;top:0';
+        document.body.appendChild(textarea);
+        try {
+          textarea.select();
+          if (!document.execCommand('copy')) throw new Error('Copy failed');
+        } finally {
+          textarea.remove();
+          if (previousFocus instanceof HTMLElement) previousFocus.focus({ preventScroll: true });
+        }
+      }
+      setStatus('copied');
+    } catch {
+      setStatus('error');
+    }
+  }
+
+  return (
+    <button type="button" className="collab-code-copy" onClick={copy} aria-live="polite">
+      {status === 'copied' ? 'Copied' : status === 'error' ? 'Copy failed — retry' : 'Copy'}
+    </button>
+  );
+}
+
 function isLocalBrowserHandoffUrl(href: string): boolean {
   try {
     const url = new URL(href);
@@ -193,6 +234,7 @@ function renderInlineContent(
                   {lang && <span className="collab-code-lang">{lang}</span>}
                   {inner}
                 </pre>
+                <CodeBlockCopyButton text={inner} />
               </div>,
             );
           }

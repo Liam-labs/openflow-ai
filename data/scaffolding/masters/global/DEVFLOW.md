@@ -29,13 +29,6 @@ counts, or sprint notes.
 - Browser interaction and current browser availability: `/browser`. Resolve
   browser failures through `platform/browser-use.md`. Native Windows
   applications use the `/computer-use` desktop adapter and its control boundary.
-- Provider-backed capabilities shared across models: use the `devflow-gateway`
-  MCP tools. For Claude Design, create a durable job with
-  `design_session_create`, poll `design_session_status`, then use the feedback
-  or export tool. If this runtime cannot load MCP, call the same contract via
-  `~/DevFlow/scripts/devflow-gateway`. `/design-sync` remains a signed-in human
-  action; `design_system_prepare_sync` returns the exact command instead of
-  pretending the agent performed it.
 - Tools for {{OWNER_NAME}} in your channel (the "Channel tools" launcher): the Channel tools section of
   your `Workspace.md`, then `platform/channel-tools.md`.
 - Channel transport and message quality: `channel-communication.md`, with

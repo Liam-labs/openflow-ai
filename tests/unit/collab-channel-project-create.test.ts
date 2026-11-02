@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+// These tests call a handler directly, outside the transaction mutateChannels opens, so saving goes to the test's own spy; the handler's change to the data is what they check.
+vi.mock('@/lib/collab-channel-store', async (orig) => ({ ...(await orig<typeof import('@/lib/collab-channel-store')>()), saveChannels: (data: unknown) => mocks.writeData(data) }));      // the handler saves through the store now; the test's persistence spy is writeData
 import type { CollabChannelActionRequest, CollabChannelsData } from '@/lib/types';
 
 const mocks = vi.hoisted(() => ({
@@ -20,10 +22,6 @@ vi.mock('@/app/api/collab/_collab-shared', () => ({
   ensureBrowserUserInChannel: vi.fn(),
 }));
 
-vi.mock('@/teams-integration/lib/teams-auto-sync', () => ({
-  onChannelCreated: vi.fn().mockResolvedValue(undefined),
-  onChannelDeleted: vi.fn().mockResolvedValue(undefined),
-}));
 
 vi.mock('@/slack-integration/lib/slack-auto-sync', () => ({
   onChannelCreated: vi.fn().mockResolvedValue(undefined),

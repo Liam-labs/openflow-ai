@@ -76,7 +76,7 @@ export function CommandPalette({ tasks, onSelectTask, onClose }: CommandPaletteP
       <div
         className="command-palette fixed top-[18vh] left-1/2 -translate-x-1/2 z-[61] w-full max-w-[560px] mx-4 bg-[#0c1a2e] border border-white/[0.1] rounded-2xl overflow-hidden"
         style={{
-          boxShadow: '0 24px 64px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.05) inset',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.65), 0 0 0 1px rgba(var(--ink-ch), 0.05) inset',
         }}
       >
         {/* Search row */}

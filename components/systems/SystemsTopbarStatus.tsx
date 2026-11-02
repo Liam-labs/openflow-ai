@@ -1,44 +1,21 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
+import { useMetricsBuffer } from '@/lib/hooks/useMetricsBuffer';
 
-interface PM2Process {
-  name: string;
-  status: string;
-  monit?: { cpu: number; memory: number };
-}
-
+/**
+ * The health pill beside the Systems title. It reads the same rolling PM2 buffer as the status strip on the Overview,
+ * so the two CPU figures are the same number at the same moment (they were sampled separately and drifted apart).
+ */
 export function SystemsTopbarStatus() {
-  const [online, setOnline] = useState<number | null>(null);
-  const [total, setTotal]   = useState<number | null>(null);
-  const [cpu, setCpu]       = useState<number | null>(null);
-  const [errored, setErrored] = useState(0);
+  const { serviceStatus, cpuMemorySeries, loading } = useMetricsBuffer();
+  if (loading) return null;
 
-  const fetch_ = useCallback(async () => {
-    try {
-      const res = await fetch('/api/pm2');
-      if (!res.ok) return;
-      const { processes = [] }: { processes: PM2Process[] } = await res.json();
-      const services = processes.filter((p) => !p.name.startsWith('dev-'));
-      setTotal(services.length);
-      setOnline(services.filter((p) => p.status === 'online').length);
-      setErrored(services.filter((p) => p.status === 'errored').length);
-      const totalCpu = services.reduce((s, p) => s + (p.monit?.cpu ?? 0), 0);
-      setCpu(Math.round(totalCpu * 10) / 10);
-    } catch {
-      // silent — topbar status is non-critical
-    }
-  }, []);
-
-  useEffect(() => {
-    fetch_();
-    const id = setInterval(fetch_, 15_000);
-    return () => clearInterval(id);
-  }, [fetch_]);
-
-  if (online === null || total === null) return null;
-
+  const { online, stopped, errored, launching } = serviceStatus;
+  const total = online + stopped + errored + launching;
   const healthy = errored === 0 && online === total;
+  const latest = cpuMemorySeries.length > 0 ? cpuMemorySeries[cpuMemorySeries.length - 1] : null;
+  const cpu = latest ? latest.cpu.toFixed(1) : null; // same one-decimal format as the strip
 
   return (
     <div className="stbs-wrap" aria-label="System health summary">
@@ -55,7 +32,7 @@ export function SystemsTopbarStatus() {
         <span className="stbs-badge stbs-badge--err">{errored} errored</span>
       )}
       {cpu !== null && (
-        <span className="stbs-cpu">CPU {cpu}%</span>
+        <span className="stbs-cpu" title="Combined CPU of the services run by PM2, the same figure as the CPU in the status strip">CPU {cpu}%</span>
       )}
     </div>
   );

@@ -62,7 +62,8 @@ $tabs | ConvertTo-Json -Depth 2 -Compress
 
     // Convert WSL path to Windows path and execute
     const windowsPath = scriptPath.replace('/tmp', 'C:\\temp');
-    await execAsync(`mkdir -p /mnt/c/temp && cp ${scriptPath} /mnt/c/temp/get-wt-tabs.ps1`, { timeout: 8000 });
+    await fs.mkdir('/mnt/c/temp', { recursive: true });
+    await fs.copyFile(scriptPath, '/mnt/c/temp/get-wt-tabs.ps1');
 
     const { stdout } = await execAsync(
       `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\\temp\\get-wt-tabs.ps1"`,

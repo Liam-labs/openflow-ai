@@ -34,17 +34,17 @@ interface ModelMeta {
 }
 
 const MODEL_META: Record<string, ModelMeta> = {
-  claude:    { label: 'Claude',    tagline: 'Anthropic — SG-1 team models',      color: '#60a5fa', border: 'rgba(96,165,250,0.3)',  bg: 'rgba(96,165,250,0.08)',  dot: '#60a5fa' },
-  gemini:    { label: 'Gemini',    tagline: 'Google DeepMind — multimodal',       color: '#818cf8', border: 'rgba(129,140,248,0.3)', bg: 'rgba(129,140,248,0.08)', dot: '#818cf8' },
-  grok:      { label: 'Grok',      tagline: 'xAI — real-time knowledge',          color: '#fbbf24', border: 'rgba(251,191,36,0.3)',  bg: 'rgba(251,191,36,0.07)',  dot: '#fbbf24' },
-  codex:     { label: 'Codex',     tagline: 'OpenAI — agentic coding model',      color: '#34d399', border: 'rgba(52,211,153,0.3)',  bg: 'rgba(52,211,153,0.07)',  dot: '#34d399' },
-  deepseek:  { label: 'DeepSeek',  tagline: 'DeepSeek — Anthropic-compat backbone', color: '#2dd4bf', border: 'rgba(45,212,191,0.3)',  bg: 'rgba(45,212,191,0.07)',  dot: '#2dd4bf' },
+  claude:    { label: 'Claude',    tagline: 'Anthropic',      color: 'var(--tx-60a5fa)', border: 'rgba(96,165,250,0.3)',  bg: 'rgba(96,165,250,0.08)',  dot: '#60a5fa' },
+  gemini:    { label: 'Gemini',    tagline: 'Google DeepMind — multimodal',       color: 'var(--tx-818cf8)', border: 'rgba(129,140,248,0.3)', bg: 'rgba(129,140,248,0.08)', dot: '#818cf8' },
+  grok:      { label: 'Grok',      tagline: 'xAI — real-time knowledge',          color: 'var(--tx-fbbf24)', border: 'rgba(251,191,36,0.3)',  bg: 'rgba(251,191,36,0.07)',  dot: '#fbbf24' },
+  codex:     { label: 'Codex',     tagline: 'OpenAI — agentic coding model',      color: 'var(--tx-34d399)', border: 'rgba(52,211,153,0.3)',  bg: 'rgba(52,211,153,0.07)',  dot: '#34d399' },
+  deepseek:  { label: 'DeepSeek',  tagline: 'DeepSeek — Anthropic-compat backbone', color: 'var(--tx-2dd4bf)', border: 'rgba(45,212,191,0.3)',  bg: 'rgba(45,212,191,0.07)',  dot: '#2dd4bf' },
 };
 
 const FALLBACK_META: ModelMeta = {
   label: '', tagline: 'Language model',
-  color: 'rgba(255,255,255,0.5)', border: 'rgba(255,255,255,0.15)',
-  bg: 'rgba(255,255,255,0.04)', dot: 'rgba(255,255,255,0.4)',
+  color: 'rgba(var(--ink-ch), 0.5)', border: 'rgba(var(--ink-ch), 0.15)',
+  bg: 'rgba(var(--ink-ch), 0.04)', dot: 'rgba(var(--ink-ch), 0.4)',
 };
 
 function getModelMeta(model: string): ModelMeta {
@@ -186,7 +186,7 @@ export function AlignmentRulesPanel({ onClose }: AlignmentRulesPanelProps) {
         <div className="arp-header">
           <div className="arp-header-left">
             <div className="arp-header-icon" aria-hidden="true">
-              <Shield className="w-4 h-4" style={{ color: '#60a5fa' }} />
+              <Shield className="w-4 h-4" style={{ color: 'var(--tx-60a5fa)' }} />
             </div>
             <div>
               <h2 className="arp-header-title">Alignment Rules</h2>
@@ -210,7 +210,7 @@ export function AlignmentRulesPanel({ onClose }: AlignmentRulesPanelProps) {
 
             {loadingList ? (
               <div className="arp-sidebar-loading">
-                <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'rgba(255,255,255,0.25)' }} />
+                <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'rgba(var(--ink-ch), 0.25)' }} />
               </div>
             ) : files.length === 0 ? (
               <div className="arp-sidebar-empty">No files found</div>
@@ -272,7 +272,7 @@ export function AlignmentRulesPanel({ onClose }: AlignmentRulesPanelProps) {
           <div className="arp-editor-area">
             {!selectedModel || !selectedMeta ? (
               <div className="arp-editor-empty">
-                <FileText className="w-8 h-8" style={{ color: 'rgba(255,255,255,0.1)' }} aria-hidden="true" />
+                <FileText className="w-8 h-8" style={{ color: 'rgba(var(--ink-ch), 0.1)' }} aria-hidden="true" />
                 <p>Select a model to edit its alignment rules</p>
               </div>
             ) : (
@@ -296,7 +296,7 @@ export function AlignmentRulesPanel({ onClose }: AlignmentRulesPanelProps) {
                   <div className="arp-editor-meta">
                     {selectedFile && (
                       <>
-                        <Clock className="w-3 h-3" aria-hidden="true" style={{ color: 'rgba(255,255,255,0.2)' }} />
+                        <Clock className="w-3 h-3" aria-hidden="true" style={{ color: 'rgba(var(--ink-ch), 0.2)' }} />
                         <span>{formatRelative(selectedFile.updatedAt)}</span>
                       </>
                     )}
@@ -307,7 +307,7 @@ export function AlignmentRulesPanel({ onClose }: AlignmentRulesPanelProps) {
                 <div className="arp-editor-wrap">
                   {loadingContent ? (
                     <div className="arp-editor-loading" aria-live="polite">
-                      <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'rgba(255,255,255,0.2)' }} />
+                      <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'rgba(var(--ink-ch), 0.2)' }} />
                     </div>
                   ) : (
                     <textarea

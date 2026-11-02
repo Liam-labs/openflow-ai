@@ -213,7 +213,8 @@ export function TaskColumn({
   const priorityLevel = (priority: CollabTaskPriority) => (priority === 'high' ? 3 : priority === 'low' ? 1 : 2);
   const priorityLabel = (priority: CollabTaskPriority) => (priority === 'high' ? 'High' : priority === 'low' ? 'Low' : 'Normal');
 
-  const laneClass = { todo: 'sb-lane--todo', in_progress: 'sb-lane--doing', done: 'sb-lane--done' }[status];
+  // 'cancelled' is never a lane (cancelled tasks are listed under the lanes), so it only has to type-check.
+  const laneClass = { todo: 'sb-lane--todo', in_progress: 'sb-lane--doing', done: 'sb-lane--done', cancelled: 'sb-lane--done' }[status];
 
   return (
     <div className={`sb-lane ${laneClass}${dragOver ? ' sb-lane--over' : ''}`}

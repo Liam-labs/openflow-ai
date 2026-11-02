@@ -106,7 +106,7 @@ function AddMappingForm({
             onChange={(e) => setSlackChannel(e.target.value)}
             placeholder="#general"
             className="w-full px-3 py-2 rounded-lg text-sm text-white/80 placeholder:text-white/20 outline-none"
-            style={{ background: 'rgba(10,20,40,0.5)', border: '1px solid rgba(139,92,246,0.2)' }}
+            style={{ background: 'rgba(var(--deep-ch), 0.5)', border: '1px solid rgba(139,92,246,0.2)' }}
           />
         </div>
         <div>
@@ -116,7 +116,7 @@ function AddMappingForm({
               value={devflowChannel}
               onChange={(e) => setDevflowChannel(e.target.value)}
               className="w-full px-3 py-2 rounded-lg text-sm text-white/80 outline-none"
-              style={{ background: 'rgba(10,20,40,0.8)', border: '1px solid rgba(139,92,246,0.2)' }}
+              style={{ background: 'rgba(var(--deep-ch), 0.8)', border: '1px solid rgba(139,92,246,0.2)' }}
             >
               <option value="">Select channel...</option>
               {devflowChannels.map((c) => (
@@ -128,9 +128,9 @@ function AddMappingForm({
               type="text"
               value={devflowChannel}
               onChange={(e) => setDevflowChannel(e.target.value)}
-              placeholder="SG-1"
+              placeholder="general"
               className="w-full px-3 py-2 rounded-lg text-sm text-white/80 placeholder:text-white/20 outline-none"
-              style={{ background: 'rgba(10,20,40,0.5)', border: '1px solid rgba(139,92,246,0.2)' }}
+              style={{ background: 'rgba(var(--deep-ch), 0.5)', border: '1px solid rgba(139,92,246,0.2)' }}
             />
           )}
         </div>

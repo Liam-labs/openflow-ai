@@ -50,7 +50,7 @@ const SOURCE_CONFIG: {
   { id: 'build',   label: 'Build',   color: 'var(--df-info)',     activeClass: 'logs-pill--build'   },
   { id: 'error',   label: 'Error',   color: 'var(--df-error)',    activeClass: 'logs-pill--error'   },
   { id: 'tools',   label: 'Tools',   color: 'var(--df-pink)',     activeClass: 'logs-pill--tools'   },
-  { id: 'crash',   label: 'Crash',   color: '#b91c1c',            activeClass: 'logs-pill--crash'   },
+  { id: 'crash',   label: 'Crash',   color: 'var(--tx-b91c1c)',            activeClass: 'logs-pill--crash'   },
 ];
 
 const SEVERITY_CONFIG: {

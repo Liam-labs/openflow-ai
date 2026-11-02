@@ -1,8 +1,8 @@
 .cb-mermaid {
   margin: 8px 0;
   padding: 12px;
-  background: rgba(10, 20, 40, 0.4);
-  border: 1px solid rgba(59, 130, 246, 0.15);
+  background: rgba(var(--deep-ch), 0.4);
+  border: 1px solid rgba(var(--glow-ch), 0.15);
   border-radius: 8px;
   overflow: auto;
   max-width: 100%;
@@ -18,9 +18,9 @@
   height: 80px;
   background: linear-gradient(
     90deg,
-    rgba(10, 20, 40, 0.4) 25%,
-    rgba(59, 130, 246, 0.06) 50%,
-    rgba(10, 20, 40, 0.4) 75%
+    rgba(var(--deep-ch), 0.4) 25%,
+    rgba(var(--glow-ch), 0.06) 50%,
+    rgba(var(--deep-ch), 0.4) 75%
   );
   background-size: 200% 100%;
   animation: cb-mermaid-shimmer 1.4s ease infinite;
@@ -35,6 +35,6 @@
   padding: 10px 14px;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 0.8em;
-  color: rgba(248, 113, 113, 0.8);
+  color: rgba(var(--txc-248-113-113), 0.8);
   font-style: italic;
 }

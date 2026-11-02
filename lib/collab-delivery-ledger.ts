@@ -212,25 +212,61 @@ async function writeStore(store: DeliveryLedgerStore): Promise<void> {
 
 const LEDGER_LOCK_STALE_MS = 30_000;
 const LEDGER_LOCK_TIMEOUT_MS = 10_000;
+const LEDGER_LOCK_HEARTBEAT_MS = 5_000;
 
-async function acquireLedgerProcessLock(ledgerPath: string): Promise<() => Promise<void>> {
+export class LedgerLockLostError extends Error {}
+
+interface LedgerProcessLock {
+  /** Throws LedgerLockLostError unless this holder still owns the lock file. Call before committing a write. */
+  assertHeld(): Promise<void>;
+  release(): Promise<void>;
+}
+
+/**
+ * The lock file holds a random token. The holder refreshes its mtime every few seconds, so a slow mutation is never judged stale; a lock
+ * is stolen only when its holder has stopped (crash), by renaming it away so two waiters cannot both win; release and the pre-write check
+ * look at the token, so a holder whose lock was taken never deletes the new holder's lock or overwrites the new holder's write.
+ */
+async function acquireLedgerProcessLock(ledgerPath: string): Promise<LedgerProcessLock> {
   const lockPath = `${ledgerPath}.lock`;
+  const token = randomUUID();
   const startedAt = Date.now();
+  const readToken = async () => (await fs.readFile(lockPath, 'utf-8').catch(() => '')).split('\n')[1] ?? '';
   while (true) {
     try {
       const handle = await fs.open(lockPath, 'wx');
       try {
-        await handle.write(`${process.pid}\n${new Date().toISOString()}\n`);
+        await handle.write(`${process.pid}\n${token}\n${new Date().toISOString()}\n`);
       } finally {
         await handle.close();
       }
-      return async () => fs.unlink(lockPath).catch(() => undefined);
+      const beat = setInterval(() => {
+        const t = new Date();
+        void fs.utimes(lockPath, t, t).catch(() => undefined);
+      }, LEDGER_LOCK_HEARTBEAT_MS);
+      beat.unref?.();
+      return {
+        assertHeld: async () => {
+          if (await readToken() !== token) throw new LedgerLockLostError('Delivery ledger lock was taken over; write abandoned');
+        },
+        release: async () => {
+          clearInterval(beat);
+          if (await readToken() === token) await fs.unlink(lockPath).catch(() => undefined);
+        },
+      };
     } catch (error) {
       if ((error as NodeJS.ErrnoException)?.code !== 'EEXIST') throw error;
       try {
         const stat = await fs.stat(lockPath);
         if (Date.now() - stat.mtimeMs > LEDGER_LOCK_STALE_MS) {
-          await fs.unlink(lockPath).catch(() => undefined);
+          const aside = `${lockPath}.stale.${randomUUID()}`;
+          await fs.rename(lockPath, aside).catch(() => undefined);
+          // If the file we moved was already a fresh lock (another waiter took over between our stat and rename), put it back.
+          const moved = await fs.stat(aside).catch(() => null);
+          if (moved && Date.now() - moved.mtimeMs <= LEDGER_LOCK_STALE_MS) {
+            await fs.link(aside, lockPath).catch(() => undefined);
+          }
+          await fs.unlink(aside).catch(() => undefined);
           continue;
         }
       } catch {
@@ -248,7 +284,7 @@ async function mutateStore<T>(fn: (store: DeliveryLedgerStore, now: Date) => T |
   const ledgerPath = getLedgerPath();
   await fs.mkdir(path.dirname(ledgerPath), { recursive: true });
   return withFileLock(ledgerPath, async () => {
-    const releaseProcessLock = await acquireLedgerProcessLock(ledgerPath);
+    const processLock = await acquireLedgerProcessLock(ledgerPath);
     try {
       const snapshot = await readSnapshot();
       // Mutate a private copy so readers of the shared snapshot never observe
@@ -300,13 +336,14 @@ async function mutateStore<T>(fn: (store: DeliveryLedgerStore, now: Date) => T |
       if (after !== before) {
         store.lastUpdated = now.toISOString();
         snapshotCache = null;
+        await processLock.assertHeld();
         await writeStore(store);
         const key = await ledgerFileKey(ledgerPath);
         if (key) snapshotCache = { key, store, serializedRecords: after };
       }
       return result;
     } finally {
-      await releaseProcessLock();
+      await processLock.release();
     }
   });
 }
@@ -428,9 +465,16 @@ function expireReplayableLeases(store: DeliveryLedgerStore, now: Date): void {
   for (const record of store.records) {
     if ((record.state !== 'leased' && record.state !== 'submitted') || !record.lease) continue;
     if (new Date(record.lease.expiresAt).getTime() > now.getTime()) continue;
+    record.updatedAt = now.toISOString();
+    if (record.state === 'submitted') {
+      // The runtime already accepted this turn. Sending it again after a wrapper restart (a new owner id, so it cannot renew) would be a
+      // second delivery. Hand it to transcript recovery (recoverIngestedDelivery), which checks the transcript before anything is typed again.
+      record.state = 'ingested';
+      record.recoveryReason = 'lease_expired_after_submit';
+      continue;
+    }
     record.state = 'pending';
     record.recoveryReason = 'lease_expired';
-    record.updatedAt = now.toISOString();
     delete record.lease;
     delete record.submittedAt;
   }
@@ -518,6 +562,9 @@ function bundleQueuedMessages(
   };
   for (const record of folded) {
     record.state = 'bundled';
+    // A folded message travels in the carrier's turn, so that turn is one of its attempts: otherwise a carrier that keeps failing
+    // re-folds the same messages for ever and MAX_DELIVERY_ATTEMPTS never stops them.
+    record.attempts += 1;
     record.bundledInto = carrier.id;
     record.updatedAt = now.toISOString();
   }

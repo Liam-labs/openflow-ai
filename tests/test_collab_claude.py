@@ -2536,6 +2536,7 @@ class TestCrossChannelReplyCountsAsResponse(unittest.TestCase):
 
     def _serve(self, url, timeout=None):
         from urllib.parse import urlparse, parse_qs
+        url = getattr(url, 'full_url', url)  # the wrapper passes a Request object (devflow_auth.request), not a string
         q = parse_qs(urlparse(url).query)
         since = q.get('since', [''])[0]
         msgs = [m for m in self.store.get(q['channelId'][0], []) if m['timestamp'] > since]

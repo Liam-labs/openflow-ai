@@ -81,9 +81,9 @@ export const POST = tracked('/api/tokens', async (request: NextRequest) => {
       return errorResponse('Token name is required', 'MISSING_FIELD', 400);
     }
 
-    if (!body.scope || !['read', 'write', 'admin'].includes(body.scope)) {
+    if (!body.scope || !['read', 'write', 'agent', 'admin'].includes(body.scope)) {
       return errorResponse(
-        'Valid scope is required (read, write, or admin)',
+        'Valid scope is required (read, write, agent, or admin)',
         'INVALID_FIELD',
         400
       );

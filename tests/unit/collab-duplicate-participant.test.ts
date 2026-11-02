@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+// These tests call a handler directly, outside the transaction mutateChannels opens, so saving is stubbed; the handler's change to the data is what they check.
+vi.mock('@/lib/collab-channel-store', async (orig) => ({ ...(await orig<typeof import('@/lib/collab-channel-store')>()), saveChannels: vi.fn() }));
 import type { CollabChannel, CollabChannelsData, CollabMessage, CollabParticipant } from '@/lib/types';
 
 const mocks = vi.hoisted(() => ({ messages: [] as unknown[] }));

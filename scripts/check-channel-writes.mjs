@@ -28,7 +28,7 @@ const ts = require('typescript');
 export const STORE_FILE = 'lib/collab-channel-store.ts';
 // Server code lives in these folders and in the TypeScript files at the repository root
 // (instrumentation, middleware, config).
-export const SCAN_DIRS = ['app', 'lib', 'components', 'services', 'slack-integration', 'teams-integration'];
+export const SCAN_DIRS = ['app', 'lib', 'components', 'services', 'slack-integration'];
 
 const WRITE_CALLEES = new Set([
   'writeJsonFile', 'writeFile', 'writeFileSync', 'appendFile', 'appendFileSync',

@@ -11,7 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuthOrLocal } from '@/lib/api-auth';
+import { getClientIp, requireAuthOrLocal } from '@/lib/api-auth';
 import type { CollabPtySession } from '@/lib/types';
 import {
   getChannelPtySessions,
@@ -106,7 +106,10 @@ export const POST = withTiming('/api/collab/pty', tracked('/api/collab/pty', asy
       case 'roster_list':              return handleRosterList(body);
       case 'roster_add':               return handleRosterAdd(body, now);
       case 'roster_add_from_participant': return handleRosterAddFromParticipant(body, now);
-      case 'roster_remove':            return handleRosterRemove(body, now);
+      case 'roster_remove':
+        // A direct call (the dashboard, a script) names no caller: record where it came from.
+        body.callerName ||= `${getClientIp(request)} ${(request.headers.get('user-agent') || 'no user-agent').slice(0, 60)}`;
+        return handleRosterRemove(body, now);
       case 'roster_update':            return handleRosterUpdate(body, now);
       case 'roster_directives_read':   return handleRosterDirectivesRead(body);
       case 'roster_directives_write':  return handleRosterDirectivesWrite(body);

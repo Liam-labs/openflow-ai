@@ -121,6 +121,20 @@ def resolve_recipients(message, to_names, broadcast):
     )
 
     if to_names:
+        # The channel routes by scanning the text for @name, where a name is one run of letters, numbers, - or _. A
+        # --to value with a space or other character (for example "the owner") can never be routed: prepending "@the
+        # owner" would mention only "the". Refuse it so a mis-addressed reply is corrected, not sent to the wrong people
+        # or broadcast (BUG-56). Use the exact one-word @name shown in the message being answered. The refusal gives no example
+        # name: "--to You" was copied literally and, where no participant is called You, the message was broadcast (cloud
+        # review 31 Oct 2026). Names are ASCII letters, digits, - and _ because the channel's own mention scan is too.
+        unroutable = [n for n in to_names if not re.fullmatch(r'[A-Za-z0-9_-]+', n)]
+        if unroutable:
+            names = ", ".join('"%s"' % n for n in unroutable)
+            return message, (
+                "--to %s cannot be delivered. A name to reply to is one word of letters, numbers, - or _ "
+                "(the @name the channel routes by); a value with a space or other characters can never reach anyone. "
+                "Use the exact name from the \"[Channel message from NAME ...]\" line you are answering, as --to NAME." % names
+            )
         missing = [n for n in to_names if n.lower() not in existing]
         if missing:
             prefix = " ".join(f"@{n}" for n in missing)
@@ -677,6 +691,8 @@ class CollabSession:
                 print(f"Warning: offline in that channel, will see it only when they return: "
                       f"{', '.join(offline)}. Check with --online {target_channel_id}.",
                       file=sys.stderr)
+            if response_data.get('wakeNote'):
+                print(response_data['wakeNote'], file=sys.stderr)
             _log("INFO", "cross-channel", "Message sent with preserved identity",
                  source_channel=self.channel_id,
                  target_channel=target_channel_id, msg_id=message_id)
@@ -1224,7 +1240,8 @@ if __name__ == "__main__":
                 text_only = True
                 i += 1
             elif args[i] == '--to' and i + 1 < len(args):
-                to_names.extend(n.strip() for n in args[i + 1].split(',') if n.strip())
+                # Agents often copy the @ along with the name (--to @Alice); the @ is added when the message is built.
+                to_names.extend(n.strip().lstrip('@') for n in args[i + 1].split(',') if n.strip().lstrip('@'))
                 i += 2
             elif args[i] == '--broadcast':
                 broadcast = True

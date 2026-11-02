@@ -50,6 +50,10 @@ async function mayViewPages(request: NextRequest): Promise<boolean> {
     const peer = request.headers.get('x-openflow-peer');
     if (peer) headers.set('x-forwarded-for', [headers.get('x-forwarded-for'), peer].filter(Boolean).join(', '));
     if (request.headers.get('x-openflow-http-version') === '1.0') headers.set('via', '1.0 http10-peer');
+    // The gate's own connection is this server's (the Linux user DevFlow runs as), so pass on who owns the caller's end: a server agent
+    // (its own Linux user) must not see the pages as "this machine" (lib/api-auth.ts peerIsThisUser). The header can only lower trust.
+    const callerUid = request.headers.get('x-openflow-peer-uid');
+    if (callerUid) headers.set('x-openflow-caller-uid', callerUid);
     const res = await fetch(`http://127.0.0.1:${process.env.PORT || 3000}/api/auth/gate`, { headers, cache: 'no-store' });
     if (!res.ok) return true;
     return (await res.json()).allow !== false;

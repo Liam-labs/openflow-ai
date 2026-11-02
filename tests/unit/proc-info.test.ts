@@ -104,3 +104,36 @@ describe('proc-info on macOS (fake ps, pgrep and vm_stat)', () => {
     expect(await availableMemoryMB('win32', async () => VM_STAT)).toBeNull();
   });
 });
+
+// Task 82b8d491 (30 Oct 2026): agents of another Linux user answer EPERM to signals from DevFlow.
+import { pidExists, signalPid } from '@/lib/proc-info';
+
+describe('pidExists and signalPid with another user\'s process', () => {
+  it('counts EPERM as alive, ESRCH and bad ids as gone', () => {
+    const real = process.kill;
+    try {
+      (process as { kill: unknown }).kill = (_pid: number) => { throw Object.assign(new Error('perm'), { code: 'EPERM' }); };
+      expect(pidExists(1234)).toBe(true);
+      (process as { kill: unknown }).kill = (_pid: number) => { throw Object.assign(new Error('gone'), { code: 'ESRCH' }); };
+      expect(pidExists(1234)).toBe(false);
+    } finally { (process as { kill: unknown }).kill = real; }
+    expect(pidExists(process.pid)).toBe(true);
+    expect(pidExists(0)).toBe(false);
+    expect(pidExists(-5)).toBe(false);
+    expect(pidExists(1.5)).toBe(false);
+  });
+  it('signals through sudo as the agent user only when the direct signal is refused', () => {
+    const real = process.kill;
+    const calls: Array<[string, string[]]> = [];
+    try {
+      (process as { kill: unknown }).kill = () => { throw Object.assign(new Error('perm'), { code: 'EPERM' }); };
+      signalPid(4321, 'SIGKILL', (file, args) => { calls.push([file, args]); });
+      expect(calls).toEqual([['sudo', ['-n', '-u', 'devflow-agent', '/usr/bin/kill', '-s', 'KILL', '4321']]]);
+      (process as { kill: unknown }).kill = () => { throw Object.assign(new Error('gone'), { code: 'ESRCH' }); };
+      expect(() => signalPid(4321, 'SIGTERM', (file, args) => { calls.push([file, args]); })).toThrow('gone');
+      expect(calls).toHaveLength(1);
+      (process as { kill: unknown }).kill = () => true;
+      signalPid(4321, 'SIGTERM', () => { throw new Error('must not run'); });
+    } finally { (process as { kill: unknown }).kill = real; }
+  });
+});

@@ -40,8 +40,8 @@
   --oc-success:     #4ade80;
   --oc-warning:     #fbbf24;
   --oc-error:       #f87171;
-  --oc-shadow-pop:  0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05) inset;
-  --oc-shadow-modal:0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05) inset;
+  --oc-shadow-pop:  0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(var(--ink-ch), 0.05) inset;
+  --oc-shadow-modal:0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(var(--ink-ch), 0.05) inset;
   --oc-focus:       0 0 0 2px #09090b, 0 0 0 4px #22d3ee;
   --oc-r-micro:     2px;
   --oc-r-sm:        4px;
@@ -165,7 +165,7 @@
 .po-avatar--color-b { background: rgba(74,222,128,0.15); color: var(--oc-success); border-color: rgba(74,222,128,0.2); }
 .po-avatar--color-c { background: rgba(251,191,36,0.15); color: var(--oc-warning); border-color: rgba(251,191,36,0.2); }
 .po-avatar--color-d { background: rgba(248,113,113,0.15); color: var(--oc-error); border-color: rgba(248,113,113,0.2); }
-.po-avatar--color-e { background: rgba(167,139,250,0.15); color: #a78bfa; border-color: rgba(167,139,250,0.2); }
+.po-avatar--color-e { background: rgba(167,139,250,0.15); color: var(--tx-a78bfa); border-color: rgba(167,139,250,0.2); }
 
 .po-avatar-name {
   font-size: 13px;
@@ -244,11 +244,11 @@
 .po-badge--active { background: rgba(74,222,128,0.15); color: var(--oc-success); }
 .po-badge--hold   { background: rgba(251,191,36,0.15); color: var(--oc-warning); }
 .po-badge--done   { background: rgba(34,211,238,0.15); color: var(--oc-accent); }
-.po-badge--low    { background: rgba(161,161,170,0.12); color: var(--oc-text-m); }
+.po-badge--low    { background: rgba(var(--txc-161-161-170), 0.12); color: var(--oc-text-m); }
 .po-badge--med    { background: rgba(251,191,36,0.12); color: var(--oc-warning); }
 .po-badge--high   { background: rgba(248,113,113,0.12); color: var(--oc-error); }
 .po-badge--urgent { background: rgba(248,113,113,0.2); color: var(--oc-error); border: 1px solid rgba(248,113,113,0.3); }
-.po-badge--todo   { background: rgba(161,161,170,0.1); color: var(--oc-text-m); }
+.po-badge--todo   { background: rgba(var(--txc-161-161-170), 0.1); color: var(--oc-text-m); }
 .po-badge--inprog { background: rgba(34,211,238,0.12); color: var(--oc-accent); }
 .po-badge--done-s { background: rgba(74,222,128,0.12); color: var(--oc-success); }
 
@@ -459,7 +459,7 @@
   cursor: default;
 }
 .po-table tbody tr:last-child { border-bottom: none; }
-.po-table tbody tr:nth-child(even) { background: rgba(255,255,255,0.01); }
+.po-table tbody tr:nth-child(even) { background: rgba(var(--ink-ch), 0.01); }
 .po-table tbody tr:hover { background: var(--oc-elevated); }
 .po-table tbody tr.po-row--overdue { background: rgba(248,113,113,0.04); }
 .po-table tbody tr.po-row--overdue:hover { background: rgba(248,113,113,0.08); }
@@ -623,7 +623,7 @@
 .po-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(var(--shade-ch), 0.6);
   z-index: 60;
   display: flex;
   align-items: center;

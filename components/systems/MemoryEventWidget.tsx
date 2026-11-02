@@ -52,9 +52,9 @@ function EventRow({ event }: { event: MemoryEvent }) {
       <div className="mew-row__body">
         <span className="mew-row__msg" style={{ color: 'rgba(228,228,231,0.85)' }}>
           {event.type === 'earlyoom_kill' ? (
-            <>OOM killed <span style={{ color: '#60a5fa', fontFamily: 'monospace' }}>{subject}</span></>
+            <>OOM killed <span style={{ color: 'var(--tx-60a5fa)', fontFamily: 'monospace' }}>{subject}</span></>
           ) : (
-            <>Unloaded <span style={{ color: '#a78bfa', fontFamily: 'monospace' }}>{subject}</span></>
+            <>Unloaded <span style={{ color: 'var(--tx-a78bfa)', fontFamily: 'monospace' }}>{subject}</span></>
           )}
         </span>
         {event.memAvailPercent && !isNaN(parseFloat(event.memAvailPercent)) && (
@@ -103,7 +103,7 @@ export function MemoryEventWidget({ onNavigate }: MemoryEventWidgetProps) {
     <div className="sov-panel">
       <div className="sov-panel__header">
         <span className="sov-panel__title">
-          <Brain size={14} style={{ color: '#a855f7' }} />
+          <Brain size={14} style={{ color: 'var(--tx-a855f7)' }} />
           Memory
         </span>
         {criticalCount > 0 && (

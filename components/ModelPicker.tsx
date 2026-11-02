@@ -281,7 +281,7 @@ export function ModelPicker({
   // ── Custom dropdown arrow style (reuse pattern from AgentSpawnDropdown) ────
 
   const selectStyle: React.CSSProperties = {
-    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.3)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(var(--ink-ch), 0.3)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
     backgroundRepeat: 'no-repeat',
     backgroundPosition: 'right 8px center',
     paddingRight: '28px',
@@ -381,11 +381,11 @@ export function ModelPicker({
         :global(.ms-dot--full) { background: #22c55e; box-shadow: 0 0 4px rgba(34,197,94,0.4); }
         :global(.ms-dot--partial) { background: #eab308; box-shadow: 0 0 4px rgba(234,179,8,0.4); }
         :global(.ms-dot--none) { background: #ef4444; }
-        :global(.ms-dot--unknown) { background: rgba(255,255,255,0.15); }
+        :global(.ms-dot--unknown) { background: rgba(var(--ink-ch), 0.15); }
         :global(.mp-cap) { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 3px; flex-shrink: 0; }
-        :global(.mp-cap--full) { background: rgba(34,197,94,0.15); color: #22c55e; }
-        :global(.mp-cap--partial) { background: rgba(234,179,8,0.18); color: #eab308; }
-        :global(.mp-cap--none) { background: rgba(239,68,68,0.15); color: #ef4444; }
+        :global(.mp-cap--full) { background: rgba(34,197,94,0.15); color: var(--tx-22c55e); }
+        :global(.mp-cap--partial) { background: rgba(234,179,8,0.18); color: var(--tx-eab308); }
+        :global(.mp-cap--none) { background: rgba(239,68,68,0.15); color: var(--tx-ef4444); }
       `}</style>
     </>
   );

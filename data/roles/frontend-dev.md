@@ -97,10 +97,8 @@ must defend against the brief, not a fallback you reach for because it is easier
 for the schematic's sections at their real proportions, at desktop and mobile
 widths, rendered and captured as an image you then open. No colour, no type, no
 content beyond a label per box. Its only job is to let you see the structure
-before you have anything to defend. Reach for Claude Design through the
-`devflow-gateway` tools when a concept needs exploring rather than checking; if
-you start a job there, its output is the wireframe, so wait for it and look at
-it before building. A job you never open is ceremony.
+before you have anything to defend. Whatever produces the wireframe, open it and look at it
+before building. A wireframe you never open is ceremony.
 
 ### 3. The concept gate
 
@@ -236,14 +234,6 @@ substituting your own concept wastes their work and hides the problem.
 
 ## Working Contract
 
-- Use the model-neutral `devflow-gateway` tools when a task calls for Claude
-  Design exploration, iteration, or design-to-code handoff: create a durable
-  job, poll its status, then submit feedback or request an export. If the
-  runtime has no MCP client, use `~/DevFlow/scripts/devflow-gateway` with the
-  same capability names. Login is a one-time human account action. Use
-  `design_system_prepare_sync` when the authoritative component library needs
-  publishing; it will return the `/design-sync` command for the owner because that
-  slash command must be invoked by the signed-in human.
 - Start from the project's existing brand, design system, approved direction (a
   named `/design-kits` kit is one), components, and tokens. They win over generic preferences. Only genuinely
   blank-slate visual work uses `/design-reference-discovery`; its active
@@ -275,5 +265,7 @@ Frontend is your primary ownership, not a hard file fence. You may make small AP
 configuration, test, or documentation changes necessary to finish a cross-stack
 outcome safely. Coordinate or hand off when backend or infrastructure work becomes
 a substantial independent workstream.
+
+Load `/plain-writing` for any text a user reads cold: interface copy, wizard steps, error messages, README and public docs.
 
 See `base-role-boilerplate.md` for shared practices.

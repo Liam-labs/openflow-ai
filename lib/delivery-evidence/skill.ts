@@ -245,14 +245,14 @@ function escapeHtml(value: string): string {
  * isn't true (e.g. a copy-pasted snippet).
  */
 export function renderContactSheetHtmlBlock(response: VisualReviewRunResponse): string {
-  const card = 'background:#0a0a0e;border:1px solid rgba(255,255,255,0.1);border-radius:8px;'
+  const card = 'background:#0a0a0e;border:1px solid rgba(var(--ink-ch), 0.1);border-radius:8px;'
     + 'padding:12px 14px;font-family:ui-sans-serif,system-ui,sans-serif;color:#e4e4e7;max-width:480px;';
 
   if (!response.success) {
     return (
       `<div style="${card}">`
       + '<div style="font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;'
-      + 'color:rgba(255,255,255,0.55);margin-bottom:8px;">Visual Review</div>'
+      + 'color:rgba(var(--ink-ch), 0.55);margin-bottom:8px;">Visual Review</div>'
       + `<div style="color:${TONE_COLOR.warning};font-weight:600;font-size:13px;">`
       + 'implementation ready; visual verification pending</div>'
       + `<div style="font-size:12px;color:#a1a1aa;margin-top:3px;">${escapeHtml(response.error)} `
@@ -274,7 +274,7 @@ export function renderContactSheetHtmlBlock(response: VisualReviewRunResponse): 
     + screenshots.map((shot) => (shot.url
       ? `<img src="${escapeHtml(shot.url)}" alt="${escapeHtml(shot.route)} — ${escapeHtml(shot.viewport.id)}" `
         + 'style="width:72px;height:56px;object-fit:cover;object-position:top;border-radius:4px;'
-        + 'border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.3);" />'
+        + 'border:1px solid rgba(var(--ink-ch), 0.1);background:rgba(0,0,0,0.3);" />'
       : '')).join('')
     + '</div>'
   );
@@ -298,7 +298,7 @@ export function renderContactSheetHtmlBlock(response: VisualReviewRunResponse): 
     `<div style="${card}">`
     + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">'
     + '<span style="font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;'
-    + 'color:rgba(255,255,255,0.55);">Visual Review</span>'
+    + 'color:rgba(var(--ink-ch), 0.55);">Visual Review</span>'
     + `<span style="font-size:10px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;`
     + `padding:2px 8px;border-radius:2px;background:${TONE_COLOR[decision.tone]}22;`
     + `color:${TONE_COLOR[decision.tone]};">${decision.label}</span>`

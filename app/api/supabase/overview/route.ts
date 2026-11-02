@@ -45,6 +45,20 @@ function getLocalConnStr(instance: SupabaseInstance): string {
   return DEFAULT_LOCAL_DB_URL;
 }
 
+// Network-level failures that mean "nothing answered at the database address" (stack stopped, or on another machine).
+const DB_UNREACHABLE_CODES = new Set(['ECONNREFUSED', 'ETIMEDOUT', 'EHOSTUNREACH', 'ENETUNREACH', 'ENOTFOUND', 'ECONNRESET']);
+
+function isDbUnreachable(err: unknown): boolean {
+  const code = (err as { code?: unknown } | null)?.code;
+  if (typeof code === 'string' && DB_UNREACHABLE_CODES.has(code)) return true;
+  // pg wraps some failures in an AggregateError (IPv4 + IPv6 attempts): look inside it.
+  const inner = (err as { errors?: unknown[] } | null)?.errors;
+  return Array.isArray(inner) && inner.length > 0 && inner.every(isDbUnreachable);
+}
+
+const DB_UNREACHABLE_MESSAGE =
+  "Database not reachable from the DevFlow server. The Supabase stack may be stopped, or it may run on a different machine than the server.";
+
 function getAccessToken(): string {
   const token = process.env.SUPABASE_ACCESS_TOKEN;
   if (!token) throw new Error('SUPABASE_ACCESS_TOKEN env var is not set');
@@ -240,6 +254,12 @@ export const GET = tracked('/api/supabase/overview', async (request: NextRequest
     return NextResponse.json({ success: true, data });
   } catch (err) {
     console.error('[Supabase Overview GET]', err);
+    if (isDbUnreachable(err)) {
+      return NextResponse.json(
+        { success: false, code: 'db_unreachable', error: DB_UNREACHABLE_MESSAGE },
+        { status: 503 }
+      );
+    }
     const statusCode = (err as { statusCode?: number }).statusCode ?? 500;
     return NextResponse.json(
       { success: false, error: err instanceof Error ? err.message : 'Internal error' },

@@ -32,6 +32,13 @@ import subprocess
 import re
 import uuid
 import proc_info
+try:
+    import devflow_auth
+except ImportError:  # editions without the agent-token module send plain requests
+    class devflow_auth:  # noqa: N801
+        @staticmethod
+        def request(url, data=None, headers=None, method=None, env=None):
+            return urllib.request.Request(url, data=data, headers=headers or {}, method=method)
 from jsonl_state_reader import check_jsonl_state, resolve_transcript_path, JsonlState, tool_to_label, verify_message_ingested, final_response_disposition, TURN_EMPTY, NO_REPLY_MARKER
 
 
@@ -75,6 +82,83 @@ def resume_args(claude_args, session_id):
             continue
         out.append(arg)
     return out + ['--resume', session_id]
+
+
+def _skill_dir_names(path, recursive=False):
+    """Names of skills under path: entries (or, if recursive, dirs holding SKILL.md)."""
+    names = set()
+    if not os.path.isdir(path):
+        return names
+    if not recursive:
+        for entry in os.listdir(path):
+            if not entry.startswith('.'):
+                names.add(entry)
+        return names
+    for root, dirnames, _files in os.walk(path):
+        for d in dirnames:
+            if os.path.isfile(os.path.join(root, d, 'SKILL.md')):
+                names.add(d)
+    return names
+
+
+def skill_listing_settings(cwd):
+    """Write <cwd>/.claude/skill-listing.settings.json marking every non-core skill
+    name-only (listed by name, no description) and return its path.
+
+    Config: $DEVFLOW_HOME/data/scaffolding/skill-listing.json. Returns None when the
+    config is missing, invalid or not enabled, or on any failure. Never raises."""
+    try:
+        cfg_path = os.path.join(DEVFLOW_HOME, 'data', 'scaffolding', 'skill-listing.json')
+        try:
+            with open(cfg_path, encoding='utf-8') as f:
+                cfg = json.load(f)
+        except Exception as e:
+            debug(f"skill listing: skipped ({type(e).__name__} reading config)")
+            return None
+        if not isinstance(cfg, dict) or cfg.get('enabled') is not True:
+            debug("skill listing: skipped (config not enabled)")
+            return None
+        core = {n for n in (cfg.get('core') or []) if isinstance(n, str)}
+        names = set()
+        names |= _skill_dir_names(os.path.join(DEVFLOW_HOME, 'data', 'skills'), recursive=True)
+        names |= _skill_dir_names(os.path.join(os.path.expanduser('~'), '.claude', 'skills'))
+        names |= _skill_dir_names(os.path.join(cwd, '.claude', 'skills'))
+        names |= {n for n in (cfg.get('extraNames') or []) if isinstance(n, str) and n}
+        overrides = {n: 'name-only' for n in sorted(names - core)}
+        claude_dir = os.path.join(cwd, '.claude')
+        os.makedirs(claude_dir, exist_ok=True)
+        target = os.path.join(claude_dir, 'skill-listing.settings.json')
+        tmp = f"{target}.{os.getpid()}.tmp"
+        try:
+            with open(tmp, 'w', encoding='utf-8') as f:
+                json.dump({'skillOverrides': overrides}, f, indent=1)
+            os.replace(tmp, target)
+        except Exception:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            raise
+        debug(f"skill listing: {len(overrides)} skills name-only -> {target}")
+        return target
+    except Exception as e:
+        debug(f"skill listing: skipped ({type(e).__name__}: {e})")
+        return None
+
+
+def with_skill_listing_settings(claude_args, cwd):
+    """claude_args plus --settings <skill-listing file>, unless --settings is already
+    present or the feature is off. resume_args() keeps the flag (it only drops
+    session-selection flags)."""
+    try:
+        if any(a == '--settings' or a.startswith('--settings=') for a in claude_args):
+            return claude_args
+        path = skill_listing_settings(cwd)
+        if path:
+            return list(claude_args) + ['--settings', path]
+    except Exception:
+        pass
+    return claude_args
 
 # Linux caps a single argv string at 128 KB (MAX_ARG_STRLEN). A large role prompt
 # passed inline as --append-system-prompt made pexpect.spawn die with
@@ -125,6 +209,16 @@ except ImportError:  # ships next to this script; a stray copy without it only l
     def format_reply_context(reply_to):
         return ""
 
+try:
+    from skill_router_hint import SkillHintClient
+except ImportError:  # ships next to this script; a stray copy without it only loses the skill hint
+    class SkillHintClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def hint_for(self, message_id):
+            return ""
+
 # Configuration
 DEVFLOW_URL = __import__("os").environ.get("DEVFLOW_URL", "http://localhost:3000").rstrip("/")
 API_BASE = f"{DEVFLOW_URL}/api/collab"
@@ -154,7 +248,8 @@ def _stored_secret(name):
             os.environ.get("DEVFLOW_HOME") or os.path.join(os.path.expanduser("~"), "DevFlow"), ".AppData", "secrets.json")
         with open(path, encoding="utf-8") as handle:
             value = json.load(handle).get(name, "")
-        return value if isinstance(value, str) else ""
+        # An enc:v1: value is encrypted at rest (lib/secret-vault.ts); only the app can open it, so it is not a usable key here.
+        return value if isinstance(value, str) and not value.startswith("enc:") else ""
     except (OSError, ValueError, AttributeError):
         return ""
 
@@ -175,6 +270,8 @@ def _use_stored_api_key():
 
 # Debug log
 DEBUG_LOG = "/tmp/collab-claude-debug.log"
+# Longest inject_message waits for Claude's start-up questions to be answered. Normal start-up settles in 2-10 s.
+STARTUP_SETTLE_WAIT = 20.0
 
 COLLAB_RESPONSE_ACTION_RE = re.compile(
     r'["\']action["\']\s*:\s*["\']collab\.(?:message|cross_channel_message)["\']'
@@ -274,6 +371,19 @@ POINTER_DIR = os.path.join('.session-scratch', 'inbox')
 _CC_SOURCE_NAME = re.compile(r"^Source channel: (.+?) \(`([0-9a-fA-F-]{8,64})`\)", re.M)
 _CC_SENDER = re.compile(r"^Sender: (.+?) \(`", re.M)
 _CC_BODY_MARKER = "Original cross-channel message:\n"
+
+
+_CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
+
+
+ENTER_FAILURE_LIMIT = 5
+
+
+def strip_control_chars(text):
+    """Replace every control byte except newline and tab with a space. Typed into the TUI, a CR submits the message early and ESC
+    starts a key sequence, so whatever follows would reach Claude as a bare prompt or slash command with no channel header
+    (audit cj-20261028-083123-465c, finding 1)."""
+    return _CONTROL_CHARS.sub(' ', text) if isinstance(text, str) else text
 
 
 def needs_pointer(content):
@@ -383,6 +493,8 @@ class CollabClaudeWrapper:
         self.last_cpu_times = {}  # Track CPU times for process tree to detect thinking
         # Deferred Enter mechanism - send text first, Enter later when idle
         self.pending_enter = False  # True if text was sent but Enter not yet
+        self._enter_failures = 0  # consecutive failed deferred-Enter sends; the text is rolled back after ENTER_FAILURE_LIMIT
+        self._buffer_msg_ids = []  # every message id typed into the input box and not yet submitted with Enter
         self.pending_mark_read = False  # True if mark_read should fire after Claude finishes processing
         self.pending_mark_read_timestamp = None  # Timestamp of the message being processed
         self.pending_enter_time = 0  # When text was sent
@@ -422,6 +534,10 @@ class CollabClaudeWrapper:
         self._child_write_lock = threading.Lock()
         # Push-wake: SSE thread signals poll thread to wake immediately on new message
         self._message_event = threading.Event()
+        # Clear from each spawn until that Claude's start-up questions are answered (D1, 2026-10-31). Set while no Claude
+        # has been started, because then no question can be on screen.
+        self._startup_settled = threading.Event()
+        self._startup_settled.set()
         # JSONL transcript state reader (Sprint 38 — idle override)
         self._transcript_path: str | None = None  # Cached path to JSONL transcript
         self._jsonl_check_count = 0  # Counter for sampling debug logs
@@ -529,6 +645,8 @@ class CollabClaudeWrapper:
                 return
             self.injected_message_ids.add(msg_id)
             self._dedup_order.append(msg_id)
+            if msg_id not in self._buffer_msg_ids:
+                self._buffer_msg_ids = (self._buffer_msg_ids + [msg_id])[-50:]
             while len(self._dedup_order) > self._dedup_max_ids:
                 old = self._dedup_order.pop(0)
                 self.injected_message_ids.discard(old)
@@ -552,6 +670,18 @@ class CollabClaudeWrapper:
                 pass
             self._dedup_dirty = True
         self._maybe_persist_dedup()
+
+    def _rollback_buffered_ids(self, reason):
+        """Text typed but never submitted is lost with the buffer: forget every message id that went into it (not just the last), so the
+        inbox does not mark them read and the catch-up delivers them again. Returns how many were rolled back."""
+        with self._dedup_lock:
+            ids, self._buffer_msg_ids = list(self._buffer_msg_ids), []
+        for msg_id in ids:
+            if msg_id in self.injected_message_ids:
+                self._untrack_injected_id(msg_id)
+                debug(f"Removed {msg_id[:8]} from injected_message_ids ({reason})")
+                self.log_delivery_failure(msg_id, reason)
+        return len(ids)
 
     def _requeue_failed_inject(self, msg):
         """Schedule a failed inject for retry with linear backoff (5s, 10s).
@@ -781,7 +911,7 @@ class CollabClaudeWrapper:
             return
         now = time.monotonic()
         try:
-            with open(path, 'r') as f:
+            with open(path, 'r', errors='replace') as f:
                 if self._plan_mode_tail_byte > 0:
                     f.seek(self._plan_mode_tail_byte - 1)
                     if f.read(1) != '\n':
@@ -1044,27 +1174,77 @@ class CollabClaudeWrapper:
     # ignores the provisioned enableAllProjectMcpServers and asks instead. Its
     # servers are all ticked by default; Enter on a server would untick it, so
     # only "Enable selected" may receive Enter (LaptopProbe, 2026-10-02).
+    # "Try the new fullscreen renderer?" is normally answered in the agent's settings before launch
+    # (lib/claude-first-run.ts), so it does not appear. This is the safety net if a Claude version shows
+    # it anyway: pick "Not now". "Yes, try it" is highlighted by default, and its Enter would eat the
+    # hello and relaunch Claude without the wrapper's arguments (BUG-51, 2026-10-30).
     STARTUP_DIALOGS = (
         ('Yes, I trust this folder', 'Yes, I trust this folder'),
         ('Yes, allow external imports', 'Yes, allow external imports'),
         ('new MCP servers found in this project', 'Enable selected'),
+        ('Try the new fullscreen renderer', 'Not now'),
     )
+
+    # The options each start-up question shows. Used only to tell a waiting question from an answered one.
+    STARTUP_DIALOG_OPTIONS = {
+        'Yes, I trust this folder': ('Yes, I trust this folder', 'No, exit'),
+        'Yes, allow external imports': ('Yes, allow external imports', 'No, disable external imports'),
+        'new MCP servers found in this project': ('Enable selected',),
+        'Try the new fullscreen renderer': ('Yes, try it', 'Not now'),
+    }
+
+    def _startup_dialog_waiting(self, pane):
+        return any(
+            marker in pane and any(self._option_highlighted(pane, option) for option in options)
+            for marker, options in self.STARTUP_DIALOG_OPTIONS.items()
+        )
 
     @staticmethod
     def _option_highlighted(pane, option):
         return any('❯' in line and option in line for line in pane.splitlines())
 
+    def _pane_since_session_ready(self, pane):
+        """Return only the pane text written for the CURRENT Claude. After a relaunch in the same tmux pane the previous
+        Claude's "bypass permissions on" footer is still on screen; treating it as "startup already finished" makes the
+        handler quit and leaves the new Claude's question unanswered (BUG-52). The wrapper prints
+        "[Collab] Session ready (PID <pid>)" once per spawn, just before this handler starts, so anything below its last
+        occurrence belongs to this Claude. The previous spawn's marker carries the old PID, so it never matches. If this
+        spawn's marker is not in view (scrolled off), fall back to the whole capture — no worse than before."""
+        marker = "Session ready (PID %s)" % self.claude_pid
+        lines = pane.splitlines()
+        for i in range(len(lines) - 1, -1, -1):
+            if marker in lines[i]:
+                return "\n".join(lines[i + 1:])
+        return pane
+
     def _accept_startup_dialogs(self, timeout=90.0):
+        """Answer the start-up questions, then let message injection begin. Text typed while a question is on screen
+        is eaten by it: Heimdall's hello was typed into "Allow external CLAUDE.md file imports?" 1 s before this handler
+        pressed Enter on it, and was lost (D1, README trial 2026-10-31). inject_message waits for _startup_settled."""
+        started = time.time()
+        try:
+            self._answer_startup_dialogs(timeout)
+        finally:
+            self._startup_settled.set()
+            self._message_event.set()  # wake the poll loop so a waiting hello goes in at once
+            debug(f"Startup: settled after {time.time() - started:.1f}s; channel messages may be typed now")
+
+    def _answer_startup_dialogs(self, timeout):
         """Accept the folder-trust and CLAUDE.md external-imports dialogs for this
         agent's own workspace. Moves the selection to Yes and presses Enter only
-        once Yes is highlighted; stops when the prompt is ready or on timeout."""
+        once Yes is highlighted; stops when the prompt is ready or on timeout.
+        Looks only at output from the current Claude, so a stale footer left by a
+        previous Claude in the same pane cannot end it early (BUG-52)."""
         if not self.tmux_pane_target:
             return
         workspace = os.path.realpath(os.getcwd())
         deadline = time.time() + timeout
         while time.time() < deadline and self.running:
-            pane = self._capture_tmux_pane(lines=60)
-            if 'bypass permissions' in pane or '? for shortcuts' in pane:
+            pane = self._pane_since_session_ready(self._capture_tmux_pane(lines=80))
+            # The footer ends start-up only when no question is still waiting: a question drawn above the footer would
+            # otherwise get the hello typed into it (cloud review 31 Oct 2026). A question counts as waiting while one of
+            # its options carries the selection cursor; an answered one stays on screen without it, and must not be pressed.
+            if ('bypass permissions' in pane or '? for shortcuts' in pane) and not self._startup_dialog_waiting(pane):
                 return
             for marker, highlighted in self.STARTUP_DIALOGS:
                 if marker not in pane:
@@ -1076,7 +1256,7 @@ class CollabClaudeWrapper:
                     subprocess.run(['tmux', 'send-keys', '-t', self.tmux_pane_target, 'Down'],
                                    capture_output=True, timeout=5)
                     time.sleep(0.5)
-                    pane = self._capture_tmux_pane(lines=60)
+                    pane = self._pane_since_session_ready(self._capture_tmux_pane(lines=80))
                 if self._option_highlighted(pane, highlighted):
                     subprocess.run(['tmux', 'send-keys', '-t', self.tmux_pane_target, 'Enter'],
                                    capture_output=True, timeout=5)
@@ -1112,9 +1292,9 @@ class CollabClaudeWrapper:
         url = f"{API_BASE}{endpoint}"
         try:
             if method == "GET":
-                req = urllib.request.Request(url)
+                req = devflow_auth.request(url)
             else:
-                req = urllib.request.Request(
+                req = devflow_auth.request(
                     url,
                     data=json.dumps(data).encode('utf-8'),
                     headers={'Content-Type': 'application/json'},
@@ -1122,9 +1302,32 @@ class CollabClaudeWrapper:
                 )
             with urllib.request.urlopen(req, timeout=5) as resp:
                 return json.loads(resp.read().decode('utf-8'))
+        except urllib.error.HTTPError as e:
+            # Keep DevFlow's answer: a 409 {"duplicate": true} tells this copy to stop (lib/wrapper-holders.ts).
+            try:
+                body = json.loads(e.read().decode('utf-8'))
+            except Exception:
+                body = {}
+            debug(f"API error: HTTP {e.code} {body.get('error', '')}")
+            return {**(body if isinstance(body, dict) else {}), "error": body.get("error", str(e)) if isinstance(body, dict) else str(e), "_status": e.code}
         except Exception as e:
             debug(f"API error: {e}")
             return {"error": str(e)}
+
+    def stop_as_duplicate(self, result):
+        """DevFlow says another copy of this agent already runs (on this or the other machine). Stop this copy for good: no leave (the
+        other copy owns the seat, and leave would remove it), no Claude restart (task 0b828d01)."""
+        if getattr(self, "duplicate_stop", False):
+            return
+        self.duplicate_stop = True
+        print(f"\033[31m[Collab] {result.get('error') or 'Another copy of this agent is already running.'} Stopping this copy.\033[0m", file=sys.stderr)
+        self.joined = False
+        self.running = False
+        try:
+            if self.child and self.child.isalive():
+                self.child.terminate(force=True)
+        except Exception as e:
+            debug(f"Could not stop Claude after the duplicate refusal: {e}")
 
     def _resolve_transcript(self) -> str | None:
         """Resolve the JSONL transcript path, re-resolving on rotation.
@@ -1297,7 +1500,9 @@ class CollabClaudeWrapper:
         if activity_detail is not None:
             payload["activityDetail"] = activity_detail
         payload["host"] = self._host_report()
-        self.api_call("", "POST", payload)
+        result = self.api_call("", "POST", payload)
+        if isinstance(result, dict) and result.get("duplicate"):
+            self.stop_as_duplicate(result)
 
     def _host_report(self):
         """Self-reported host facts so the server need not inspect this machine."""
@@ -1339,10 +1544,12 @@ class CollabClaudeWrapper:
                     "cwd": os.getcwd(),
                     "wrapperPid": self.wrapper_pid
                 }, f)
-            print(f"\033[32m[Collab] Session ready (PID {self.claude_pid}) - can be added to channels via DevFlow UI\033[0m", file=sys.stderr)
             debug(f"Session registered: {self.participant_name} (Claude PID: {self.claude_pid})")
         except Exception as e:
             print(f"\033[33m[Collab] Warning: {e}\033[0m", file=sys.stderr)
+        # Printed even when the ready file could not be written: the start-up handler reads only the pane text below this
+        # line, so without it a previous Claude's footer could end start-up early (BUG-52; cloud review 31 Oct 2026).
+        print(f"\033[32m[Collab] Session ready (PID {self.claude_pid}) - can be added to channels via DevFlow UI\033[0m", file=sys.stderr)
 
     def cleanup_stale_sessions(self):
         """Remove stale session/ready/invite files for PIDs that no longer exist.
@@ -1437,7 +1644,7 @@ class CollabClaudeWrapper:
     def join_channel(self, channel_id, channel_name=None, force=False):
         self.channel_id = channel_id
         if channel_name:
-            self.channel_name = channel_name  # Store for OTEL and Pulse reporting
+            self.channel_name = channel_name  # Stored for logging
         payload = {
             "action": "join",
             "channelId": channel_id,
@@ -1451,7 +1658,11 @@ class CollabClaudeWrapper:
         }
         if force:
             payload["force"] = True
+        payload["host"] = self._host_report()            # lets DevFlow refuse a second copy of this agent before it joins
         result = self.api_call("", "POST", payload)
+        if result.get("duplicate"):
+            self.stop_as_duplicate(result)
+            return
         if result.get("success"):
             self.participant_id = result.get("participantId")
             self.joined = True
@@ -1631,7 +1842,7 @@ class CollabClaudeWrapper:
             # Fetch role name from roles API
             role_id = my_entry["roleId"]
             try:
-                req = urllib.request.Request(f"{DEVFLOW_URL}/api/roles")
+                req = devflow_auth.request(f"{DEVFLOW_URL}/api/roles")
                 with urllib.request.urlopen(req, timeout=5) as resp:
                     roles_result = json.loads(resp.read().decode('utf-8'))
                 if roles_result.get("success"):
@@ -1665,7 +1876,7 @@ class CollabClaudeWrapper:
             if extra:
                 payload.update(extra)
             data = json.dumps(payload).encode()
-            req = urllib_req.Request(
+            req = devflow_auth.request(
                 f"{DEVFLOW_URL}/api/collab/delivery-status",
                 data=data,
                 headers={"Content-Type": "application/json"},
@@ -1716,7 +1927,12 @@ class CollabClaudeWrapper:
             self.inject_message("System", f"You have returned to your home channel '{home}' after visiting '{visited}'. Resume your normal work here.")
 
     def check_forward_queue(self):
-        """Check for cross-channel forwarded messages and inject them."""
+        """Check for cross-channel forwarded messages and inject them, one at a time.
+
+        Only a message that was injected (or is already known) leaves the queue; the rest are written back, so a message that arrives
+        while the user is typing or Enter is pending waits for the next tick instead of being thrown away with the file
+        (audit cj-20261028-083123-465c, finding 4). The read-and-rewrite holds an flock so a concurrent append is not lost.
+        """
         if not self.participant_id:
             return
         safe_id = ''.join(c if c.isalnum() or c in ('_', '-') else '_' for c in self.participant_id)[:50]
@@ -1724,33 +1940,49 @@ class CollabClaudeWrapper:
         if not os.path.exists(queue_file):
             return
         try:
-            with open(queue_file, 'r') as f:
-                queue = json.load(f)
-            messages = queue.get("messages", [])
-            if not messages:
-                return
-            # Clear queue immediately to prevent re-processing
-            with open(queue_file, 'w') as f:
-                json.dump({"participantId": self.participant_id, "messages": [], "lastUpdated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}, f)
-            debug(f"Draining {len(messages)} forwarded message(s)")
-            for msg in messages:
-                msg_id = msg.get("id", "")
-                with self._dedup_lock:
-                    if msg_id and msg_id in self.injected_message_ids:
+            import fcntl
+            fd = os.open(queue_file, os.O_RDWR | os.O_NOFOLLOW)
+        except OSError as e:
+            debug(f"Forward queue open error: {e}")
+            return
+        try:
+            with os.fdopen(fd, 'r+') as f:
+                fcntl.flock(f, fcntl.LOCK_EX)
+                raw = f.read()
+                queue = json.loads(raw) if raw.strip() else {}
+                messages = queue.get("messages", [])
+                if not messages:
+                    return
+                remaining = []
+                injected_one = False
+                for msg in messages:
+                    msg_id = msg.get("id", "")
+                    with self._dedup_lock:
+                        if msg_id and msg_id in self.injected_message_ids:
+                            continue   # already delivered: drop it
+                    if injected_one:
+                        remaining.append(msg)
                         continue
-                sender = msg.get("from", "Unknown")
-                content = msg.get("content", "")
-                source_channel = msg.get("sourceChannelName", "unknown")
-                # Prefix with forwarding context so the agent knows it's from another channel
-                forwarded_content = f"[Forwarded from #{source_channel}] {content}"
-                if self.child and self.child.isalive() and not self.pending_enter:
-                    idle_time = time.time() - self.last_keystroke
-                    if idle_time >= IDLE_THRESHOLD:
-                        if self.inject_message(sender, forwarded_content):
-                            if msg_id:
-                                self._track_injected_id(msg_id)
-                            debug(f"Injected forwarded message from {sender} (#{source_channel})")
-                            break  # One message at a time
+                    sender = msg.get("from", "Unknown")
+                    content = msg.get("content", "")
+                    source_channel = msg.get("sourceChannelName", "unknown")
+                    # Prefix with forwarding context so the agent knows it's from another channel
+                    forwarded_content = f"[Forwarded from #{source_channel}] {content}"
+                    if (self.child and self.child.isalive() and not self.pending_enter
+                            and time.time() - self.last_keystroke >= IDLE_THRESHOLD
+                            and self.inject_message(sender, forwarded_content)):
+                        if msg_id:
+                            self._track_injected_id(msg_id)
+                        debug(f"Injected forwarded message from {sender} (#{source_channel})")
+                        injected_one = True   # One message at a time; the rest stay queued
+                    else:
+                        remaining.append(msg)
+                if len(remaining) != len(messages):
+                    f.seek(0)
+                    f.truncate()
+                    json.dump({"participantId": self.participant_id, "messages": remaining,
+                               "lastUpdated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}, f)
+                    debug(f"Forward queue: {len(remaining)} message(s) still waiting")
         except Exception as e:
             debug(f"Forward queue check error: {e}")
 
@@ -2112,7 +2344,7 @@ class CollabClaudeWrapper:
             inject_iso = self.last_inject_time_iso
             for channel_id in channel_ids:
                 query = urllib.parse.urlencode({'channelId': channel_id, 'since': inject_iso, 'limit': 200})
-                with urllib.request.urlopen(f"{API_BASE}?{query}", timeout=5) as resp:
+                with urllib.request.urlopen(devflow_auth.request(f"{API_BASE}?{query}"), timeout=5) as resp:
                     data = json.loads(resp.read().decode('utf-8'))
                 messages = data.get('messages') if isinstance(data, dict) else None
                 if not isinstance(messages, list):
@@ -2181,14 +2413,24 @@ class CollabClaudeWrapper:
             debug(f"Name sync error: {e}")
         return False
 
+    def _skill_hint(self, msg_id):
+        """The skill-router hint line for this message, or ''. Shared by every runtime: scripts/skill_router_hint.py."""
+        client = getattr(self, '_skill_hint_client', None)
+        if client is None:
+            client = self._skill_hint_client = SkillHintClient(DEVFLOW_URL, getattr(self, 'participant_id', '') or '', log=debug)
+        return client.hint_for(msg_id)
+
     def _format_injection(self, sender, content, reply_to, ch, marker, msg_id):
         """Text to type for one channel message: the full message when short,
         otherwise a single-line pointer to a file holding the full message."""
+        sender, content, ch = strip_control_chars(sender), strip_control_chars(content), strip_control_chars(ch)
         header = f"[Channel message from {sender} in {ch}]"
         reply_line = format_reply_context(reply_to)  # names the full id of the message being answered
         if reply_line:
             header += f" {reply_line}"
-        full = f"{header}: {content}\n{marker}"
+        hint = self._skill_hint(msg_id)
+        hint_block = f"\n\n{hint}" if hint else ""
+        full = f"{header}: {content}{hint_block}\n{marker}"
         if not needs_pointer(content):
             return full
         try:
@@ -2197,7 +2439,8 @@ class CollabClaudeWrapper:
             debug(f"Pointer file write failed ({e}) — typing full message")
             return full
         debug(f"Long message ({len(content)} chars) delivered as pointer: {path}")
-        return build_pointer_line(header, content, marker, path)
+        pointer = build_pointer_line(header, content, marker, path)
+        return f"{pointer} {hint}" if hint else pointer
 
     def inject_message(self, sender, content, reply_to=None, mentions=None, channel_id=None, msg_timestamp=None, msg_id=None):
         """Inject a message into Claude's input using pexpect (deferred Enter)
@@ -2220,6 +2463,10 @@ class CollabClaudeWrapper:
             return False
         if not self.child or not self.child.isalive():
             debug("Cannot inject - child not alive")
+            return False
+        # Text typed while a start-up question is on screen is eaten by it, so wait for the handler (D1).
+        if not self._startup_settled.wait(timeout=STARTUP_SETTLE_WAIT):
+            debug("Inject: a start-up question is still on screen; message left for retry")
             return False
 
         # A hearing connection check is answered by the wrapper itself when switched on; Claude never sees it.
@@ -2485,10 +2732,9 @@ class CollabClaudeWrapper:
             if not self.child or not self.child.isalive():
                 # Child died before Enter was sent — message text is lost from the buffer.
                 # Remove from dedup set so it can be re-delivered after Claude respawns.
-                if self.last_injected_msg_id and self.last_injected_msg_id in self.injected_message_ids:
-                    self._untrack_injected_id(self.last_injected_msg_id)
-                    debug(f"Removed {self.last_injected_msg_id[:8]} from injected_message_ids (child died before Enter)")
-                    self.log_delivery_failure(self.last_injected_msg_id, "child_died")
+                if self.last_injected_msg_id and self.last_injected_msg_id in self.injected_message_ids and self.last_injected_msg_id not in self._buffer_msg_ids:
+                    self._buffer_msg_ids = self._buffer_msg_ids + [self.last_injected_msg_id]
+                self._rollback_buffered_ids("child_died")
                 # Rewind poll cursor so catch-up polling returns the lost message
                 if self.pending_mark_read_timestamp:
                     from datetime import datetime, timezone as _tz_recovery
@@ -2520,8 +2766,16 @@ class CollabClaudeWrapper:
             if prompt or time_since_output >= self.enter_idle_threshold or time_since_inject >= max_wait:
                 try:
                     debug(f"Sending deferred Enter (idle: {time_since_output:.2f}s, waited: {time_since_inject:.2f}s, prepared at once: {prompt})")
-                    if self._tmux_send('', enter=True):  # Thread-safe Enter via tmux (Task 2)
-                        self._stamp_prepared()
+                    if not self._tmux_send('', enter=True):  # Thread-safe Enter via tmux (Task 2)
+                        # The text is still in the input box, unsubmitted. Keep the Enter pending and try again on the next tick; only
+                        # after ENTER_FAILURE_LIMIT failures give the messages back (the except branch below).
+                        self._enter_failures += 1
+                        if self._enter_failures < ENTER_FAILURE_LIMIT:
+                            return False
+                        raise RuntimeError(f"Enter could not be sent after {self._enter_failures} attempts")
+                    self._enter_failures = 0
+                    self._buffer_msg_ids = []  # submitted: these ids are now with Claude
+                    self._stamp_prepared()
                     self.pending_enter = False
                     self._prepared_enter = False
                     # Start JSONL ingestion verification (Sprint 45 T2.1)
@@ -2553,10 +2807,11 @@ class CollabClaudeWrapper:
                     return True
                 except Exception as e:
                     debug(f"Error sending deferred Enter: {e}")
-                    # Enter failed — remove from dedup for re-delivery
-                    if self.last_injected_msg_id and self.last_injected_msg_id in self.injected_message_ids:
-                        self._untrack_injected_id(self.last_injected_msg_id)
-                        debug(f"Removed {self.last_injected_msg_id[:8]} from injected_message_ids (Enter failed)")
+                    # Enter failed — remove every message in the buffer from dedup for re-delivery
+                    if self.last_injected_msg_id and self.last_injected_msg_id in self.injected_message_ids and self.last_injected_msg_id not in self._buffer_msg_ids:
+                        self._buffer_msg_ids = self._buffer_msg_ids + [self.last_injected_msg_id]
+                    self._rollback_buffered_ids("enter_failed")
+                    self._enter_failures = 0
                     self.pending_enter = False
                     self._prepared_submitted = []  # ingestion uncertain: never stamped
                     self._prepared_enter = False
@@ -2700,16 +2955,20 @@ class CollabClaudeWrapper:
                         if elapsed > 15:
                             debug(f"WATCHDOG: Pending Enter stuck for {elapsed:.1f}s — force-sending Enter")
                             try:
-                                if self._tmux_send('', enter=True):  # Thread-safe via tmux (Task 2)
-                                    self._stamp_prepared()
+                                if not self._tmux_send('', enter=True):  # Thread-safe via tmux (Task 2)
+                                    raise RuntimeError("Enter could not be sent")
+                                self._buffer_msg_ids = []
+                                self._enter_failures = 0
+                                self._stamp_prepared()
                                 self.pending_enter = False
                                 self._prepared_enter = False
                             except Exception as e:
                                 debug(f"WATCHDOG: Failed to send Enter: {e}")
                                 # Same recovery as check_pending_enter — remove from dedup for re-delivery
-                                if self.last_injected_msg_id and self.last_injected_msg_id in self.injected_message_ids:
-                                    self._untrack_injected_id(self.last_injected_msg_id)
-                                    debug(f"WATCHDOG: Removed {self.last_injected_msg_id[:8]} from injected_message_ids")
+                                if self.last_injected_msg_id and self.last_injected_msg_id in self.injected_message_ids and self.last_injected_msg_id not in self._buffer_msg_ids:
+                                    self._buffer_msg_ids = self._buffer_msg_ids + [self.last_injected_msg_id]
+                                self._rollback_buffered_ids("watchdog_enter_failed")
+                                self._enter_failures = 0
                                 self.pending_enter = False
             except Exception as e:
                 debug(f"WATCHDOG error: {e}")
@@ -2744,7 +3003,7 @@ class CollabClaudeWrapper:
                 headers["Last-Event-ID"] = str(self.sse_last_event_id)
 
             try:
-                req = urllib.request.Request(url, headers=headers)
+                req = devflow_auth.request(url, headers=headers)
                 resp = urllib.request.urlopen(req, timeout=90)
                 self._sse_resp = resp
                 self.sse_connected = True
@@ -2783,7 +3042,7 @@ class CollabClaudeWrapper:
                             except Exception:
                                 if self.last_poll_time:
                                     poll_url += f"&since={self.last_poll_time}"
-                        poll_req = urllib.request.Request(poll_url)
+                        poll_req = devflow_auth.request(poll_url)
                         poll_resp = urllib.request.urlopen(poll_req, timeout=5)
                         poll_data = json.loads(poll_resp.read().decode('utf-8'))
                         catchup_msgs = poll_data.get('messages', [])
@@ -3030,6 +3289,8 @@ class CollabClaudeWrapper:
                             self.pending_mark_read = True
                             self.pending_mark_read_timestamp = _qm_ts
                             _drained += 1
+                        else:
+                            self._requeue_failed_inject(_qm)
                     if _drained > 0:
                         debug(f"Fast drain: injected {_drained} message(s) while processing")
 
@@ -3322,7 +3583,7 @@ class CollabClaudeWrapper:
                             if catchup_since:
                                 catchup_url += f"&since={catchup_since}"
                             cu_resp = urllib.request.urlopen(
-                                urllib.request.Request(catchup_url), timeout=5
+                                devflow_auth.request(catchup_url), timeout=5
                             )
                             cu_data = json.loads(cu_resp.read().decode('utf-8'))
                             queued = 0
@@ -3479,42 +3740,14 @@ class CollabClaudeWrapper:
             return 1
 
         _use_stored_api_key()
+        # Skill listing slimming: set before the first spawn; resume_args() keeps it.
+        self.claude_args = with_skill_listing_settings(self.claude_args, os.getcwd())
         debug(f"Starting Claude: {CLAUDE_BINARY} {self.claude_args}")
 
         # Disable auto-updater: agents spawning simultaneously all trigger update
         # checks, causing a thundering herd on the network + CPU. Updates should
         # be done manually via `claude update` when no agents are running.
         os.environ.setdefault('DISABLE_AUTOUPDATER', '1')
-
-        # Inject OTEL telemetry env vars so Claude Code reports to TokenPulse.
-        # pexpect.spawn inherits os.environ, so setting here is sufficient.
-        # Use setdefault so we don't override vars already exported by the shell.
-        os.environ.setdefault('CLAUDE_CODE_ENABLE_TELEMETRY', '1')
-        os.environ.setdefault('OTEL_METRICS_EXPORTER', 'otlp')
-        os.environ.setdefault('OTEL_LOGS_EXPORTER', 'otlp')
-        os.environ.setdefault('OTEL_EXPORTER_OTLP_PROTOCOL', 'grpc')
-        os.environ.setdefault('OTEL_EXPORTER_OTLP_ENDPOINT', 'http://localhost:4317')
-        os.environ.setdefault('OTEL_LOG_TOOL_DETAILS', '1')
-        os.environ.setdefault('OTEL_METRICS_INCLUDE_SESSION_ID', 'true')
-        # Always set OTEL_RESOURCE_ATTRIBUTES from current CWD + channel name.
-        # Do not rely on any pre-existing env value — it may have a stale project name.
-        if self.participant_name:
-            # Derive project: handle Team/{agent} directory structure
-            # e.g. /home/user/Pulse/Team/an agent -> project=Pulse
-            _cwd_parts = os.getcwd().replace('\\', '/').split('/')
-            _project = get_project_name()  # fallback (basename or package.json name)
-            if 'Team' in _cwd_parts:
-                _team_idx = len(_cwd_parts) - 1 - _cwd_parts[::-1].index('Team')
-                if _team_idx > 0:
-                    _project = _cwd_parts[_team_idx - 1]
-            # Prefer resolved channel name over raw UUID
-            _channel = self.channel_name or self.channel_id or ''
-            os.environ['OTEL_RESOURCE_ATTRIBUTES'] = (
-                f"agent.name={self.participant_name},"
-                f"project={_project},"
-                f"collab.channel={_channel}"
-            )
-            debug(f"Set OTEL_RESOURCE_ATTRIBUTES: {os.environ['OTEL_RESOURCE_ATTRIBUTES']}")
 
         try:
             MAX_RESTARTS = 50
@@ -3547,6 +3780,8 @@ class CollabClaudeWrapper:
             # Join channel once — persists across Claude restarts.
             if self.channel_id:
                 self.join_channel(self.channel_id)
+                if getattr(self, "duplicate_stop", False):
+                    return 3                        # another copy owns this agent: never start Claude here (task 0b828d01)
                 # Inbox catch-up: read any messages the server wrote to disk that
                 # SSE/polling missed (e.g. crash recovery, API saturation).
                 # Queues into sse_message_queue for the normal processing pipeline.
@@ -3625,6 +3860,7 @@ class CollabClaudeWrapper:
                 spawn_kwargs = {'encoding': 'utf-8', 'timeout': None}
                 if spawn_env is not None:
                     spawn_kwargs['env'] = spawn_env
+                self._startup_settled.clear()  # no channel text until this Claude's start-up questions are answered
                 self.child = pexpect.spawn(CLAUDE_BINARY, spawn_args, **spawn_kwargs)
                 # Disable pexpect's 50ms sleep-before-send (Task 3 — delaybeforesend=0)
                 self.child.delaybeforesend = 0
@@ -3701,6 +3937,9 @@ class CollabClaudeWrapper:
                     if not resume_session_id:
                         debug("Abnormal exit but no resumable transcript — fresh session")
 
+                if getattr(self, "duplicate_stop", False):
+                    debug("Another copy of this agent runs elsewhere: not restarting Claude")
+                    break
                 if restart_count >= MAX_RESTARTS:
                     debug(f"Max restarts ({MAX_RESTARTS}) reached, wrapper exiting")
                     break
@@ -3708,6 +3947,8 @@ class CollabClaudeWrapper:
                 # Reset state before respawn — prevents stale flags from previous session
                 self.is_processing = False
                 with self._enter_lock:
+                    if self.pending_enter:
+                        self._rollback_buffered_ids("respawn_before_enter")
                     self.pending_enter = False
                     self.pending_enter_time = 0
                 self.collab_response_sent = False
@@ -3749,7 +3990,7 @@ class CollabClaudeWrapper:
 
 def list_channels():
     try:
-        req = urllib.request.Request(f"{API_BASE}?action=list")
+        req = devflow_auth.request(f"{API_BASE}?action=list")
         with urllib.request.urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read().decode('utf-8'))
             channels = data.get("channels", [])
@@ -3794,13 +4035,20 @@ def main():
         except Exception as e:
             print(f"\033[33m[Collab] Warning: Could not read system prompt file: {e}\033[0m", file=sys.stderr)
     # channel-communication.md defers transport to "the current system or wrapper
-    # prompt"; this wrapper never stated it, so agents without an SG-1 startup
+    # prompt"; this wrapper never stated it, so agents without an the main project startup
     # rule answered in the terminal (Woolsey, 25 Sep 2026). State it for every
     # channel session.
     if args.channel:
         prompt_content = (TRANSPORT_PROMPT + "\n\n" + prompt_content).strip()
     if prompt_content:
         claude_args = system_prompt_args(prompt_content) + claude_args
+
+    # Return from the API runner to Max with the same conversation.
+    if args.channel and args.name:
+        from headless_session import consume
+        session = consume(args.name, args.channel)
+        if session:
+            claude_args = resume_args(claude_args, session)
 
     if args.list:
         list_channels()

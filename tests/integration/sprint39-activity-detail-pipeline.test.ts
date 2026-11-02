@@ -18,6 +18,9 @@ import { resolveActivityLabel } from '@/lib/activity-label';
 import { eventBus } from '@/lib/event-bus';
 import type { CollabChannelsData, CollabParticipant } from '@/lib/types';
 
+// The handler is called directly, outside the transaction mutateChannels opens, so saving is stubbed; the handler's change to the data is what is checked.
+vi.mock('@/lib/collab-channel-store', async (orig) => ({ ...(await orig<typeof import('@/lib/collab-channel-store')>()), saveChannels: vi.fn() }));
+
 // Mock writeData
 vi.mock('@/app/api/collab/_collab-shared', () => ({
   writeData: vi.fn().mockResolvedValue(undefined),

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+vi.mock('@/lib/collab-channel-store', async (orig) => ({ ...(await orig<typeof import('@/lib/collab-channel-store')>()), saveChannels: vi.fn() }));      // called directly, outside the transaction mutateChannels opens
 import { handleUpdateSettings } from '@/app/api/collab/_handlers/settings';
 import type { CollabChannelsData, CollabParticipant, CollabParticipantType } from '@/lib/types';
 

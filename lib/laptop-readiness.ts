@@ -81,7 +81,8 @@ export async function laptopReadiness(deps: ReadinessDeps = defaultReadinessDeps
 
 /** The roster add/update guard. Returns a refusal to send back, or null to carry on. */
 export async function refuseRunLocationChange(
-  body: { channelId?: unknown; agentId?: unknown; runLocation?: unknown; spawnMode?: unknown },
+  /** assumeStopped: judge the move as it will be once the caller has stopped the agent (the fleet restart stops it first and applies the change on the stopped agent). Never set by the dialog or roster.update. */
+  body: { channelId?: unknown; agentId?: unknown; runLocation?: unknown; spawnMode?: unknown; assumeStopped?: boolean },
   deps: ReadinessDeps = defaultReadinessDeps,
 ): Promise<Refusal | null> {
   const wanted = body.runLocation === 'server' ? 'server' : 'desktop';
@@ -93,7 +94,7 @@ export async function refuseRunLocationChange(
     const agent = data.channels.find(c => c.id === body.channelId)?.roster?.agents.find(a => a.id === body.agentId);
     if (!agent) return null;                              // the update handler reports "not found"
     current = agent.runLocation === 'server' ? 'server' : 'desktop';
-    status = agent.status;
+    status = body.assumeStopped ? 'stopped' : agent.status;
     spawnMode = body.spawnMode !== undefined ? body.spawnMode : agent.spawnMode;
   }
   const needsReadiness = wanted === 'server' && current !== 'server';

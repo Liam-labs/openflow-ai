@@ -46,10 +46,10 @@ const COLS: ColumnDef<FirewallPort>[] = [
         <div style={{ fontWeight: 500, fontSize: '12.5px' }}>
           {r.service}
           {r.runsIn && (
-            <span title={r.runsIn === 'wsl' ? 'Runs inside WSL' : 'Runs on Windows'} style={{ marginLeft: 6, padding: '0 6px', borderRadius: 999, fontSize: 10, color: '#7dd3fc', border: '1px solid rgba(125,211,252,0.35)' }}>{r.runsIn === 'wsl' ? 'WSL' : 'Windows'}</span>
+            <span title={r.runsIn === 'wsl' ? 'Runs inside WSL' : 'Runs on Windows'} style={{ marginLeft: 6, padding: '0 6px', borderRadius: 999, fontSize: 10, color: 'var(--tx-7dd3fc)', border: '1px solid rgba(125,211,252,0.35)' }}>{r.runsIn === 'wsl' ? 'WSL' : 'Windows'}</span>
           )}
           {r.registered === false && (
-            <span title="Nobody has named this port in the registry yet" style={{ marginLeft: 6, padding: '0 6px', borderRadius: 999, fontSize: 10, color: '#94a3b8', border: '1px solid rgba(148,163,184,0.35)' }}>Unregistered</span>
+            <span title="Nobody has named this port in the registry yet" style={{ marginLeft: 6, padding: '0 6px', borderRadius: 999, fontSize: 10, color: 'var(--tx-94a3b8)', border: '1px solid rgba(148,163,184,0.35)' }}>Unregistered</span>
           )}
         </div>
         {r.process && r.process !== r.service && (
@@ -65,7 +65,7 @@ const COLS: ColumnDef<FirewallPort>[] = [
     width: '100px',
     getValue: r => r.port,
     render: r => (
-      <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#60a5fa', fontSize: '12.5px' }}>
+      <span style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--tx-60a5fa)', fontSize: '12.5px' }}>
         {r.port}<span style={{ color: 'var(--muted)', fontWeight: 400 }}>/{r.proto}</span>
       </span>
     ),
@@ -75,7 +75,7 @@ const COLS: ColumnDef<FirewallPort>[] = [
     header: 'Listening on',
     sortable: true,
     getValue: r => r.bind,
-    render: r => <span style={{ fontSize: 12.5 }}>{describeBind(r.bind)}</span>,
+    render: r => <span style={{ display: 'block', minWidth: 130, fontSize: 12.5, overflowWrap: 'break-word' }}>{describeBind(r.bind)}</span>,
   },
   {
     key: 'exposure',
@@ -87,7 +87,7 @@ const COLS: ColumnDef<FirewallPort>[] = [
       <div style={{ display: 'grid', gap: 3, justifyItems: 'start' }}>
         <ExposureBadge exposure={r.exposure} how={r.how} tailnet={isTailnetOnly(r)} />
         {r.drift && (
-          <span title="The firewall lets in more than this port is meant for" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '1px 7px', borderRadius: 999, fontSize: 10.5, fontWeight: 600, color: '#fca5a5', background: 'rgba(239,68,68,0.14)', border: '1px solid rgba(239,68,68,0.4)' }}>
+          <span title="The firewall lets in more than this port is meant for" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '1px 7px', borderRadius: 999, fontSize: 10.5, fontWeight: 600, color: 'var(--tx-fca5a5)', background: 'rgba(239,68,68,0.14)', border: '1px solid rgba(239,68,68,0.4)' }}>
             <AlertTriangle size={10} /> Allows more than intended
           </span>
         )}
@@ -103,7 +103,7 @@ const COLS: ColumnDef<FirewallPort>[] = [
     getValue: r => (r.allowedFrom ?? []).join(' '),
     render: r => r.allowedFrom?.length
       ? (
-        <span style={{ fontSize: 12 }} title={r.allowedFrom.length > 2 ? r.allowedFrom.join('\n') : undefined}>
+        <span style={{ display: 'block', minWidth: 150, fontSize: 12, overflowWrap: 'break-word' }} title={r.allowedFrom.length > 2 ? r.allowedFrom.join('\n') : undefined}>
           {r.allowedFrom.slice(0, 2).join(', ')}
           {r.allowedFrom.length > 2 && <span style={{ color: 'var(--muted)' }}> +{r.allowedFrom.length - 2} more</span>}
         </span>
@@ -114,15 +114,15 @@ const COLS: ColumnDef<FirewallPort>[] = [
     key: 'note',
     header: 'Note',
     getValue: r => r.note ?? '',
-    render: r => <span style={{ fontSize: 11.5, color: 'var(--muted)' }}>{r.note ?? ''}</span>,
+    render: r => <span style={{ display: 'block', minWidth: 240, fontSize: 11.5, color: 'var(--muted)', overflowWrap: 'break-word' }}>{r.note ?? ''}</span>,
   },
 ];
 
 const CONTROL_STYLE: Record<ControlState, { color: string; label: string }> = {
-  ok: { color: '#22c55e', label: 'OK' },
-  warn: { color: '#f59e0b', label: 'Needs a look' },
-  off: { color: '#ef4444', label: 'Off' },
-  unknown: { color: '#94a3b8', label: 'Not checked' },
+  ok: { color: 'var(--tx-22c55e)', label: 'OK' },
+  warn: { color: 'var(--tx-f59e0b)', label: 'Needs a look' },
+  off: { color: 'var(--tx-ef4444)', label: 'Off' },
+  unknown: { color: 'var(--tx-94a3b8)', label: 'Not checked' },
 };
 
 function ControlIcon({ state }: { state: ControlState }) {
@@ -156,7 +156,7 @@ function ControlsStrip({ controls }: { controls: FirewallControl[] }) {
               aria-expanded={selected}
               onClick={() => setOpenId(selected ? null : c.id)}
               title={c.summary}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 8, fontSize: 12, cursor: 'pointer', color: 'inherit', background: selected ? `${color}22` : 'rgba(255,255,255,0.04)', border: `1px solid ${selected ? `${color}77` : `${color}40`}` }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 8, fontSize: 12, cursor: 'pointer', color: 'inherit', background: selected ? `${color}22` : 'rgba(var(--ink-ch), 0.04)', border: `1px solid ${selected ? `${color}77` : `${color}40`}` }}
             >
               <ControlIcon state={c.state} />{c.title}
             </button>
@@ -164,14 +164,14 @@ function ControlsStrip({ controls }: { controls: FirewallControl[] }) {
         })}
       </div>
       {open && (
-        <div style={{ marginTop: 8, padding: '10px 12px', borderRadius: 8, fontSize: 12.5, lineHeight: 1.45, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ marginTop: 8, padding: '10px 12px', borderRadius: 8, fontSize: 12.5, lineHeight: 1.45, background: 'rgba(var(--ink-ch), 0.03)', border: '1px solid rgba(var(--ink-ch), 0.08)' }}>
           <div style={{ fontWeight: 600, color: (CONTROL_STYLE[open.state] ?? CONTROL_STYLE.unknown).color }}>{(CONTROL_STYLE[open.state] ?? CONTROL_STYLE.unknown).label}</div>
           {open.summary && <p style={{ margin: '2px 0 0' }}>{open.summary}</p>}
           {open.how && <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>{open.how}</p>}
           {open.check && (
             <div style={{ marginTop: 8, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-              <code style={{ flex: 1, padding: '6px 8px', borderRadius: 6, fontSize: 11.5, background: 'rgba(0,0,0,0.35)', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{open.check}</code>
-              <button type="button" onClick={() => copy(open.check!)} title="Copy the command" aria-label="Copy the command" style={{ padding: 6, borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'inherit', cursor: 'pointer' }}>
+              <code style={{ flex: 1, padding: '6px 8px', borderRadius: 6, fontSize: 11.5, background: 'rgba(var(--shade-ch), 0.35)', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{open.check}</code>
+              <button type="button" onClick={() => copy(open.check!)} title="Copy the command" aria-label="Copy the command" style={{ padding: 6, borderRadius: 6, border: '1px solid rgba(var(--ink-ch), 0.15)', background: 'transparent', color: 'inherit', cursor: 'pointer' }}>
                 {copied ? <Check size={13} /> : <Copy size={13} />}
               </button>
             </div>
@@ -224,7 +224,7 @@ export function FirewallSection() {
     <div className="systems-section">
       <div className="systems-section__header">
         <div className="systems-section__header-left">
-          <ShieldCheck size={16} style={{ color: '#06b6d4', flexShrink: 0 }} />
+          <ShieldCheck size={16} style={{ color: 'var(--tx-06b6d4)', flexShrink: 0 }} />
           <h2 className="systems-section__title">Firewall</h2>
           {machine?.reachable && (
             <>
@@ -343,6 +343,7 @@ export function FirewallSection() {
                 data={rows}
                 rowKey={r => `${machine.id}-${r.proto}-${r.port}-${r.bind}`}
                 pageSize={30}
+                resetKey={`${machine.id}:${activeFilter}`}
                 initialSort={{ key: 'exposure', direction: 'asc' }}
                 emptyMessage="No listening ports."
               />
@@ -371,7 +372,7 @@ export function FirewallSection() {
                 <ul style={{ margin: '8px 0 0', padding: 0, listStyle: 'none', display: 'grid', gap: 6, maxHeight: 420, overflowY: 'auto' }}>
                   {machine.rules.length === 0 && <li style={{ color: 'var(--muted)', fontSize: 12.5 }}>No rules. Everything follows the default.</li>}
                   {machine.rules.map((r, i) => (
-                    <li key={i} style={{ fontSize: 12.5, padding: '6px 10px', borderRadius: 6, background: 'rgba(255,255,255,0.03)' }}>
+                    <li key={i} style={{ fontSize: 12.5, padding: '6px 10px', borderRadius: 6, background: 'rgba(var(--ink-ch), 0.03)' }}>
                       <span style={{ fontFamily: 'monospace' }}>{ruleSummary(r)}</span>
                       {r.comment && <span style={{ color: 'var(--muted)' }}> — {r.comment}</span>}
                     </li>

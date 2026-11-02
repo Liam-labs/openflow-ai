@@ -18,6 +18,8 @@ export interface AccountProfile {
   /** Empty string when none is set. */
   email: string;
   about: string;
+  /** Server-normalised profile photo, empty when removed. */
+  avatarUrl?: string;
 }
 
 export interface FieldError {
@@ -86,7 +88,11 @@ function validateAbout(raw: unknown): Validated<string> {
   return { ok: true, value: about };
 }
 
-const PROFILE_FIELDS = ['displayName', 'email', 'about'] as const;
+export function validateAvatarUrl(raw: unknown): Validated<string> {
+  if (typeof raw === 'string' && (raw === '' || /^\/api\/account\/avatar\?id=[a-f0-9]{64}$/.test(raw))) return { ok: true, value: raw };
+  return { ok: false, errors: [{ field: 'avatarUrl', message: 'Choose a photo using Upload photo.' }] };
+}
+const PROFILE_FIELDS = ['displayName', 'email', 'about', 'avatarUrl'] as const;
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -106,6 +112,7 @@ export function validateProfilePatch(raw: unknown): Validated<Partial<AccountPro
     ['displayName', validateDisplayName],
     ['email', validateEmail],
     ['about', validateAbout],
+    ['avatarUrl', validateAvatarUrl],
   ];
   for (const [key, check] of checks) {
     if (!(key in raw) || raw[key] === undefined) continue;
@@ -120,7 +127,7 @@ export function validateProfilePatch(raw: unknown): Validated<Partial<AccountPro
 export function validateFullProfile(raw: unknown): Validated<AccountProfile> {
   const patch = validateProfilePatch(raw);
   if (!patch.ok) return patch;
-  const missing = PROFILE_FIELDS.filter(key => patch.value[key] === undefined);
+  const missing = PROFILE_FIELDS.filter(key => key !== 'avatarUrl' && patch.value[key] === undefined);
   if (missing.length > 0) {
     return { ok: false, errors: missing.map(field => ({ field, message: `The profile has no ${field}.` })) };
   }

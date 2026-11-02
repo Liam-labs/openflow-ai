@@ -41,6 +41,9 @@ export interface PtyActionRequest {
   spawnMode?: 'wsl' | 'powershell';
   psWorkingDirectory?: string; // Windows-native working directory for powershell spawn mode
   effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max' | 'ultra'; // Reasoning effort; Codex applies it live, other runtimes on spawn
+  placement?: 'home-only' | 'flexible'; // roster_update: may a wake start this agent on the other machine? (lib/wake-on-mention.ts)
+  keepOnline?: boolean; // roster_update: false = never restore this agent automatically after a crash or reboot (lib/agent-drops.ts)
+  authMode?: string; // roster_update: 'max' | 'api-key' (validated in roster-ops; lib/claude-spawn-env.ts). Applies at the agent's next start.
   runLocation?: 'server' | 'desktop' | null; // 'server' = DevFlow server agent; anything else = desktop
   fastMode?: boolean; // Codex Fast mode (1.5x)
   fresh?: boolean;
@@ -51,10 +54,12 @@ export interface PtyActionRequest {
   temporary?: boolean; // If true, agent is ephemeral — removable via "Remove from Channel"
   rehydrate?: boolean; // For 'roster_respawn' — inject rehydrate instruction on spawn (Sprint 40)
   restartOnly?: boolean; // For 'roster_launch_all' — only relaunch agents that were already running; leave offline agents stopped (graceful-restart vs launch-all)
+  agentIds?: string[]; // For 'roster_launch_all' — act on only these roster entries (omit = the whole channel, as the dashboard button does). Narrowing only; it skips no warning.
   keepAliveMs?: number; // For 'roster_respawn' — keep old session alive for N ms after spawn (overlap; owner 2026-06-06)
   reason?: string;              // For 'roster_remove' — why the agent is being removed (audit trail)
-  callerParticipantId?: string; // For 'roster_remove' — who requested the removal
-  callerName?: string;          // For 'roster_remove' — human-readable caller name
+  callerParticipantId?: string; // For 'roster_remove' — who requested the removal; for 'roster_update' — the API caller's participant id (audit)
+  callerName?: string;          // For 'roster_remove' — human-readable caller name; for 'roster_update' — the API token's name (audit)
+  via?: string;                 // For 'roster_update' / 'roster_add' — which door the change came in by: 'agent-api' (set by /api/agent), default 'ui' (audit)
 }
 
 export interface PtyActionResponse {

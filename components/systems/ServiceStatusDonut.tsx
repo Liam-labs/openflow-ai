@@ -130,7 +130,7 @@ export function ServiceStatusDonut({
           <circle
             cx={CX} cy={CY} r={R}
             fill="none"
-            stroke="rgba(255,255,255,0.06)"
+            stroke="rgba(var(--ink-ch), 0.06)"
             strokeWidth="5"
           />
 
@@ -178,7 +178,7 @@ export function ServiceStatusDonut({
             textAnchor="middle"
             dominantBaseline="middle"
             className="ssd-center-label"
-            fill="rgba(255,255,255,0.4)"
+            fill="rgba(var(--ink-ch), 0.4)"
           >
             of {total} online
           </text>
