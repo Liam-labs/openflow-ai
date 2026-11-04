@@ -4,6 +4,14 @@ type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<{
   json: () => Promise<unknown>;
 }>;
 
+function responseCommand(payload: unknown): string | null {
+  if (payload && typeof payload === 'object' && 'command' in payload) {
+    const command = (payload as { command?: unknown }).command;
+    if (typeof command === 'string' && command.trim()) return command;
+  }
+  return null;
+}
+
 function responseError(payload: unknown): string | null {
   if (payload && typeof payload === 'object' && 'error' in payload) {
     const error = (payload as { error?: unknown }).error;
@@ -18,6 +26,8 @@ export async function requestRosterTerminal(
   channelId: string,
   agentId: string,
   showError: (message: string) => void,
+  /** Called instead of showError when the computer cannot open a window but can say what to type. */
+  showCommand?: (message: string, command: string) => void,
 ): Promise<boolean> {
   try {
     const response = await fetcher('/api/collab/pty', {
@@ -28,6 +38,11 @@ export async function requestRosterTerminal(
     const payload = await response.json().catch(() => null);
     const success = payload && typeof payload === 'object' && 'success' in payload && payload.success === true;
     if (!response.ok || !success) {
+      const command = responseCommand(payload);
+      if (command && showCommand) {
+        showCommand(responseError(payload) || 'Open a terminal and run this command.', command);
+        return false;
+      }
       showError(responseError(payload) || 'Unable to open this agent terminal');
       return false;
     }

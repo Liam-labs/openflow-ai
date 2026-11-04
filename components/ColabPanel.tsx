@@ -160,6 +160,7 @@ import {
 import { resolveChannelGroups, getChannelGroupId, homeGroupId } from '@/lib/collab-groups';
 import { useChannelAttachmentDrafts } from '@/hooks/useChannelAttachmentDrafts';
 import { useAccountSettings } from './collab/AccountSettings';
+import { AttachCommandDialog } from './collab/AttachCommandDialog';
 import { isHumanParticipant, mentionsHuman } from '@/lib/human-identity';
 import { resolveChannelWorkingDirectory } from '@/lib/channel-working-directory';
 import { selectStaleParticipantsForCleanup } from '@/lib/collab-participant-cleanup';
@@ -529,6 +530,8 @@ function GracefulShutdownButton({ channelId }: { channelId: string }) {
 export function ColabPanel({ isOpen, onClose, initialChannelId, mode = 'modal' }: ColabPanelProps) {
   const { isMobile, isTablet, width: viewportWidth } = useBreakpoint();
   const { toast } = useToast();
+  // "Open terminal" on a computer that cannot open a window shows the command to copy here.
+  const [attachDialog, setAttachDialog] = useState<{ message: string; command: string } | null>(null);
   // Riley Voice watching a channel: shown and switched from the channel's right-click menu (lib/voice/watching.ts).
   const riley = useRileyVoiceWatching();
   const eventStream = useEventStreamContext();
@@ -3269,10 +3272,10 @@ export function ColabPanel({ isOpen, onClose, initialChannelId, mode = 'modal' }
     }
   };
 
-  // Roster: Open terminal
+  // Roster: Open terminal. A computer that cannot open a window gets the command to copy instead of an error.
   const handleRosterOpenTerminal = async (agentId: string) => {
     if (!activeChannel) return;
-    await requestRosterTerminal(fetch, activeChannel.id, agentId, toast.error);
+    await requestRosterTerminal(fetch, activeChannel.id, agentId, toast.error, (message, command) => setAttachDialog({ message, command }));
   };
 
   // Roster: ask the agent's harness to compact its context (/compact, /compress for Gemini)
@@ -4498,6 +4501,7 @@ export function ColabPanel({ isOpen, onClose, initialChannelId, mode = 'modal' }
 
   return (
     <div className={mode === 'modal' || isMobile ? 'fixed inset-0 z-50' : 'w-full h-screen overflow-hidden'}>
+      {attachDialog && <AttachCommandDialog message={attachDialog.message} command={attachDialog.command} onClose={() => setAttachDialog(null)} />}
       {/* Full-screen Panel */}
       <div
         className="collab-panel relative overflow-hidden flex w-full h-full"
