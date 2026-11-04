@@ -1,1 +1,76 @@
-[]
+[
+  {
+    "id": "dashboard",
+    "title": "Dashboard and channels",
+    "page": "kb/dashboard.md",
+    "paths": [
+      "app/page.tsx",
+      "app/collab/"
+    ]
+  },
+  {
+    "id": "agents",
+    "title": "Agents and the roster",
+    "page": "kb/agents.md",
+    "paths": [
+      "components/modals/RosterConfigModal.tsx",
+      "data/examples/agents.json"
+    ]
+  },
+  {
+    "id": "models",
+    "title": "AI models and sign-ins",
+    "page": "kb/models.md",
+    "paths": [
+      "components/setup/StepCredentials.tsx",
+      "components/setup/SubscriptionSignIn.tsx",
+      "components/wizards/SignInWizard.tsx",
+      "app/api/setup/test-key/"
+    ]
+  },
+  {
+    "id": "connections",
+    "title": "Connections",
+    "page": "kb/connections.md",
+    "paths": [
+      "components/systems/connections/",
+      "app/setup/connections/"
+    ]
+  },
+  {
+    "id": "vps",
+    "title": "Running OpenFlow on a VPS",
+    "page": "kb/vps.md",
+    "paths": [
+      "scripts/setup-server",
+      "docker-compose.server.yml"
+    ]
+  },
+  {
+    "id": "names",
+    "title": "Your OpenFlow web address",
+    "page": "kb/names.md",
+    "paths": [
+      "components/setup/InstallAddress.tsx",
+      "app/api/setup/address/"
+    ]
+  },
+  {
+    "id": "memory",
+    "title": "Shared memory for your team",
+    "page": "kb/memory.md",
+    "paths": [
+      "lib/wizards/memory.ts",
+      "lib/wizards/memory-runtime.ts",
+      "components/wizards/MemoryWizard.tsx"
+    ]
+  },
+  {
+    "id": "jev",
+    "title": "TypeSafe Jev: skill hints",
+    "page": "kb/jev.md",
+    "paths": [
+      "lib/skill-router-jev.ts"
+    ]
+  }
+]
