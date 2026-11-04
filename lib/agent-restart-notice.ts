@@ -121,6 +121,9 @@ export async function sendRestartResumeNotice(input: {
     recipients: [agent.participantId],
     metadata: {
       deliveryMode: 'targeted',
+      // An instruction for the agent, not a message for the person: delivered, but kept out of the chat feed (the "Show system messages"
+      // toggle still reveals it). Otherwise a restarted Setup chat opens on a long block the user never wrote.
+      isHidden: true,
       client: { kind: 'devflow.restart-resume', agentId: agent.id, shutdownAt: input.shutdownAt },
     },
   };

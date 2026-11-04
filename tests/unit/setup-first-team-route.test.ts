@@ -9,6 +9,7 @@ import { NextRequest } from 'next/server';
 import fsSync from 'node:fs';
 import nodePath from 'node:path';
 
+const mockSaved = vi.hoisted(() => ({ model: undefined as string | undefined }));
 const { root, createChannel, getChannel, provision } = await vi.hoisted(async () => {
   const fs = await import('node:fs');
   const path = await import('node:path');
@@ -35,6 +36,7 @@ vi.mock('@/lib/api-auth', () => ({ requireAuthOrLocal: vi.fn(async () => null) }
 vi.mock('@/lib/api-tracking', () => ({ tracked: (_n: string, h: unknown) => h }));
 vi.mock('@/lib/app-paths', () => ({ appPath: (...s: string[]) => nodePath.join(root, ...s) }));
 vi.mock('@/lib/data-paths', () => ({ DataPaths: { memoryWizard: nodePath.join(root, '.AppData', 'memory-wizard.json') } }));
+vi.mock('@/lib/default-model', () => ({ modelFromSavedKeys: (t: string) => (t === 'claude' ? mockSaved.model : undefined) }));
 vi.mock('@/lib/home-dir', () => ({ getHomeDir: () => root }));
 vi.mock('@/app/api/agent/actions/collab', () => ({ createChannel, getChannel }));
 vi.mock('@/app/api/agent/actions/roster', () => ({ provision }));
@@ -51,6 +53,7 @@ const setupChannelDone = () => { fsSync.mkdirSync(nodePath.dirname(markerPath), 
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockSaved.model = undefined;
   setupChannelDone();
   createChannel.mockResolvedValue({ channel: { id: 'chan-1' } });
   getChannel.mockResolvedValue({ channel: { id: 'chan-1', roster: { agents: [] } }, found: true });
@@ -149,6 +152,27 @@ describe('/api/setup/first-team', () => {
       const json = await (await post({ agents: ['Scout'] })).json();
       expect(json.success).toBe(true);
       expect(json.setupChannel).toMatchObject({ status: 'created', guideStarted: false });
+    });
+  });
+
+  describe('a DeepSeek key saved on the Connections page', () => {
+    it('starts the team and the Setup assistant on DeepSeek when nothing else can run Claude', async () => {
+      mockSaved.model = 'deepseek-flash';
+      fsSync.rmSync(markerPath, { force: true });
+      createChannel.mockResolvedValueOnce({ channel: { id: 'team-chan' } }).mockResolvedValueOnce({ channel: { id: 'setup-chan' } });
+      await post({ agents: ['Scout'], agentType: 'claude' });
+      const models = provision.mock.calls.map((c) => c[0].model);
+      expect(models.length).toBeGreaterThanOrEqual(2);
+      expect(models.every((m) => m === 'deepseek-flash')).toBe(true);
+    });
+
+    it('never overrides a model the wizard sent, or the other runtimes', async () => {
+      mockSaved.model = 'deepseek-flash';
+      await post({ agents: ['Scout'], agentType: 'claude', model: 'sonnet' });
+      expect(provision.mock.calls.at(-1)?.[0].model).toBe('sonnet');
+      provision.mockClear();
+      await post({ agents: ['Scout'], agentType: 'codex' });
+      expect(provision.mock.calls.at(-1)?.[0].model).toBeUndefined();
     });
   });
 });

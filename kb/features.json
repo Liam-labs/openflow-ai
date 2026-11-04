@@ -84,7 +84,8 @@
     "paths": [
       "lib/deepseek-env.ts",
       "app/api/setup/complete/",
-      "app/api/setup/save-step/"
+      "app/api/setup/save-step/",
+      "lib/default-model.ts"
     ]
   },
   {

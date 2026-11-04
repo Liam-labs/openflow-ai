@@ -24,6 +24,7 @@ import { getHomeDir } from '@/lib/home-dir';
 import { claudeUsesApiKey } from '@/lib/claude-spawn-env';
 import { ensureClaudeFirstRun } from '@/lib/claude-first-run';
 import { resolveSecretStore } from '@/lib/secret-store';
+import { modelFromSavedKeys } from '@/lib/default-model';
 import { createChannel, getChannel } from '@/app/api/agent/actions/collab';
 import { provision } from '@/app/api/agent/actions/roster';
 import { extensions } from '@/instance/extensions';
@@ -134,7 +135,7 @@ export const POST = tracked('/api/setup/first-team', async (request: NextRequest
   }
 
   const agentType = typeof body.agentType === 'string' && ALLOWED_RUNTIMES.has(body.agentType) ? body.agentType : 'claude';
-  const model = typeof body.model === 'string' && body.model.trim() ? body.model.trim() : undefined;
+  const model = (typeof body.model === 'string' && body.model.trim() ? body.model.trim() : undefined) ?? modelFromSavedKeys(agentType);
   const workingDirectory = typeof body.workingDirectory === 'string' && body.workingDirectory.trim()
     ? path.resolve(body.workingDirectory.trim())
     : path.join(getHomeDir(), 'devflow-projects', 'first-project');

@@ -21,6 +21,8 @@ A DeepSeek account at https://platform.deepseek.com, some money on its balance, 
 3. In the wizard's **AI access** step, paste the key into the **DeepSeek API Key** field at the top.
 4. Press **Test**. A green "Connection verified" line means DeepSeek accepted the key. A red line gives the reason, for example a wrong key.
 
+If you saved the key on the Connections page instead, the wizard still uses it. When a DeepSeek key is saved and there is no Anthropic key and no Claude sign-in on the computer, your first team and Jack start on DeepSeek by themselves. If you have another way to run Claude, nothing is chosen for you.
+
 ## How to tell it is working
 
 The test passes, and your first agents answer their hello message. A wrong key shows a refusal on the test.
