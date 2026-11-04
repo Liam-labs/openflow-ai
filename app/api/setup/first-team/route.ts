@@ -26,6 +26,8 @@ import { ensureClaudeFirstRun } from '@/lib/claude-first-run';
 import { resolveSecretStore } from '@/lib/secret-store';
 import { createChannel, getChannel } from '@/app/api/agent/actions/collab';
 import { provision } from '@/app/api/agent/actions/roster';
+import { extensions } from '@/instance/extensions';
+import type { FirstTeamContext } from '@/lib/instance-extensions';
 import type { AgentApiRequest, AgentAuthContext } from '@/lib/types';
 
 interface ExampleAgent {
@@ -85,6 +87,7 @@ async function roleIdForSlug(slug: string): Promise<string | undefined> {
   const roles = Array.isArray(parsed) ? parsed : parsed.roles ?? [];
   return roles.find(r => r.slug === slug)?.id;
 }
+
 
 export const GET = tracked('/api/setup/first-team', async (request: NextRequest) => {
   const denied = await requireAuthOrLocal(request, 'read');
@@ -209,9 +212,35 @@ export const POST = tracked('/api/setup/first-team', async (request: NextRequest
     }
   }
 
+  // The Setup channel and its Guide, once per install. The wizard goes on whatever happens here.
+  const started = results.some(r => r.started);
+  const added: Record<string, unknown> = {};
+  if (started) {
+    const ctx: FirstTeamContext = {
+      agentType, model, workingDirectory,
+      createChannel: async (name, description, projectPath) => {
+        const { channel } = await createChannel({ action: 'collab.channels.create', name, description, projectPath } as AgentApiRequest, AUTH);
+        return channel.id;
+      },
+      startAgent: async (id, agent) => {
+        const roleId = await roleIdForSlug(agent.roleSlug);
+        if (!roleId) return { started: false, error: `Role "${agent.roleSlug}" is not installed.` };
+        const out = await provision(
+          { action: 'roster.provision', channelId: id, name: agent.name, workingDirectory: agent.workingDirectory, roleId, roleSlug: agent.roleSlug, personality: agent.personality, agentType, model } as AgentApiRequest,
+          AUTH,
+        );
+        return out.spawned ? { started: true } : { started: false, error: (out as { error?: string }).error || 'The agent did not start.' };
+      },
+    };
+    for (const hook of extensions.afterFirstTeam) {
+      try { added[hook.id] = await hook.run(ctx); } catch (error) { added[hook.id] = { status: 'failed', error: error instanceof Error ? error.message : 'failed' }; }
+    }
+  }
+
   return NextResponse.json({
-    success: results.some(r => r.started),
+    success: started,
     channelId,
+    ...added,
     agents: results,
     firstMessages: Object.fromEntries(chosen.map(a => [a.name, a.firstMessage])),
   });
