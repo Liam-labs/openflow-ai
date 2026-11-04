@@ -541,6 +541,14 @@
     {
       "path": "tests/unit/setup-summary-route.test.ts",
       "kind": "openflow-only"
+    },
+    {
+      "path": "components/setup/AskJackLink.tsx",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/ask-jack-link.test.ts",
+      "kind": "openflow-only"
     }
   ]
 }

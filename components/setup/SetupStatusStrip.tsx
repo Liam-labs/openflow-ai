@@ -15,8 +15,34 @@ interface Summary { items: Item[]; setupChannelId: string | null }
 
 const STATE_TEXT: Record<State, string> = { on: 'On', off: 'Not set up', skipped: 'Skipped' };
 
-export function SetupStatusStrip({ channelId }: { channelId: string }) {
+const QUICK_STARTS = [
+  'What can OpenFlow connect to?',
+  'What is already set up?',
+  'Help me set up shared memory',
+] as const;
+
+export function SetupStatusStrip({ channelId, participantId }: { channelId: string; participantId?: string | null }) {
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [sent, setSent] = useState<string | null>(null);
+  const [sendError, setSendError] = useState(false);
+
+  // Sends the question as an ordinary message from the person, addressed to Jack.
+  const ask = async (question: string) => {
+    if (!participantId) return;
+    setSendError(false);
+    try {
+      const res = await fetch('/api/collab', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'message', channelId, participantId, content: `@Jack ${question}` }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.success === false) throw new Error('not sent');
+      setSent(question);
+    } catch {
+      setSendError(true);
+    }
+  };
 
   useEffect(() => {
     let alive = true;
@@ -52,6 +78,26 @@ export function SetupStatusStrip({ channelId }: { channelId: string }) {
           );
         })}
       </ul>
+ 
+      {participantId && (
+        <div className="mt-3" data-testid="quick-starts">
+          <p className="text-xs text-white/50 mb-1.5">Ask Jack:</p>
+          <div className="flex flex-wrap gap-2">
+            {QUICK_STARTS.map((q) => (
+              <button
+                key={q}
+                type="button"
+                onClick={() => void ask(q)}
+                className="rounded-full border border-[#60a5fa]/40 bg-[#60a5fa]/10 px-3 py-1.5 text-xs text-[#93c5fd] hover:bg-[#60a5fa]/20 min-h-8"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+          {sendError && <p role="alert" className="text-xs text-red-300 mt-1.5">That did not send. Try again, or type your question below.</p>}
+          {sent && !sendError && <p role="status" className="text-xs text-white/50 mt-1.5">Sent. Jack will answer in a moment.</p>}
+        </div>
+      )}
       <a href="/operations#systems/connections" className="inline-block mt-2 text-xs text-[#60a5fa] underline underline-offset-2">
         Open Systems &gt; Connections
       </a>

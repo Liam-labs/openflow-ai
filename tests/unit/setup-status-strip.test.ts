@@ -53,3 +53,33 @@ it('draws nothing when the summary cannot be read, and reads again when the tab 
   expect(container.querySelector('[data-testid="setup-status-strip"]')).not.toBeNull();
   expect(fetchMock).toHaveBeenCalledTimes(2);
 });
+
+it('offers three quick questions that send an ordinary message to Jack from the person', async () => {
+  const posts: Record<string, unknown>[] = [];
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
+    if (init?.method === 'POST') { posts.push(JSON.parse(init.body ?? '{}')); return { ok: true, json: async () => ({ success: true }) }; }
+    return { ok: true, json: async () => summary };
+  }));
+  await act(async () => root.render(createElement(SetupStatusStrip, { channelId: 'setup-1', participantId: 'p-1' })));
+  await flush();
+  const buttons = Array.from(container.querySelectorAll('[data-testid="quick-starts"] button'));
+  expect(buttons.map((b) => b.textContent)).toEqual(['What can OpenFlow connect to?', 'What is already set up?', 'Help me set up shared memory']);
+  await act(async () => { (buttons[2] as HTMLButtonElement).click(); });
+  await flush();
+  expect(posts).toEqual([{ action: 'message', channelId: 'setup-1', participantId: 'p-1', content: '@Jack Help me set up shared memory' }]);
+  expect(container.textContent).toContain('Sent.');
+});
+
+it('says so when a quick question did not send, and shows no buttons without a participant', async () => {
+  vi.stubGlobal('fetch', vi.fn(async (_u: string, init?: { method?: string }) => init?.method === 'POST'
+    ? { ok: false, json: async () => ({ success: false }) }
+    : { ok: true, json: async () => summary }));
+  await act(async () => root.render(createElement(SetupStatusStrip, { channelId: 'setup-1', participantId: 'p-1' })));
+  await flush();
+  await act(async () => { (container.querySelector('[data-testid="quick-starts"] button') as HTMLButtonElement).click(); });
+  await flush();
+  expect(container.querySelector('[role="alert"]')?.textContent).toContain('did not send');
+  await act(async () => root.render(createElement(SetupStatusStrip, { channelId: 'setup-1', participantId: null })));
+  await flush();
+  expect(container.querySelector('[data-testid="quick-starts"]')).toBeNull();
+});
