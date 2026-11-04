@@ -97,7 +97,7 @@ export const POST = tracked('/api/setup/complete', async (request: NextRequest) 
     // 3. Generate/update ~/.secrets with any new API keys
     await appendToSecretsFile(credentials, integrations);
 
-    // The DeepSeek key goes to the Connections store (.UserData/connectors.env), which is where the DeepSeek agent start-up reads it first
+    // The DeepSeek key goes to the secret store (.AppData/secrets.json) through the Connections code, which also sets it in the running app's environment, where the DeepSeek agent start-up reads it
     // and where the Connections page shows it as saved. It is never put in a chat or a log.
     if (credentials.deepseekApiKey) {
       await saveConnectorKey('DEEPSEEK_API_KEY', credentials.deepseekApiKey, new Set(['DEEPSEEK_API_KEY']));

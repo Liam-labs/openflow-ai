@@ -35,12 +35,20 @@ it('the Connections store accepts the key name the wizard saves it under, and th
   const { promises: fs } = await import('fs');
   const os = await import('os');
   const path = await import('path');
-  const { saveConnectorKey, readConnectorEnv } = await import('@/lib/connectors/secrets');
+  const { saveConnectorKey, getConnectorKey } = await import('@/lib/connectors/secrets');
+  const { FileSecretStore } = await import('@/lib/secret-store');
   const raw = JSON.parse(await fs.readFile('data/connectors-catalog.json', 'utf-8')) as { connectors: { id: string; keys?: { env?: string }[]; env?: string[] }[] };
   expect(JSON.stringify(raw.connectors.find((c) => c.id === 'deepseek'))).toContain('DEEPSEEK_API_KEY');
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ds-key-'));
-  const file = path.join(dir, 'connectors.env');
-  await saveConnectorKey('DEEPSEEK_API_KEY', 'sk-test-123', new Set(['DEEPSEEK_API_KEY']), file);
-  expect((await readConnectorEnv(file)).DEEPSEEK_API_KEY).toBe('sk-test-123');
+  const store = new FileSecretStore(path.join(dir, 'secrets.json'));
+  const old = { host: process.env.DEVFLOW_AGENT_HOST, key: process.env.DEEPSEEK_API_KEY };
+  process.env.DEVFLOW_AGENT_HOST = 'test-host'; // skip the real tmux server
+  try {
+    await saveConnectorKey('DEEPSEEK_API_KEY', 'sk-test-123', new Set(['DEEPSEEK_API_KEY']), store);
+    expect(getConnectorKey('DEEPSEEK_API_KEY', store)).toBe('sk-test-123');
+  } finally {
+    if (old.host === undefined) delete process.env.DEVFLOW_AGENT_HOST; else process.env.DEVFLOW_AGENT_HOST = old.host;
+    if (old.key === undefined) delete process.env.DEEPSEEK_API_KEY; else process.env.DEEPSEEK_API_KEY = old.key;
+  }
   await fs.rm(dir, { recursive: true, force: true });
 });

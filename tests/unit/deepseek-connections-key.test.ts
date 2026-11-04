@@ -1,61 +1,36 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'fs';
-import { tmpdir } from 'os';
-import path from 'path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { buildDeepSeekProcessEnv } from '@/lib/deepseek-env';
+import { saveConnectorKey, removeConnectorKey } from '@/lib/connectors/secrets';
+import { FileSecretStore } from '@/lib/secret-store';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
-// A DeepSeek key saved on the Connections page (.UserData/connectors.env) must reach a DeepSeek agent.
+// A DeepSeek key saved on the Connections page must reach a DeepSeek agent: saving puts it in the secret store and in the running
+// app's environment, which is where the agent start-up reads it.
 let dir: string;
-const saved = { ...process.env };
-
+const old: Record<string, string | undefined> = {};
 beforeEach(() => {
-  dir = mkdtempSync(path.join(tmpdir(), 'dskey-'));
-  mkdirSync(path.join(dir, 'home'), { recursive: true });
-  process.env.HOME = path.join(dir, 'home');
-  // DataPaths joins this onto the app folder, so give it a path relative to there.
-  process.env.DEVFLOW_USER_DATA_DIR = path.relative(process.cwd(), path.join(dir, 'userdata'));
+  dir = mkdtempSync(join(tmpdir(), 'dskey-'));
+  for (const k of ['DEVFLOW_AGENT_HOST', 'DEEPSEEK_API_KEY', 'HOME']) old[k] = process.env[k];
+  process.env.DEVFLOW_AGENT_HOST = 'test-host'; // the save skips the real tmux server
+  process.env.HOME = join(dir, 'home'); // no ~/.secrets to fall back on
   delete process.env.DEEPSEEK_API_KEY;
-  vi.resetModules();
 });
-afterEach(() => { process.env = { ...saved }; rmSync(dir, { recursive: true, force: true }); });
-
-function saveConnectionsKey(value: string) {
-  mkdirSync(path.join(dir, 'userdata'), { recursive: true });
-  writeFileSync(path.join(dir, 'userdata', 'connectors.env'), `DEEPSEEK_API_KEY='${value}'\n`, { mode: 0o600 });
-}
+afterEach(() => {
+  for (const [k, v] of Object.entries(old)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
+  rmSync(dir, { recursive: true, force: true });
+});
 
 describe('DeepSeek key saved on the Connections page', () => {
-  it('reaches a DeepSeek agent started as a process', async () => {
-    saveConnectionsKey('sk-from-connections');
-    const { buildDeepSeekProcessEnv } = await import('@/lib/deepseek-env');
-    expect(buildDeepSeekProcessEnv(['--model', 'deepseek-flash']).ANTHROPIC_AUTH_TOKEN).toBe('sk-from-connections');
-  });
-  it('wins over a key in ~/.secrets', async () => {
-    saveConnectionsKey('sk-from-connections');
-    writeFileSync(path.join(dir, 'home', '.secrets'), 'export DEEPSEEK_API_KEY=sk-old-secrets\n');
-    const { buildDeepSeekProcessEnv } = await import('@/lib/deepseek-env');
-    expect(buildDeepSeekProcessEnv(['--model', 'deepseek-flash']).ANTHROPIC_AUTH_TOKEN).toBe('sk-from-connections');
-  });
-  it('is still empty for a non-DeepSeek model, and when no key is saved anywhere', async () => {
-    saveConnectionsKey('sk-from-connections');
-    const { buildDeepSeekProcessEnv } = await import('@/lib/deepseek-env');
-    expect(buildDeepSeekProcessEnv(['--model', 'sonnet'])).toEqual({});
-    rmSync(path.join(dir, 'userdata'), { recursive: true });
+  const allowed = new Set(['DEEPSEEK_API_KEY']);
+  it('reaches a DeepSeek agent, and stops reaching it once removed', async () => {
+    const store = new FileSecretStore(join(dir, 'secrets.json'));
     expect(buildDeepSeekProcessEnv(['--model', 'deepseek-flash'])).toEqual({});
-  });
-  it('the shell start-up sources the saved file after ~/.secrets, and never contains the key', async () => {
-    saveConnectionsKey('sk-from-connections');
-    const { buildDeepSeekShellEnv } = await import('@/lib/deepseek-env');
-    const sh = buildDeepSeekShellEnv(['--model', 'deepseek-flash'], '/work');
-    expect(sh).toContain('connectors.env');
-    expect(sh.indexOf('.secrets')).toBeLessThan(sh.indexOf('connectors.env'));
-    expect(sh).not.toContain('sk-from-connections');
-  });
-  it('the shell start-up really exports the saved key to the agent', async () => {
-    saveConnectionsKey('sk-from-connections');
-    const { buildDeepSeekShellEnv } = await import('@/lib/deepseek-env');
-    const { spawnSync } = await import('child_process');
-    const sh = buildDeepSeekShellEnv(['--model', 'deepseek-flash'], '/work');
-    const r = spawnSync('bash', ['-c', `${sh} printf %s "$ANTHROPIC_AUTH_TOKEN"`], { env: { PATH: process.env.PATH, HOME: process.env.HOME }, encoding: 'utf8' });
-    expect(r.stdout).toBe('sk-from-connections');
+    await saveConnectorKey('DEEPSEEK_API_KEY', 'sk-from-connections', allowed, store);
+    expect(buildDeepSeekProcessEnv(['--model', 'deepseek-flash']).ANTHROPIC_AUTH_TOKEN).toBe('sk-from-connections');
+    expect(buildDeepSeekProcessEnv(['--model', 'sonnet'])).toEqual({});
+    await removeConnectorKey('DEEPSEEK_API_KEY', allowed, store);
+    expect(buildDeepSeekProcessEnv(['--model', 'deepseek-flash'])).toEqual({});
   });
 });

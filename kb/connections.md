@@ -26,5 +26,6 @@ Nothing for the page itself. Each service needs its own account or software, and
 
 The card shows **On** after the wizard's test passes. **Off** and **Skipped** mean nothing is connected. Opening a login page is not a connection. Only a passed test is.
 
+**Careful:** a key you save here is kept in OpenFlow's private key file on this install, and it is also given to every agent that OpenFlow starts on the same machine. Agents that run on another computer do not get it. Only save keys you are happy for your own agents to use.
 **Not yet proved:** Slack, Teams and WhatsApp setup screens work, but no real account has been connected. Cloudflare access from outside has not been tested with a real account. Tailscale has joined one test machine to a private network, and the remaining checks are in progress.
 **Last checked:** 4 Nov 2026, from the live VPS tests of 2 to 4 Nov.

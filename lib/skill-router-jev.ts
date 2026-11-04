@@ -6,9 +6,9 @@
  *   key      a TypeSafe key saved through Systems > Connections (OpenFlow), sent straight to api.typesafe.ai.
  * With neither, the router is unavailable: it cannot be switched on and does nothing.
  */
-import { readConnectorEnv } from '@/lib/connectors/secrets';
+import { getConnectorKey } from '@/lib/connectors/secrets';
 
-export type JevCall = (args: Record<string, unknown>, signal: AbortSignal) => Promise<Record<string, any>>;
+export type JevCall = (args: Record<string, unknown>, signal: AbortSignal) => Promise<Record<string, unknown>>;
 
 export const JEV_MODEL = 'jev-1.13.0'; // pinned: the scorer's weights were fitted on this model
 const GATEWAY_URL = () => process.env.DEVFLOW_JEV_URL ?? '';
@@ -20,7 +20,7 @@ export const gatewayJev: JevCall = async (args, signal) => {
     method: 'POST', headers: { 'content-type': 'application/json' }, cache: 'no-store', signal,
     body: JSON.stringify({ tool: 'typesafe_system_one', arguments: { caller: 'skill-router', model: JEV_MODEL, ...args } }),
   });
-  const data = await res.json().catch(() => null) as { ok?: boolean; result?: any } | null;
+  const data = await res.json().catch(() => null) as { ok?: boolean; result?: { answers?: Record<string, unknown> } } | null;
   if (!res.ok || !data?.ok || !data.result?.answers) throw new Error(`gateway ${res.status}`);
   return data.result.answers;
 };
@@ -33,7 +33,7 @@ export function directJev(key: string): JevCall {
       headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
       body: JSON.stringify({ model: JEV_MODEL, state: args.state, questions: args.questions }),
     });
-    const data = await res.json().catch(() => null) as { answers?: Record<string, any> } | null;
+    const data = await res.json().catch(() => null) as { answers?: Record<string, unknown> } | null;
     if (!res.ok || !data?.answers) throw new Error(`typesafe ${res.status}`);
     return data.answers;
   };
@@ -61,7 +61,7 @@ async function gatewayConfigured(): Promise<boolean> {
 async function savedKey(): Promise<string | null> {
   const fromEnv = process.env[KEY_ENV]?.trim();
   if (fromEnv) return fromEnv;
-  try { return (await readConnectorEnv())[KEY_ENV]?.trim() || null; } catch { return null; }
+  return getConnectorKey(KEY_ENV)?.trim() || null;
 }
 
 async function probeReal(): Promise<JevConnection> {
