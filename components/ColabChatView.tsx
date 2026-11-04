@@ -477,8 +477,9 @@ export function ColabChatView({
                 {(() => {
                   const ra = activeChannel?.roster?.agents?.find(a => a.participantId === msg.from.id);
                   const role = ra?.roleId ? roles.find(r => r.id === ra.roleId) : null;
-                  return role ? (
-                    <span className="px-1.5 py-0 rounded text-[8px] font-medium bg-indigo-500/10 text-indigo-400/70 border border-indigo-500/15">{role.name}</span>
+                  const roleText = ra?.roleLabel || role?.name;
+                  return roleText ? (
+                    <span className="px-1.5 py-0 rounded text-[8px] font-medium bg-indigo-500/10 text-indigo-400/70 border border-indigo-500/15">{roleText}</span>
                   ) : null;
                 })()}
                 {isHiddenMsg && (

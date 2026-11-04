@@ -10,7 +10,7 @@ import fsSync from 'node:fs';
 import nodePath from 'node:path';
 
 const mockSaved = vi.hoisted(() => ({ model: undefined as string | undefined }));
-const { root, createChannel, getChannel, provision } = await vi.hoisted(async () => {
+const { root, createChannel, getChannel, listChannels, provision } = await vi.hoisted(async () => {
   const fs = await import('node:fs');
   const path = await import('node:path');
   const os = await import('node:os');
@@ -29,7 +29,7 @@ const { root, createChannel, getChannel, provision } = await vi.hoisted(async ()
   fs.writeFileSync(path.join(root, 'data', 'roles', 'roles.json'), JSON.stringify({
     roles: [{ id: 'r-research', slug: 'researcher' }, { id: 'r-backend', slug: 'backend-dev' }],
   }));
-  return { root, createChannel: vi.fn(), getChannel: vi.fn(), provision: vi.fn() };
+  return { root, createChannel: vi.fn(), getChannel: vi.fn(), listChannels: vi.fn(), provision: vi.fn() };
 });
 
 vi.mock('@/lib/api-auth', () => ({ requireAuthOrLocal: vi.fn(async () => null) }));
@@ -38,7 +38,7 @@ vi.mock('@/lib/app-paths', () => ({ appPath: (...s: string[]) => nodePath.join(r
 vi.mock('@/lib/data-paths', () => ({ DataPaths: { memoryWizard: nodePath.join(root, '.AppData', 'memory-wizard.json') } }));
 vi.mock('@/lib/default-model', () => ({ modelFromSavedKeys: (t: string) => (t === 'claude' ? mockSaved.model : undefined) }));
 vi.mock('@/lib/home-dir', () => ({ getHomeDir: () => root }));
-vi.mock('@/app/api/agent/actions/collab', () => ({ createChannel, getChannel }));
+vi.mock('@/app/api/agent/actions/collab', () => ({ createChannel, getChannel, listChannels }));
 vi.mock('@/app/api/agent/actions/roster', () => ({ provision }));
 
 import { GET, POST } from '@/app/api/setup/first-team/route';
@@ -58,6 +58,7 @@ beforeEach(() => {
   createChannel.mockResolvedValue({ channel: { id: 'chan-1' } });
   getChannel.mockResolvedValue({ channel: { id: 'chan-1', roster: { agents: [] } }, found: true });
   provision.mockResolvedValue({ spawned: true });
+  listChannels.mockResolvedValue({ channels: [], count: 0 });
 });
 
 describe('/api/setup/first-team', () => {
@@ -173,6 +174,36 @@ describe('/api/setup/first-team', () => {
       provision.mockClear();
       await post({ agents: ['Scout'], agentType: 'codex' });
       expect(provision.mock.calls.at(-1)?.[0].model).toBeUndefined();
+    });
+  });
+
+  describe('pressing Start my team again after the wizard lost its channel (reload, second press)', () => {
+    it('reuses the team channel the wizard made before instead of making a second team', async () => {
+      listChannels.mockResolvedValue({ channels: [{ id: 'old-team', name: 'My first team' }], count: 1 });
+      getChannel.mockImplementation(async ({ channelId }: { channelId: string }) => ({
+        channel: { id: channelId, description: 'Created by the first-run wizard', roster: { agents: [{ name: 'Scout' }] } }, found: true,
+      }));
+      const json = await (await post({ agents: ['Scout', 'Mason'] })).json();
+      expect(json.channelId).toBe('old-team');
+      expect(createChannel).not.toHaveBeenCalled();
+      // Scout is already running there; only Mason is started.
+      expect(provision.mock.calls.map((c) => c[0].name)).toEqual(['Mason']);
+    });
+
+    it('does not take over a channel that only has the same name', async () => {
+      listChannels.mockResolvedValue({ channels: [{ id: 'users-own', name: 'My first team' }], count: 1 });
+      getChannel.mockImplementation(async ({ channelId }: { channelId: string }) => ({
+        channel: { id: channelId, description: 'My own notes', roster: { agents: [] } }, found: true,
+      }));
+      const json = await (await post({ agents: ['Scout'] })).json();
+      expect(json.channelId).toBe('chan-1');
+      expect(createChannel).toHaveBeenCalledTimes(1);
+    });
+
+    it('makes a new channel when the list cannot be read', async () => {
+      listChannels.mockRejectedValue(new Error('down'));
+      const json = await (await post({ agents: ['Scout'] })).json();
+      expect(json.channelId).toBe('chan-1');
     });
   });
 });

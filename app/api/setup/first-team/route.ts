@@ -25,7 +25,7 @@ import { claudeUsesApiKey } from '@/lib/claude-spawn-env';
 import { ensureClaudeFirstRun } from '@/lib/claude-first-run';
 import { resolveSecretStore } from '@/lib/secret-store';
 import { modelFromSavedKeys } from '@/lib/default-model';
-import { createChannel, getChannel } from '@/app/api/agent/actions/collab';
+import { createChannel, getChannel, listChannels } from '@/app/api/agent/actions/collab';
 import { provision } from '@/app/api/agent/actions/roster';
 import { extensions } from '@/instance/extensions';
 import type { FirstTeamContext } from '@/lib/instance-extensions';
@@ -75,6 +75,21 @@ const AUTH: AgentAuthContext = {
   scope: 'write',
   createdBy: 'setup-wizard',
 };
+
+const WIZARD_CHANNEL_NAME = 'My first team';
+const WIZARD_CHANNEL_DESCRIPTION = 'Created by the first-run wizard';
+
+/** The first team channel an earlier run of this wizard made, found by its name and its description. */
+async function earlierWizardChannelId(): Promise<string> {
+  try {
+    const { channels } = await listChannels({ action: 'collab.channels.list' } as AgentApiRequest, AUTH);
+    for (const c of channels.filter(ch => ch.name === WIZARD_CHANNEL_NAME)) {
+      const { channel } = await getChannel({ action: 'collab.channels.get', channelId: c.id } as AgentApiRequest, AUTH);
+      if (channel && channel.description === WIZARD_CHANNEL_DESCRIPTION) return channel.id;
+    }
+  } catch { /* cannot tell: make a new one, as before */ }
+  return '';
+}
 
 async function loadExamples(): Promise<ExampleAgent[]> {
   const raw = await fs.readFile(appPath('data', 'examples', 'agents.json'), 'utf-8');
@@ -152,9 +167,12 @@ export const POST = tracked('/api/setup/first-team', async (request: NextRequest
     const { found } = await getChannel({ action: 'collab.channels.get', channelId } as AgentApiRequest, AUTH);
     if (!found) channelId = '';
   }
+  // After a page reload or a second press of the button the wizard no longer knows its channel. Find the one it made before, so the
+  // team is not started twice (two teams running means twice the spend).
+  if (!channelId) channelId = await earlierWizardChannelId();
   if (!channelId) {
     const { channel } = await createChannel(
-      { action: 'collab.channels.create', name: 'My first team', description: 'Created by the first-run wizard', projectPath: workingDirectory } as AgentApiRequest,
+      { action: 'collab.channels.create', name: WIZARD_CHANNEL_NAME, description: WIZARD_CHANNEL_DESCRIPTION, projectPath: workingDirectory } as AgentApiRequest,
       AUTH,
     );
     channelId = channel.id;

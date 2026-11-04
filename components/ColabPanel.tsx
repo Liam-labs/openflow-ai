@@ -10,6 +10,7 @@
  * - Agent spawning and invitation
  */
 
+import { needsBroadcastWarning } from '@/lib/broadcast-warning';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useBreakpoint } from '@/lib/hooks/useBreakpoint';
 import { useToast } from '@/lib/contexts/ToastContext';
@@ -3547,7 +3548,10 @@ export function ColabPanel({ isOpen, onClose, initialChannelId, mode = 'modal' }
       // Skip confirmation if replying to a specific message (reply context implies recipient)
       // Skip confirmation on mobile (warning would push input off-screen)
       const mentionNames = extractMentionNames(rawContent);
-      if (mentionNames.length === 0 && !broadcastConfirmPending && !replyingTo && !isMobile) {
+      // A message to everyone only needs a warning when there is more than one agent to hear it. In the Setup channel Jack is the only
+      // agent, so a plain message is simply for him.
+      const agentsInChannel = activeChannel.participants.filter(p => p.type?.includes('terminal')).length;
+      if (needsBroadcastWarning({ mentionCount: mentionNames.length, agentCount: agentsInChannel, alreadyConfirmed: broadcastConfirmPending, isReply: !!replyingTo, isMobile })) {
         setBroadcastConfirmPending(true);
         return;
       }
