@@ -19,6 +19,7 @@ At least one AI tool installed and signed in, or an API key. See the models page
 ## How to set it up
 
 1. In the setup wizard's last step, pick which starter agents to start.
+   The starter team has a team lead called **Lead**, a backend developer, a researcher and optional architect and frontend agents. The setup assistant is the only one called Jack.
 2. Open the roster later to start, stop or restart one, or to change its role.
 
 ## How to tell it is working
