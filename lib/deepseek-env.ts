@@ -18,7 +18,6 @@
 import { readFileSync } from 'fs';
 import path from 'path';
 import { getHomeDir } from '@/lib/home-dir';
-import { connectorEnvPath, readConnectorKeySync } from '@/lib/connectors/secrets';
 
 const DEEPSEEK_BASE_URL = 'https://api.deepseek.com/anthropic';
 // DeepSeek-V4.1-Flash's canonical API name is `deepseek-flash`. DeepSeek's
@@ -88,11 +87,6 @@ function extractModelFlag(claudeFlags: readonly string[]): string | undefined {
  *   trust dialog and CLAUDE.md external @includes for that path. When omitted, falls back
  *   to $PWD which is incorrect for roster agents (the cd happens after env setup).
  */
-function connectorEnvSource(): string {
-  const file = connectorEnvPath().replace(/'/g, "'\\''");
-  return `[ -f '${file}' ] && . '${file}'; `;
-}
-
 export function buildDeepSeekShellEnv(claudeFlags: readonly string[], workingDirectory?: string): string {
   const model = extractModelFlag(claudeFlags);
   if (!isDeepSeekModel(model)) return '';
@@ -104,8 +98,6 @@ export function buildDeepSeekShellEnv(claudeFlags: readonly string[], workingDir
     : '"$PWD"';                                        // fallback: per-message spawns without a fixed cwd
   return (
     `[ -f "$HOME/.secrets" ] && . "$HOME/.secrets"; ` +
-    // A key saved on the Connections page lives in .UserData/connectors.env and wins over ~/.secrets. Sourced, not exported: only the two exports below reach the agent.
-    `${connectorEnvSource()}` +
     `_DSTMP=$(mktemp -d); ` +
     // Copy settings to skip theme/first-run wizard
     `[ -f "$HOME/.claude/settings.json" ] && cp "$HOME/.claude/settings.json" "$_DSTMP/"; ` +
@@ -149,7 +141,7 @@ json.dump(d, open(f, 'w'))
 /**
  * Build an env override for the Windows path (claude.exe via Node child_process
  * spawn). DevFlow's PM2 process env does NOT include DEEPSEEK_API_KEY, so we
- * read it directly: process.env first, then the Connections page's saved key, then ~/.secrets.
+ * read it directly: process.env first (the secret store is loaded into it), then ~/.secrets as fallback.
  *
  * Returns empty object for non-DeepSeek models, or when the key is
  * neither in process.env nor in ~/.secrets — never half-configures the env.
@@ -160,8 +152,8 @@ export function buildDeepSeekProcessEnv(
   const model = extractModelFlag(claudeFlags);
   if (!isDeepSeekModel(model)) return {};
 
-  // The key from the Connections page (.UserData/connectors.env) comes before ~/.secrets, as in the shell variant.
-  let apiKey: string | undefined = process.env.DEEPSEEK_API_KEY || readConnectorKeySync('DEEPSEEK_API_KEY');
+  // A key saved on the Connections page is in the secret store and in the environment (loaded at start, set again on save).
+  let apiKey: string | undefined = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
     apiKey = readDeepSeekKeyFromSecrets();
   }

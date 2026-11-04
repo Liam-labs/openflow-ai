@@ -25,6 +25,7 @@ const get = () => new NextRequest('http://localhost:3000/api/connectors');
 let route: typeof import('@/app/api/connectors/route');
 let oldPath: string | undefined;
 let oldHome: string | undefined;
+const savedEnv: Record<string, string | undefined> = {};
 
 beforeAll(async () => {
   work = mkdtempSync(join(tmpdir(), 'conn-route-'));
@@ -43,10 +44,14 @@ beforeAll(async () => {
   oldPath = process.env.PATH; oldHome = process.env.HOME;
   process.env.PATH = `${bin}:/usr/bin:/bin`;
   process.env.HOME = join(work, 'home');
+  // Keys go to the secret store (a temp file here). DEVFLOW_AGENT_HOST makes the save skip the real tmux server.
+  for (const k of ['DEVFLOW_SECRETS_FILE', 'DEVFLOW_AGENT_HOST', 'OPENROUTER_API_KEY']) savedEnv[k] = process.env[k];
+  process.env.DEVFLOW_SECRETS_FILE = join(work, 'secrets.json');
+  process.env.DEVFLOW_AGENT_HOST = 'test-host';
   delete process.env.OPENROUTER_API_KEY;
   route = await import('@/app/api/connectors/route');
 });
-afterAll(() => { process.env.PATH = oldPath; process.env.HOME = oldHome; rmSync(work, { recursive: true, force: true }); });
+afterAll(() => { process.env.PATH = oldPath; process.env.HOME = oldHome; for (const [k, v] of Object.entries(savedEnv)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; } rmSync(work, { recursive: true, force: true }); });
 
 const status = async (id: string) => {
   const j = await (await route.GET(get())).json();
@@ -69,7 +74,8 @@ describe('/api/connectors', () => {
     const text = await res.text();
     expect(res.status).toBe(200);
     expect(text).not.toContain(SECRET);
-    expect(statSync(join(userData, 'connectors.env')).mode & 0o777).toBe(0o600);
+    expect(statSync(join(work, 'secrets.json')).mode & 0o777).toBe(0o600);
+    expect(existsSync(join(userData, 'connectors.env'))).toBe(false);
     expect(await status('openrouter')).toMatchObject({ state: 'ready', keyFrom: 'saved' });
     expect(JSON.stringify(await (await route.GET(get())).json())).not.toContain(SECRET);
   });
@@ -160,6 +166,6 @@ describe('/api/connectors', () => {
     expect((await route.POST(post({ action: 'save-key', id: 'nope', value: 'x' }))).status).toBe(404);
     expect((await route.POST(post({ action: 'explode', id: 'openrouter' }))).status).toBe(400);
     expect((await route.POST(post('{not json'))).status).toBe(400);
-    expect(existsSync(join(userData, 'connectors.env'))).toBe(true);
+    expect(existsSync(join(work, 'secrets.json'))).toBe(true);
   });
 });

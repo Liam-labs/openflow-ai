@@ -16,7 +16,7 @@ import { requireAuthOrLocal } from '@/lib/api-auth';
 import { tracked } from '@/lib/api-tracking';
 import { loadCatalog, type Connector } from '@/lib/connectors/catalog';
 import { detectAll, detectConnector, gatherFacts } from '@/lib/connectors/detect';
-import { readConnectorEnv, removeConnectorKey, saveConnectorKey, validateKeyValue } from '@/lib/connectors/secrets';
+import { getConnectorKey, removeConnectorKey, saveConnectorKey, savedConnectorKeyNames, validateKeyValue } from '@/lib/connectors/secrets';
 import { testKey } from '@/lib/connectors/test-key';
 import { addMcp, removeMcp } from '@/lib/connectors/mcp-apply';
 import { runInstall } from '@/lib/connectors/install';
@@ -51,7 +51,7 @@ export const GET = tracked('/api/connectors', async (request: NextRequest) => {
   if (denied) return denied;
   try {
     const catalog = await loadCatalog();
-    const saved = Object.keys(await readConnectorEnv());
+    const saved = savedConnectorKeyNames();
     const facts = await gatherFacts(saved);
     const statuses = await detectAll(catalog.connectors, facts);
     return NextResponse.json({ success: true, catalog, statuses, savedKeys: saved });
@@ -86,19 +86,19 @@ export const POST = tracked('/api/connectors', async (request: NextRequest) => {
       }
       case 'remove-key': {
         const name = pickKeyName(connector, body.env);
-        return NextResponse.json({ success: true, removed: await removeConnectorKey(name) });
+        return NextResponse.json({ success: true, removed: await removeConnectorKey(name, allowed) });
       }
       case 'test-key': {
         const testId = connector.setup.key?.test;
         if (!testId) return NextResponse.json({ success: true, ok: true, message: 'This provider has no check. The key is saved and will be used as it is.' });
         const name = pickKeyName(connector, body.env);
-        const value = typeof body.value === 'string' && body.value.trim() ? validateKeyValue(body.value) : (await readConnectorEnv())[name];
+        const value = typeof body.value === 'string' && body.value.trim() ? validateKeyValue(body.value) : getConnectorKey(name);
         if (!value) return bad('Paste the key first.');
         const result = await testKey(testId, value);
         return NextResponse.json({ success: true, ...result });
       }
       case 'add-mcp': {
-        const saved = new Set(Object.keys(await readConnectorEnv()));
+        const saved = new Set(savedConnectorKeyNames());
         const inputs = body.inputs && typeof body.inputs === 'object' ? (body.inputs as Record<string, unknown>) : {};
         const result = await addMcp(connector, inputs, saved);
         return NextResponse.json({ success: result.ok, ...result });
@@ -112,7 +112,7 @@ export const POST = tracked('/api/connectors', async (request: NextRequest) => {
         return NextResponse.json({ success: result.ok, ...result });
       }
       case 'check': {
-        const facts = await gatherFacts(Object.keys(await readConnectorEnv()));
+        const facts = await gatherFacts(savedConnectorKeyNames());
         return NextResponse.json({ success: true, status: await detectConnector(connector, facts) });
       }
       default:

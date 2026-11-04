@@ -31,6 +31,15 @@ export async function register() {
     // Keys saved by the setup wizard live in a private file the app reads itself; values already in the environment win.
     try {
       const { loadSecretsIntoEnv } = await import('@/lib/secret-store');
+      // Keys the Connections page saved in .UserData/connectors.env move into the store once, before the store is loaded.
+      try {
+        const { moveLegacyConnectorEnv } = await import('@/lib/connectors/legacy-env');
+        const moved = await moveLegacyConnectorEnv();
+        if (moved.status === 'moved') console.log(`[secret-store] moved ${moved.moved.length} connector key(s) from connectors.env${moved.replaced.length ? `; replaced a different stored value for ${moved.replaced.join(', ')}` : ''}`);
+        if (moved.status === 'kept') console.error(`[secret-store] connectors.env kept: a key did not move cleanly (${moved.refused.concat(moved.moved).length} names checked). The backup is ${moved.backup}`);
+      } catch (error) {
+        console.error('[secret-store] connectors.env not moved:', error instanceof Error ? error.message : error);
+      }
       loadSecretsIntoEnv();
     } catch (error) {
       console.error('[secret-store] not loaded:', error instanceof Error ? error.message : error);

@@ -1,115 +1,78 @@
 /**
- * Where connector keys live: one owner-only file, `.UserData/connectors.env`, lines of `NAME='value'`.
- * Agents started by DevFlow source it (see `connectorEnvShellPrefix`), so a saved key is simply `$NAME` to them.
- * Only names the catalog declares may be written, values never reach a log or an API answer, and the
- * file is created 0600 from its first byte.
+ * Where connector keys live: the app's own secret store (lib/secret-store.ts, `.AppData/secrets.json`, mode 0600), the same place
+ * the Vault sync and the setup wizard put keys. The app loads it into its environment at start, so what is saved here is what agents
+ * and tools the app starts inherit. This module adds the rules for the Connections page: only names the catalog declares, values
+ * checked before they are written, and a save that also takes effect now (the running app and the running tmux server).
+ * Values never reach a log or an API answer.
+ *
+ * Until November 2026 keys lived in `.UserData/connectors.env`. lib/connectors/legacy-env.ts moves that file's keys into the store once.
  */
-import { promises as fs, existsSync, readFileSync } from 'fs';
-import path from 'path';
-import { withFileLock } from '@/lib/data-io';
-import { DataPaths } from '@/lib/data-paths';
+import { execFile } from 'child_process';
+import { resolveSecretStore, SecretStoreError, type SecretStore } from '@/lib/secret-store';
+import { secretNameAllowed, secretValueAllowed } from '@/lib/secrets-file';
+import { defaultHost } from '@/lib/host-executor';
 import { ConnectorInputError } from '@/lib/connectors/errors';
-
-const NAME = /^[A-Z][A-Z0-9_]{1,63}$/;
-const LINE = /^([A-Z][A-Z0-9_]{1,63})='((?:[^']|'\\'')*)'$/;
-// eslint-disable-next-line no-control-regex
-const CONTROL = /[\u0000-\u001f\u007f]/;
-export const MAX_VALUE_LENGTH = 4096;
-
-export function connectorEnvPath(): string {
-  return path.join(DataPaths.userData, 'connectors.env');
-}
-
-export function shellQuote(value: string): string {
-  return `'${value.replace(/'/g, `'\\''`)}'`;
-}
 
 /** Returns the cleaned value, or throws a message that is safe to show (it never contains the value). */
 export function validateKeyValue(value: unknown): string {
   if (typeof value !== 'string') throw new ConnectorInputError('The key must be text.');
   const v = value.trim();
   if (!v) throw new ConnectorInputError('The key is empty.');
-  if (v.length > MAX_VALUE_LENGTH) throw new ConnectorInputError('The key is too long.');
-  if (CONTROL.test(v)) throw new ConnectorInputError('The key has a line break or hidden character in it. Copy it again.');
+  if (!secretValueAllowed(v)) throw new ConnectorInputError('The key is too long, or has a line break or hidden character in it. Copy it again.');
   return v;
 }
 
-export function parseConnectorEnv(text: string): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const line of text.split('\n')) {
-    const m = LINE.exec(line);
-    if (m) out[m[1]] = m[2].replace(/'\\''/g, "'");
-  }
-  return out;
+function checkName(name: string, allowed: ReadonlySet<string>): void {
+  if (!secretNameAllowed(name) || !allowed.has(name)) throw new ConnectorInputError('That key name is not in the connectors list.');
 }
 
-export function serializeConnectorEnv(values: Record<string, string>): string {
-  return Object.keys(values).sort().map((k) => `${k}=${shellQuote(values[k])}\n`).join('');
+function asInputError(e: unknown): never {
+  // The store's own messages name the problem without the value ("the environment store is read-only: ...").
+  if (e instanceof SecretStoreError) throw new ConnectorInputError(e.message);
+  throw e;
 }
 
-/** One saved key, read without waiting: for code that builds an agent's start-up environment and cannot be async. */
-export function readConnectorKeySync(name: string, file: string = connectorEnvPath()): string | undefined {
-  try {
-    return parseConnectorEnv(readFileSync(file, 'utf8'))[name]?.trim() || undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-export async function readConnectorEnv(file: string = connectorEnvPath()): Promise<Record<string, string>> {
-  try {
-    return parseConnectorEnv(await fs.readFile(file, 'utf-8'));
-  } catch (e) {
-    if ((e as NodeJS.ErrnoException).code === 'ENOENT') return {};
-    throw e;
-  }
-}
-
-async function writeOwnerOnly(file: string, text: string): Promise<void> {
-  await fs.mkdir(path.dirname(file), { recursive: true });
-  const tmp = `${file}.${process.pid}.${Date.now()}.tmp`;
-  // mode on open: the secret is never readable by anyone else, not even for a moment.
-  const handle = await fs.open(tmp, 'wx', 0o600);
-  try {
-    await handle.writeFile(text, 'utf-8');
-  } finally {
-    await handle.close();
-  }
-  await fs.chmod(tmp, 0o600);
-  await fs.rename(tmp, file);
+/** New agents start from the tmux server's environment, which was fixed when it started; keep it in step with the key just saved. */
+async function offerToTmux(name: string, value: string | null): Promise<void> {
+  if (defaultHost()) return;  // agents live on another machine; this process cannot reach their tmux
+  const args = value === null ? ['set-environment', '-gu', '--', name] : ['set-environment', '-g', '--', name, value];
+  await new Promise<void>((resolve) => { execFile('tmux', args, { timeout: 3000 }, () => resolve()); });  // no tmux server yet is fine
 }
 
 /** Saves one key. `allowed` is the set of names the catalog declares; anything else is refused. */
-export async function saveConnectorKey(name: string, value: unknown, allowed: ReadonlySet<string>, file: string = connectorEnvPath()): Promise<void> {
-  if (!NAME.test(name) || !allowed.has(name)) throw new ConnectorInputError('That key name is not in the connectors list.');
+export async function saveConnectorKey(name: string, value: unknown, allowed: ReadonlySet<string>, store: SecretStore = resolveSecretStore()): Promise<void> {
+  checkName(name, allowed);
   const clean = validateKeyValue(value);
-  await withFileLock(file, async () => {
-    const all = await readConnectorEnv(file);
-    all[name] = clean;
-    await writeOwnerOnly(file, serializeConnectorEnv(all));
-  });
+  try {
+    store.set(name, clean);
+  } catch (e) {
+    asInputError(e);
+  }
+  process.env[name] = clean;
+  await offerToTmux(name, clean);
 }
 
-export async function removeConnectorKey(name: string, file: string = connectorEnvPath()): Promise<boolean> {
-  if (!NAME.test(name)) throw new ConnectorInputError('Bad key name.');
-  return withFileLock(file, async () => {
-    const all = await readConnectorEnv(file);
-    if (!(name in all)) return false;
-    delete all[name];
-    await writeOwnerOnly(file, serializeConnectorEnv(all));
-    return true;
-  });
+export async function removeConnectorKey(name: string, allowed: ReadonlySet<string>, store: SecretStore = resolveSecretStore()): Promise<boolean> {
+  checkName(name, allowed);
+  let had = false;
+  try {
+    had = store.get(name) !== undefined;
+    store.delete(name);
+  } catch (e) {
+    asInputError(e);
+  }
+  if (had) {
+    delete process.env[name];
+    await offerToTmux(name, null);
+  }
+  return had;
 }
 
-export async function savedConnectorKeyNames(file: string = connectorEnvPath()): Promise<string[]> {
-  return Object.keys(await readConnectorEnv(file)).sort();
+export function getConnectorKey(name: string, store: SecretStore = resolveSecretStore()): string | undefined {
+  try { return store.get(name); } catch { return undefined; }
 }
 
-/**
- * Shell text for the start of an agent's launch command: loads the saved keys into that agent's environment.
- * Empty when no key has been saved, so an install that never used connectors launches exactly as before.
- */
-export function connectorEnvShellPrefix(file: string = connectorEnvPath()): string {
-  if (!existsSync(file)) return '';
-  return `set -a; . ${shellQuote(file)} 2>/dev/null; set +a;`;
+/** Names saved in the store (an unreadable store counts as none). Never values. */
+export function savedConnectorKeyNames(store: SecretStore = resolveSecretStore()): string[] {
+  try { return store.names(); } catch { return []; }
 }
