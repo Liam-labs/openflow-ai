@@ -89,6 +89,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Setup is not finished, so everyone is sent to /setup. Ask the gate first anyway and ignore its answer: the gate is the only place a
+  // tailnet visit is recorded, and the Tailscale wizard (which runs inside setup) needs to see a second device open the address. This opens nothing.
+  await mayViewPages(request);
+
   // Not configured → redirect to setup wizard, on the address the caller used. request.nextUrl names the server's own idea of its host
   // and port (inside a container that is localhost:3000), which sent anyone who published another port to the wrong service.
   return NextResponse.redirect(new URL('/setup', requestOrigin(request)));

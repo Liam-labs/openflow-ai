@@ -69,6 +69,12 @@ describe('middleware: who may see the pages', () => {
     expect(new URL(response.headers.get('location')!).pathname).toBe('/setup');
   });
 
+  it('before setup the gate is still asked, so a second device visit is recorded, and the caller is still sent to /setup', async () => {
+    const { response, calls } = await run({ setupComplete: false, gate: { allow: false }, headers: { 'x-forwarded-for': '100.64.1.2' } });
+    expect(calls.some((c) => c.url.endsWith('/api/auth/gate'))).toBe(true);
+    expect(new URL(response.headers.get('location')!).pathname).toBe('/setup');
+  });
+
   it('before setup the redirect keeps the address and port the caller used, not the server\'s own idea of them', async () => {
     const { response } = await run({ setupComplete: false, url: 'http://localhost:3000/', headers: { host: 'localhost:39230' } });
     expect(response.headers.get('location')).toBe('http://localhost:39230/setup');
