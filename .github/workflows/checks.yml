@@ -25,6 +25,15 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci --no-audit --no-fund
+      - name: Ownership (which side owns each path)
+        # ownership.json labels every path core, openflow-only or devflow-only. Fails on an unlabelled path, and on an export/* branch that changes an openflow-only path.
+        env:
+          EVENT: ${{ github.event_name }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          node scripts/check-ownership.mjs --all
+          if [ "$EVENT" = "pull_request" ]; then node scripts/check-ownership.mjs --changed "$BASE" HEAD --branch "$BRANCH"; fi
       - name: Typecheck
         run: npm run typecheck
       - name: Lint the files this change touches
