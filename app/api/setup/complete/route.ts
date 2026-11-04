@@ -99,7 +99,11 @@ export const POST = tracked('/api/setup/complete', async (request: NextRequest) 
 
     // The DeepSeek key goes to the Connections store (.UserData/connectors.env), which is where the DeepSeek agent start-up reads it first
     // and where the Connections page shows it as saved. It is never put in a chat or a log.
-    if (credentials.deepseekApiKey) await saveConnectorKey('DEEPSEEK_API_KEY', credentials.deepseekApiKey, new Set(['DEEPSEEK_API_KEY']));
+    if (credentials.deepseekApiKey) {
+      await saveConnectorKey('DEEPSEEK_API_KEY', credentials.deepseekApiKey, new Set(['DEEPSEEK_API_KEY']));
+      // The store now holds the only copy, so removing the key on the Connections page really removes it.
+      await writeJsonFile(DataPaths.user.credentials, { ...credentials, deepseekApiKey: '' });
+    }
 
     // 4. Write completion marker
     const markerPath = path.join(
