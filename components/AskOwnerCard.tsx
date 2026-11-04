@@ -7,6 +7,7 @@ import {
   type StructuredQuestion,
   type StructuredAnswer,
   type AskOwnerOption,
+  type AskOwnerApproval,
 } from '@/lib/ask-owner/types';
 
 const DEFERRED_OPTION_ID = '__deferred__';
@@ -29,6 +30,12 @@ interface AskOwnerCardProps {
  * opens a free-text textarea. On answer the card collapses to show the selection.
  * Close X top-right defers the question — sends the asking agent a deferred notice.
  */
+/** What picking this choice lets the agent do, in plain words, taken from the approval itself and not from what the agent wrote. */
+export function describeApproval(a: AskOwnerApproval): string {
+  const keys = a.secretNames && a.secretNames.length > 0 ? ` using ${a.secretNames.join(', ')}` : '';
+  return `Approves one step: ${a.action}${keys}. It works once and lasts 10 minutes. The key is never shown to the agent.`;
+}
+
 export function AskOwnerCard({ question, currentParticipantId, resolvedAnswer, onAnswer, onDismiss }: AskOwnerCardProps) {
   const [localAnswer, setLocalAnswer] = React.useState<StructuredAnswer | null>(null);
   const [otherOpen, setOtherOpen] = React.useState(false);
@@ -60,7 +67,32 @@ export function AskOwnerCard({ question, currentParticipantId, resolvedAnswer, o
     ));
   };
 
-  const pickOne = (opt: AskOwnerOption) => submit(buildAnswer([opt.id], [opt.label]));
+  // A choice that carries an approval first asks the server for it (only the signed-in owner can get one). If that fails nothing is
+  // answered, so the agent is never told yes without the approval to back it.
+  const [approvalBusy, setApprovalBusy] = React.useState(false);
+  const [approvalError, setApprovalError] = React.useState('');
+  const pickOne = async (opt: AskOwnerOption) => {
+    if (!opt.approval) { submit(buildAnswer([opt.id], [opt.label])); return; }
+    setApprovalBusy(true);
+    setApprovalError('');
+    try {
+      const res = await fetch('/api/broker/approvals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: opt.approval.action, args: opt.approval.args, secretNames: opt.approval.secretNames }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.success === false || typeof json.approvalId !== 'string') {
+        setApprovalError(typeof json.error === 'string' ? json.error : 'The approval could not be created. Nothing was approved.');
+        return;
+      }
+      submit({ ...buildAnswer([opt.id], [opt.label]), approval: { id: json.approvalId, expiresAt: String(json.expiresAt ?? '') } });
+    } catch {
+      setApprovalError('Could not reach the server. Nothing was approved.');
+    } finally {
+      setApprovalBusy(false);
+    }
+  };
 
   const submitOther = () => {
     const t = otherText.trim();
@@ -128,6 +160,9 @@ export function AskOwnerCard({ question, currentParticipantId, resolvedAnswer, o
               <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-300">
                 <CheckCircle className="w-3.5 h-3.5" /> Answered
               </span>
+              {answer.approval && (
+                <span className="inline-flex items-center gap-1 text-xs text-amber-200/90">Approved once, for 10 minutes</span>
+              )}
               {answer.selectedLabels.map((label, i) => (
                 <span
                   key={i}
@@ -200,14 +235,22 @@ export function AskOwnerCard({ question, currentParticipantId, resolvedAnswer, o
             <button
               key={opt.id}
               type="button"
-              onClick={() => pickOne(opt)}
+              disabled={approvalBusy}
+              onClick={() => void pickOne(opt)}
               className="text-left px-3 py-2.5 min-h-[44px] rounded-lg border border-white/10 bg-white/[0.04] hover:bg-blue-500/15 hover:border-blue-500/45 active:bg-blue-500/20 active:scale-[0.99] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
             >
               <span className="block text-sm font-medium text-white/90">{opt.label}</span>
               {opt.description && <span className="block text-xs text-muted mt-0.5">{opt.description}</span>}
+              {opt.approval && (
+                <span className="block text-xs text-amber-200/90 mt-1" data-testid="approval-line">
+                  {describeApproval(opt.approval)}
+                </span>
+              )}
             </button>
           ),
         )}
+
+        {approvalError && <p role="alert" className="text-xs text-red-300 px-1">{approvalError}</p>}
 
         {/* Separate Other path — always available (allowOther) */}
         {question.allowOther && !otherOpen && (
