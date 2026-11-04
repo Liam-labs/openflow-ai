@@ -151,7 +151,7 @@ export function StepComplete({ onGoToDashboard, hasChannel, opensAssistant }: St
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-white">Give your team a memory</h3>
             <p className="text-xs mt-1" style={{ color: 'rgba(var(--ink-ch), 0.6)' }}>
-              Your agents save what they learn and search it later, so they stop solving the same problem twice.
+              Your agents can save notes and search them later, once you give them access, so they stop solving the same problem twice.
               It keeps notes your agents write, never your files. It stays on this computer.
             </p>
             <a href="/operations#systems/connections" className="inline-block mt-3 text-xs font-semibold text-[#60a5fa] underline underline-offset-2">
