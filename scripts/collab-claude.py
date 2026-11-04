@@ -154,8 +154,27 @@ def _stored_secret(name):
             os.environ.get("DEVFLOW_HOME") or os.path.join(os.path.expanduser("~"), "DevFlow"), ".AppData", "secrets.json")
         with open(path, encoding="utf-8") as handle:
             value = json.load(handle).get(name, "")
-        return value if isinstance(value, str) else ""
+        if not isinstance(value, str):
+            return ""
+        if value.startswith("enc:v1:"):
+            return _decrypt_stored_secret(name, value)   # encrypted at rest (lib/secret-vault.ts): opened by the same Node decrypt Riley's reader uses
+        return "" if value.startswith("enc:") else value
     except (OSError, ValueError, AttributeError):
+        return ""
+
+
+def _decrypt_stored_secret(name, value):
+    """Plain text of one enc:v1: value through scripts/read-secret.mjs (the value goes in on stdin, never on a command line), or ''. Never raises."""
+    import shutil
+    import subprocess
+    try:
+        node = shutil.which("node")
+        script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "read-secret.mjs")
+        if not node or not os.path.isfile(script):
+            return ""
+        done = subprocess.run([node, script, name], input=value, capture_output=True, text=True, timeout=10)
+        return done.stdout if done.returncode == 0 else ""
+    except (OSError, ValueError, subprocess.SubprocessError):
         return ""
 
 

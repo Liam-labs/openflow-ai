@@ -6,9 +6,13 @@
  * first run does not create a file that every new terminal runs. Writing a shell-sourceable ~/.secrets as well is opt-in
  * (DEVFLOW_WRITE_SHELL_SECRETS=1, see app/api/setup/complete).
  *
+ * Every value is written encrypted (AES-256-GCM, key held outside this folder, see lib/secret-vault.ts). set() encrypts, get() decrypts, and the
+ * file can never receive a new plaintext value. An older file with plain values is upgraded once at start (upgradeToEncrypted).
+ * A few names (PROTECTED_SECRET_NAMES, today ANTHROPIC_API_KEY) are also kept out of the app's own environment: agents get them only through
+ * the spawn code. Every other value is decrypted into the environment at start (loadSecretsIntoEnv).
+ *
  * Other stores plug in behind the same interface: "env" (read-only, whatever is in the environment) is built in, and a vault
- * can be added by implementing SecretStore. Our own server uses 1Password through scripts/devflow-secret-exec, which sets the
- * environment before the app starts, so nothing here changes for it.
+ * can be added by implementing SecretStore. A launcher that sets the environment before the app starts needs nothing here.
  *
  *   DEVFLOW_SECRET_STORE  file (default) | env
  *   DEVFLOW_SECRETS_FILE  path of the file store (default <app data>/secrets.json)
@@ -17,6 +21,8 @@ import fs from 'fs';
 import path from 'path';
 import { randomBytes } from 'crypto';
 import { secretNameAllowed, secretValueAllowed } from './secrets-file';
+import { SecretVaultError, decryptSecret, encryptSecret, isEncryptedValue, isProtectedName, resolveVaultKey } from './secret-vault';
+import { claudeUsesApiKey } from './claude-spawn-env';
 
 export interface SecretStore {
   readonly kind: string;
@@ -24,6 +30,8 @@ export interface SecretStore {
   set(name: string, value: string): void;
   delete(name: string): void;
   names(): string[];
+  /** True when the stored value is encrypted at rest (lib/secret-vault.ts). Stores without encryption omit this. */
+  isEncrypted?(name: string): boolean;
 }
 
 export class SecretStoreError extends Error {
@@ -40,7 +48,7 @@ function checkName(name: string): void {
 /** A JSON object of NAME -> value in a private file. Strict: a damaged file is an error (a copy is kept), never "empty". */
 export class FileSecretStore implements SecretStore {
   readonly kind = 'file';
-  constructor(readonly filePath: string) {}
+  constructor(readonly filePath: string, private readonly env: Record<string, string | undefined> = process.env) {}
 
   private read(): Record<string, string> {
     let text: string;
@@ -65,7 +73,15 @@ export class FileSecretStore implements SecretStore {
     }
   }
 
-  private write(data: Record<string, string>): void {
+  private write(data: Record<string, string>, before: Record<string, string> = {}): void {
+    // Last line of defence: no name may gain or change a plaintext value, whatever the caller did.
+    for (const [name, value] of Object.entries(data)) {
+      if (!isEncryptedValue(value) && before[name] !== value) throw new SecretStoreError(`${name} may only be stored encrypted`);
+    }
+    this.writeRaw(data);
+  }
+
+  private writeRaw(data: Record<string, string>): void {
     fs.mkdirSync(path.dirname(this.filePath), { recursive: true, mode: 0o700 });
     const tmp = `${this.filePath}.tmp.${process.pid}-${randomBytes(4).toString('hex')}`;
     fs.writeFileSync(tmp, JSON.stringify(data, null, 2) + '\n', { mode: 0o600, flag: 'wx' });
@@ -73,27 +89,80 @@ export class FileSecretStore implements SecretStore {
   }
 
   get(name: string): string | undefined {
-    return this.read()[name];
+    const raw = this.read()[name];
+    if (raw === undefined || !isEncryptedValue(raw)) return raw;
+    try {
+      const vault = resolveVaultKey(this.env, { dataDir: path.dirname(this.filePath) });
+      if (!vault) throw new SecretStoreError(`${name} is stored encrypted but no encryption key is available (set DEVFLOW_SECRETS_KEY)`);
+      return decryptSecret(raw, vault.key, name);
+    } catch (error) {
+      if (error instanceof SecretVaultError) throw new SecretStoreError(`${name}: ${error.message}`);
+      throw error;
+    }
+  }
+
+  isEncrypted(name: string): boolean {
+    const raw = this.read()[name];
+    return raw !== undefined && isEncryptedValue(raw);
   }
 
   set(name: string, value: string): void {
     checkName(name);
     if (!secretValueAllowed(value)) throw new SecretStoreError(`the value for ${name} is empty, too long or has a line break`);
+    if (isEncryptedValue(value)) throw new SecretStoreError(`the value for ${name} looks like an already-encrypted blob; give the real value`);
     const data = this.read();
-    data[name] = value;
-    this.write(data);
+    const before = { ...data };
+    try {
+      const vault = resolveVaultKey(this.env, { create: true, dataDir: path.dirname(this.filePath) });
+      if (!vault) throw new SecretStoreError('no encryption key is available');
+      data[name] = encryptSecret(value, vault.key, name);   // a new random nonce each time: saving the same key twice gives different bytes
+    } catch (error) {
+      if (error instanceof SecretStoreError) throw error;
+      throw new SecretStoreError(`${name} was not saved: ${error instanceof SecretVaultError ? error.message : `cannot make the encryption key (${(error as NodeJS.ErrnoException).code || 'error'})`}`);
+    }
+    this.write(data, before);
   }
 
   delete(name: string): void {
     const data = this.read();
     if (name in data) {
+      const before = { ...data };
       delete data[name];
-      this.write(data);
+      this.write(data, before);
     }
   }
 
   names(): string[] {
     return Object.keys(this.read()).sort();
+  }
+
+  /**
+   * Encrypts every plain value in an older file, once. The old contents stay in memory until the encrypted file has been read back and
+   * every value matches; if anything does not, the old file is put back and nothing is lost. No plaintext copy is left on disk.
+   * Returns the names it upgraded (none for a file that is already encrypted or empty).
+   */
+  upgradeToEncrypted(): string[] {
+    const original = this.read();
+    const plain = Object.keys(original).filter((n) => !isEncryptedValue(original[n]));
+    if (plain.length === 0) return [];
+    const upgraded = { ...original };
+    try {
+      const vault = resolveVaultKey(this.env, { create: true, dataDir: path.dirname(this.filePath) });
+      if (!vault) throw new SecretStoreError('no encryption key is available');
+      for (const name of plain) upgraded[name] = encryptSecret(original[name], vault.key, name);
+    } catch (error) {
+      if (error instanceof SecretStoreError) throw error;
+      throw new SecretStoreError(`the secret store was not encrypted: ${error instanceof SecretVaultError ? error.message : `cannot make the encryption key (${(error as NodeJS.ErrnoException).code || 'error'})`}`);
+    }
+    this.write(upgraded, original);
+    const mismatched = plain.filter((name) => {
+      try { return this.get(name) !== original[name]; } catch { return true; }
+    });
+    if (mismatched.length) {
+      this.writeRaw(original);   // put the old file back untouched
+      throw new SecretStoreError(`the secret store was not encrypted: ${mismatched.length} value(s) did not read back the same, so the old file was restored`);
+    }
+    return plain;
   }
 }
 
@@ -119,14 +188,15 @@ export function defaultSecretsFile(env: Record<string, string | undefined> = pro
   if (env.DEVFLOW_SECRETS_FILE) return path.resolve(env.DEVFLOW_SECRETS_FILE);
   const base = appDataDir || env.DEVFLOW_APP_DATA_DIR || '.AppData';
   const root = env.DEVFLOW_HOME || process.cwd();
-  return path.join(path.isAbsolute(base) ? base : path.join(root, base), 'secrets.json');
+  // turbopackIgnore: root and base are only known at run time; without it the build traces the whole .AppData tree (7 GB of backups) and runs out of memory.
+  return path.join(path.isAbsolute(base) ? base : path.join(/* turbopackIgnore: true */ root, base), 'secrets.json');
 }
 
 export function resolveSecretStore(env: Record<string, string | undefined> = process.env, appDataDir?: string): SecretStore {
   const kind = (env.DEVFLOW_SECRET_STORE || 'file').trim().toLowerCase();
   if (kind === 'env') return new EnvSecretStore(env);
   if (kind !== 'file') throw new SecretStoreError(`DEVFLOW_SECRET_STORE=${kind} is not a known store (file or env)`);
-  return new FileSecretStore(defaultSecretsFile(env, appDataDir));
+  return new FileSecretStore(defaultSecretsFile(env, appDataDir), env);
 }
 
 /**
@@ -140,6 +210,10 @@ export function loadSecretsIntoEnv(store: SecretStore = resolveSecretStore(), en
   try {
     for (const name of store.names()) {
       if (env[name] === undefined || env[name] === '') {
+        // A protected value stays in the store: agents get it only through the spawn code, so it is not in the app's own environment.
+        // The one exception is the install-wide API-key mode (DEVFLOW_CLAUDE_AUTH=api-key), which expects ANTHROPIC_API_KEY in the environment.
+        // Every other value is stored encrypted too, and is decrypted here so the app and the agents it starts can read it.
+        if (isProtectedName(name) && store.isEncrypted?.(name) && !(name === 'ANTHROPIC_API_KEY' && claudeUsesApiKey(env))) continue;
         const value = store.get(name);
         if (value !== undefined) {
           env[name] = value;

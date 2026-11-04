@@ -40,6 +40,17 @@ export async function register() {
       } catch (error) {
         console.error('[secret-store] connectors.env not moved:', error instanceof Error ? error.message : error);
       }
+      // Every value in the store is encrypted at rest. An older file with plain values is upgraded once, and put back untouched if it does not read back the same.
+      try {
+        const { resolveSecretStore, FileSecretStore } = await import('@/lib/secret-store');
+        const store = resolveSecretStore();
+        if (store instanceof FileSecretStore) {
+          const upgraded = store.upgradeToEncrypted();
+          if (upgraded.length) console.log(`[secret-store] encrypted ${upgraded.length} stored value(s)`);
+        }
+      } catch (error) {
+        console.error('[secret-store] not encrypted:', error instanceof Error ? error.message : error);
+      }
       loadSecretsIntoEnv();
     } catch (error) {
       console.error('[secret-store] not loaded:', error instanceof Error ? error.message : error);

@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import os from 'os';
 import path from 'path';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
@@ -21,6 +22,8 @@ export default defineConfig({
       DEVFLOW_AGENT_USER_FILE: '/nonexistent/devflow-agent-user.json',   // never the real list of agents that run as devflow-agent
       COMPUTER_USE_BRIDGE_TOKEN: 'vitest-bridge-token-0123456789abcdefghij',
       DEVFLOW_HOME: __dirname,
+      // Secrets are encrypted with a key file; a test run must never create or read the real one.
+      DEVFLOW_SECRETS_KEY_FILE: path.join(os.tmpdir(), 'openflow-vitest-secrets.key'),
       // An agent's shell sets the team's real names; empty values give the code's own defaults ("Builder", "the Team Lead"...).
       DEVFLOW_BUILDER_NAME: '',
       DEVFLOW_LEAD_NAME: '',
