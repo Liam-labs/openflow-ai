@@ -549,6 +549,34 @@
     {
       "path": "tests/unit/ask-jack-link.test.ts",
       "kind": "openflow-only"
+    },
+    {
+      "path": "app/setup/preview/model-features/**",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "components/model-features/**",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "lib/model-feature-card.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "lib/model-feature-client.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/model-feature-card.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/model-feature-client.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/model-feature-review.test.ts",
+      "kind": "openflow-only"
     }
   ]
 }

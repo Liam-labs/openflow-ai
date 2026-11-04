@@ -98,5 +98,15 @@
       "instance/ui.ts",
       "components/setup/AskJackLink.tsx"
     ]
+  },
+  {
+    "id": "model-features",
+    "title": "Model features (switch-on card)",
+    "page": "kb/model-features.md",
+    "paths": [
+      "components/model-features/",
+      "lib/model-feature-card.ts",
+      "lib/model-feature-client.ts"
+    ]
   }
 ]
