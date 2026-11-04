@@ -26,8 +26,8 @@ import { ensureClaudeFirstRun } from '@/lib/claude-first-run';
 import { resolveSecretStore } from '@/lib/secret-store';
 import { createChannel, getChannel } from '@/app/api/agent/actions/collab';
 import { provision } from '@/app/api/agent/actions/roster';
-import { DataPaths } from '@/lib/data-paths';
-import { ensureSetupChannel, markerFile, readMarkerFile, writeMarkerFile, type GuideDefinition } from '@/lib/setup/setup-channel';
+import { extensions } from '@/instance/extensions';
+import type { FirstTeamContext } from '@/lib/instance-extensions';
 import type { AgentApiRequest, AgentAuthContext } from '@/lib/types';
 
 interface ExampleAgent {
@@ -88,38 +88,6 @@ async function roleIdForSlug(slug: string): Promise<string | undefined> {
   return roles.find(r => r.slug === slug)?.id;
 }
 
-
-async function ensureSetupChannelOnce(opts: { agentType: string; model?: string; workingDirectory: string }) {
-  const marker = markerFile(path.dirname(DataPaths.memoryWizard));
-  return ensureSetupChannel({
-    readMarker: () => readMarkerFile(marker),
-    writeMarker: (m) => writeMarkerFile(marker, m),
-    loadGuide: async () => JSON.parse(await fs.readFile(appPath('data', 'examples', 'guide.json'), 'utf-8')) as GuideDefinition,
-    createChannel: async (name, description) => {
-      const { channel } = await createChannel(
-        { action: 'collab.channels.create', name, description, projectPath: opts.workingDirectory } as AgentApiRequest,
-        AUTH,
-      );
-      return channel.id;
-    },
-    startGuide: async (channelId, guide) => {
-      // Its own folder: the first team may also have an agent called Jack, and two agents with one name must not share an agent folder.
-      const guideDir = path.join(getHomeDir(), 'devflow-projects', 'setup-assistant');
-      await fs.mkdir(guideDir, { recursive: true });
-      const roleId = await roleIdForSlug(guide.roleSlug);
-      if (!roleId) return { started: false, error: `Role "${guide.roleSlug}" is not installed.` };
-      const out = await provision(
-        {
-          action: 'roster.provision', channelId, name: guide.name, workingDirectory: guideDir, roleId, roleSlug: guide.roleSlug,
-          personality: guide.personality, agentType: opts.agentType, model: opts.model,
-        } as AgentApiRequest,
-        AUTH,
-      );
-      return out.spawned ? { started: true } : { started: false, error: (out as { error?: string }).error || 'The Guide did not start.' };
-    },
-    now: () => new Date().toISOString(),
-  });
-}
 
 export const GET = tracked('/api/setup/first-team', async (request: NextRequest) => {
   const denied = await requireAuthOrLocal(request, 'read');
@@ -246,12 +214,33 @@ export const POST = tracked('/api/setup/first-team', async (request: NextRequest
 
   // The Setup channel and its Guide, once per install. The wizard goes on whatever happens here.
   const started = results.some(r => r.started);
-  const setup = started ? await ensureSetupChannelOnce({ agentType, model, workingDirectory }) : undefined;
+  const added: Record<string, unknown> = {};
+  if (started) {
+    const ctx: FirstTeamContext = {
+      agentType, model, workingDirectory,
+      createChannel: async (name, description, projectPath) => {
+        const { channel } = await createChannel({ action: 'collab.channels.create', name, description, projectPath } as AgentApiRequest, AUTH);
+        return channel.id;
+      },
+      startAgent: async (id, agent) => {
+        const roleId = await roleIdForSlug(agent.roleSlug);
+        if (!roleId) return { started: false, error: `Role "${agent.roleSlug}" is not installed.` };
+        const out = await provision(
+          { action: 'roster.provision', channelId: id, name: agent.name, workingDirectory: agent.workingDirectory, roleId, roleSlug: agent.roleSlug, personality: agent.personality, agentType, model } as AgentApiRequest,
+          AUTH,
+        );
+        return out.spawned ? { started: true } : { started: false, error: (out as { error?: string }).error || 'The agent did not start.' };
+      },
+    };
+    for (const hook of extensions.afterFirstTeam) {
+      try { added[hook.id] = await hook.run(ctx); } catch (error) { added[hook.id] = { status: 'failed', error: error instanceof Error ? error.message : 'failed' }; }
+    }
+  }
 
   return NextResponse.json({
     success: started,
     channelId,
-    setupChannel: setup,
+    ...added,
     agents: results,
     firstMessages: Object.fromEntries(chosen.map(a => [a.name, a.firstMessage])),
   });
