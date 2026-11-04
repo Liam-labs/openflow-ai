@@ -597,6 +597,30 @@
     {
       "path": "tests/unit/collab-claude-token.test.ts",
       "kind": "openflow-only"
+    },
+    {
+      "path": "data/scaffolding/EDITION",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "data/scaffolding/manifest.openflow.json",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "data/scaffolding/masters/global/OPENFLOW.md",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "data/scaffolding/masters/per-agent/startup.openflow.md.tmpl",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "data/scaffolding/masters/per-agent/Workspace.openflow.md.tmpl",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/test_scaffolding_edition.py",
+      "kind": "openflow-only"
     }
   ]
 }

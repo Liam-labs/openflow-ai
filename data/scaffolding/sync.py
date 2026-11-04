@@ -131,8 +131,63 @@ def load_teams() -> dict:
     except Exception as e:
         raise RuntimeError(f"Failed to parse {TEAMS_PATH}: {e}")
 
+EDITION_PATH = SCAFFOLDING_DIR / "EDITION"
+
+
+def current_edition() -> str:
+    """Which edition of the shipped rules this install uses: the word in data/scaffolding/EDITION, or "devflow" when there is no such file.
+
+    DevFlow has no EDITION file, so nothing below changes for it. OpenFlow ships one containing `openflow`.
+    """
+    try:
+        name = EDITION_PATH.read_text(encoding="utf-8").strip().lower()
+    except OSError:
+        return "devflow"
+    return name if re.fullmatch(r"[a-z][a-z0-9-]*", name) else "devflow"
+
+
+def apply_edition(manifest: dict, edition: str | None = None, scaffolding_dir: Path | None = None) -> dict:
+    """The manifest this edition deploys. `manifest.json` itself stays identical in every edition (so an export never fights over it).
+
+    An edition other than devflow reads `manifest.<edition>.json`, which lists `drop` (manifest ids to stop deploying) and `add` (entries
+    used as written). A dropped entry is replaced when an added entry writes the same target. Otherwise it is kept as a retiring entry:
+    its condition becomes `never`, so a file it wrote earlier is removed from an agent that still has it (retire_unmatched_entry), and
+    a file somebody edited by hand is left alone. For the devflow edition the very same object comes back, untouched.
+    """
+    edition = edition or current_edition()
+    if edition == "devflow":
+        return manifest
+    overlay_path = (scaffolding_dir or SCAFFOLDING_DIR) / f"manifest.{edition}.json"
+    try:
+        overlay = json.loads(overlay_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        print(f"  ! WARNING: edition '{edition}' has no readable {overlay_path.name} ({exc}); deploying the base manifest", file=sys.stderr)
+        return manifest
+    drop = set(overlay.get("drop") or [])
+    added = list(overlay.get("add") or [])
+    ids = {e.get("id") for e in manifest.get("files", [])}
+    for entry in added:
+        if not isinstance(entry, dict) or not entry.get("id") or not entry.get("master") or not entry.get("targets"):
+            raise ValueError(f"{overlay_path.name}: every added entry needs an id, a master and targets")
+        if entry["id"] in ids:
+            raise ValueError(f"{overlay_path.name}: added id {entry['id']} is already in manifest.json")
+        ids.add(entry["id"])
+        entry.setdefault("condition", "always")
+    replaced_targets = {t for entry in added for t in entry.get("targets", [])}
+    files: list[dict] = []
+    for entry in manifest.get("files", []):
+        if entry.get("id") not in drop:
+            files.append(entry)
+        elif not replaced_targets.isdisjoint(entry.get("targets", [])):
+            continue    # an added entry writes this very file, so the old one is simply gone
+        else:
+            files.append({**entry, "condition": "never", "retireWhenUnmatched": True})
+    files.extend(added)
+    return {**manifest, "files": files}
+
+
 def load_manifest() -> dict:
-    return json.loads(MANIFEST_PATH.read_text())
+    return apply_edition(json.loads(MANIFEST_PATH.read_text()))
 
 
 def load_agents() -> list[dict]:
@@ -453,6 +508,8 @@ def agent_matches_condition(agent: dict, condition: str,
                             known_models: set[str] | None = None) -> bool:
     if condition == "always":
         return True
+    if condition == "never":
+        return False    # a retiring entry (see apply_edition): it deploys nothing and removes what it wrote before
     if condition.startswith("model:"):
         required_model = condition.split(":", 1)[1].lower()
         # Validate against models.json — warn if condition references an unknown model
@@ -598,6 +655,47 @@ def migrate_legacy_codex_agentchat_profile(base_config: Path, *, write: bool = T
     return True
 
 
+def remove_managed_outlook_config(existing: str, master: str) -> str | None:
+    """The `.mcp.json` text without the scaffold-managed Outlook entry, or None when nothing else is left in the file.
+
+    Only `mcpServers.outlook` is touched, and only while it is still exactly what the scaffold wrote. A server somebody pointed elsewhere,
+    and every unrelated server and key, stay.
+    """
+    existing_data = json.loads(existing)
+    master_data = json.loads(master)
+    if not isinstance(existing_data, dict) or not isinstance(master_data, dict):
+        raise ValueError("MCP configuration root must be a JSON object")
+    servers = existing_data.get("mcpServers")
+    managed = (master_data.get("mcpServers") or {}).get("outlook")
+    if isinstance(servers, dict) and managed is not None and servers.get("outlook") == managed:
+        del servers["outlook"]
+        if not servers:
+            del existing_data["mcpServers"]
+    return json.dumps(existing_data, indent=2, ensure_ascii=False) + "\n" if existing_data else None
+
+
+def _retire_managed_outlook(teams: dict, entry: dict, agent: dict, master: str, dry_run: bool) -> list[str]:
+    removed = []
+    for raw_target in entry.get("targets", []):
+        target = resolve_target(raw_target, agent, teams)
+        if not target.is_file():
+            continue
+        try:
+            existing = target.read_text(encoding="utf-8")
+            updated = remove_managed_outlook_config(existing, master)
+            if updated == existing:
+                continue    # not the managed entry, or already gone: nothing to do
+            if not dry_run:
+                if updated is None:
+                    target.unlink()
+                else:
+                    write_managed_text(target, updated)
+        except (OSError, ValueError):
+            continue
+        removed.append(str(target))
+    return removed
+
+
 def merge_managed_outlook_config(existing: str, master: str) -> str:
     """Replace only the scaffold-managed Outlook MCP entry.
 
@@ -674,6 +772,8 @@ def retire_unmatched_entry(teams: dict, entry: dict, agent: dict,
     master_path = MASTERS_DIR / entry["master"]
     if not master_path.exists():
         return []
+    if entry.get("id") == "mcp-outlook":
+        return _retire_managed_outlook(teams, entry, agent, master_path.read_text(encoding="utf-8"), dry_run)
     heading = _first_line(master_path.read_text(encoding="utf-8"))
     removed = []
     for raw_target in entry.get("targets", []):
