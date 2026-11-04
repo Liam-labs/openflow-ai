@@ -24,6 +24,7 @@ prints the questionId (for correlation) and exits 0.
 """
 
 import argparse
+import json
 import os
 import re
 import sys
@@ -97,6 +98,25 @@ def build_structured_question(question_text, options, asked_by, channel_id,
     return q
 
 
+def parse_approval(raw):
+    """Check a --approval JSON string: an action name, optional args, optional list of key NAMES (never values)."""
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        raise ValueError("is not valid JSON")
+    if not isinstance(data, dict) or not isinstance(data.get("action"), str) or not data["action"].strip():
+        raise ValueError('needs an "action" string')
+    names = data.get("secretNames", [])
+    if not isinstance(names, list) or not all(isinstance(n, str) and re.fullmatch(r"[A-Z][A-Z0-9_]{0,63}", n) for n in names):
+        raise ValueError('"secretNames" must be a list of key names such as DEEPSEEK_API_KEY')
+    out = {"action": data["action"].strip()}
+    if "args" in data:
+        out["args"] = data["args"]
+    if names:
+        out["secretNames"] = names
+    return out
+
+
 def render_fallback_content(q):
     """Plain-text fallback so non-card contexts (logs, terminal-only agents) still
     convey the question. The card UI renders from metadata.client.payload, not this."""
@@ -105,6 +125,8 @@ def render_fallback_content(q):
         line = f'  {i}. {opt["label"]}'
         if opt.get("description"):
             line += f' — {opt["description"]}'
+        if opt.get("approval"):
+            line += f' (approves one step: {opt["approval"]["action"]})'
         lines.append(line)
     lines.append('  …or choose "Other" to type a custom answer.')
     return "\n".join(lines)
@@ -120,6 +142,9 @@ def main(argv=None):
                         help='Answer choice: "Label" or "Label|Description". Repeatable (1-4).')
     parser.add_argument("--header", default=None, help="Short chip/header (<=12 chars).")
     parser.add_argument("--multiselect", action="store_true", help="Allow multiple selections.")
+    parser.add_argument("--approval", default=None,
+                        help='JSON {"action":"test-key","args":{...},"secretNames":["NAME"]}. The first option becomes a Yes that '
+                             'approves exactly that credential-broker step when the owner picks it (the answer carries the approval id).')
     parser.add_argument("--channel", default=None, help="Override channelId (default: from session).")
     args = parser.parse_args(argv)
 
@@ -139,6 +164,17 @@ def main(argv=None):
         args.question, args.options, asked_by, channel_id,
         header=args.header, multi_select=args.multiselect,
     )
+
+    if args.approval:
+        try:
+            approval = parse_approval(args.approval)
+        except ValueError as e:
+            print(f"error: --approval {e}", file=sys.stderr)
+            return 2
+        if not question["options"]:
+            print("error: --approval needs at least one option to attach to", file=sys.stderr)
+            return 2
+        question["options"][0]["approval"] = approval
 
     metadata = {"client": {"kind": ASK_OWNER_QUESTION_KIND, "payload": question}}
     ok, result = session.post(

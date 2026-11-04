@@ -36,6 +36,21 @@ export interface AskOwnerOption {
   label: string;
   /** Optional one-line explanation / tradeoff shown under the label. */
   description?: string;
+  /** Present on a "Yes" choice that approves one broker step. */
+  approval?: AskOwnerApproval;
+}
+
+/**
+ * A choice that, when the owner picks it, also approves one exact credential-broker step (lib/credential-broker.ts). The card shows the
+ * action and the key names to the owner in plain words, asks the server for a one-use approval only after the click, and hands the
+ * approval id to the asking agent in the answer. Additive to the locked contract.
+ */
+export interface AskOwnerApproval {
+  /** A broker action name, for example 'test-key'. */
+  action: string;
+  args?: unknown;
+  /** Names of the saved keys the step may use. Names only, never values. */
+  secretNames?: string[];
 }
 
 export type QuestionStatus = 'pending' | 'answered';
@@ -86,6 +101,8 @@ export interface StructuredAnswer {
   selectedLabels: string[];
   /** Free text supplied for the "Other" choice (present only when Other was chosen). */
   otherText?: string;
+  /** Set when the chosen option carried an approval: the one-use approval the owner just granted. */
+  approval?: { id: string; expiresAt: string };
   /** Who answered — the owner's participant id. */
   answeredBy: string;
   /** ISO timestamp when answered. */

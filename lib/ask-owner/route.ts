@@ -49,7 +49,10 @@ export function formatAnswerForAgent(question: StructuredQuestion, answer: Struc
   const choice = answer.selectedLabels.length > 0 ? answer.selectedLabels.join(', ') : '(no selection)';
   const targetName = question.askedBy?.name?.trim();
   const mention = targetName ? `@${targetName.replace(/^@+/, '')} ` : '';
-  return `${mention}[Ask-Owner] ${HUMAN_ROUTING_NAME} answered your question: "${question.questionText}"\n→ ${choice}`;
+  const approval = answer.approval
+    ? `\nApproval: ${answer.approval.id} (one use, for exactly the step you asked about, expires ${answer.approval.expiresAt}).`
+    : '';
+  return `${mention}[Ask-Owner] ${HUMAN_ROUTING_NAME} answered your question: "${question.questionText}"\n→ ${choice}${approval}`;
 }
 
 /**
