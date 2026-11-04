@@ -7,12 +7,13 @@
  * Body: { provider: 'anthropic'|'openrouter'|'grok'|'ollama', key: string, url?: string }
  */
 
+import { testKey } from '@/lib/connectors/test-key';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthOrLocal } from '@/lib/api-auth';
 import { tracked } from '@/lib/api-tracking';
 
 interface TestKeyRequest {
-  provider: 'anthropic' | 'openrouter' | 'grok' | 'ollama';
+  provider: 'anthropic' | 'openrouter' | 'grok' | 'deepseek' | 'ollama';
   key?: string;
   url?: string;
 }
@@ -162,6 +163,15 @@ export const POST = tracked('/api/setup/test-key', async (request: NextRequest) 
         }
         result = await testOpenRouter(key.trim());
         break;
+
+      case 'deepseek': {
+        if (!key) {
+          return NextResponse.json({ success: false, provider, error: 'API key required' }, { status: 400 });
+        }
+        const checked = await testKey('deepseek', key.trim());
+        result = checked.ok ? { success: true, provider: 'deepseek' } : { success: false, provider: 'deepseek', error: checked.message };
+        break;
+      }
 
       case 'grok':
         if (!key) {

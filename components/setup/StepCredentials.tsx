@@ -26,6 +26,7 @@ function PasswordField({
   helpText,
   required,
   showTestButton,
+  provider = 'anthropic',
 }: {
   id: string;
   label: string;
@@ -35,6 +36,8 @@ function PasswordField({
   helpText?: string;
   required?: boolean;
   showTestButton?: boolean;
+  /** Which provider the Test button checks. Defaults to Anthropic. */
+  provider?: 'anthropic' | 'deepseek';
 }) {
   const [visible, setVisible] = useState(false);
   const [testState, setTestState] = useState<TestState>('idle');
@@ -48,7 +51,7 @@ function PasswordField({
       const res = await fetch('/api/setup/test-key', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: 'anthropic', key: value }),
+        body: JSON.stringify({ provider, key: value }),
       });
       const json = await res.json().catch(() => ({}));
       if (res.ok && json.success !== false) {
@@ -173,7 +176,7 @@ export function StepCredentials({ data, onChange }: StepCredentialsProps) {
         </div>
         <div>
           <h2 className="text-lg font-semibold text-white leading-tight">Connect your AI</h2>
-          <p className="text-sm text-white/40 mt-0.5">Sign in with a subscription, or use an API key. Either one is enough.</p>
+          <p className="text-sm text-white/40 mt-0.5">Sign in with a subscription, or use an API key. Either one is enough. A DeepSeek key is the quickest start.</p>
         </div>
       </div>
 
@@ -184,6 +187,30 @@ export function StepCredentials({ data, onChange }: StepCredentialsProps) {
         <div className="flex-1 h-px" style={{ background: 'rgba(59, 130, 246, 0.15)' }} />
         <span className="text-xs text-white/30 tracking-wider uppercase flex-shrink-0">Or use an API key</span>
         <div className="flex-1 h-px" style={{ background: 'rgba(59, 130, 246, 0.15)' }} />
+      </div>
+
+      {/* Recommended first: DeepSeek. Cheapest way to get the setup assistant talking. */}
+      <div className="flex flex-col gap-3 mb-6" data-testid="deepseek-key">
+        <PasswordField
+          id="cred-deepseek"
+          label="DeepSeek API Key (suggested first)"
+          value={data.deepseekKey}
+          onChange={(v) => update('deepseekKey', v)}
+          placeholder="sk-..."
+          helpText="The quickest and cheapest way to start. Jack, your OpenFlow assistant, uses it to help you with the rest of setup."
+          showTestButton
+          provider="deepseek"
+        />
+        <ol className="text-xs text-white/55 leading-relaxed list-decimal pl-5 flex flex-col gap-1">
+          <li>Open <a className="underline text-[#60a5fa]" href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener noreferrer">platform.deepseek.com/api_keys</a> and sign in.</li>
+          <li>Add a small balance. Start with a few dollars.</li>
+          <li>Press &quot;Create new API key&quot;, copy it and paste it here.</li>
+        </ol>
+        <p className="text-xs text-white/55 leading-relaxed">
+          Rough cost: under $1 for every 1,000 messages with Jack. Check{' '}
+          <a className="underline text-[#60a5fa]" href="https://api-docs.deepseek.com/quick_start/pricing" target="_blank" rel="noopener noreferrer">DeepSeek&apos;s price page</a>{' '}
+          for today&apos;s rates. Money comes off a balance you top up on DeepSeek&apos;s site. Everything you type to Jack is sent to DeepSeek to be answered.
+        </p>
       </div>
 
       {/* Optional — Anthropic key */}

@@ -72,5 +72,15 @@
     "paths": [
       "lib/skill-router-jev.ts"
     ]
+  },
+  {
+    "id": "deepseek",
+    "title": "DeepSeek, the suggested first model",
+    "page": "kb/deepseek.md",
+    "paths": [
+      "lib/deepseek-env.ts",
+      "app/api/setup/complete/",
+      "app/api/setup/save-step/"
+    ]
   }
 ]

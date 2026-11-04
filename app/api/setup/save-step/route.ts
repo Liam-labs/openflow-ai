@@ -33,6 +33,7 @@ interface Step2Data {
   anthropicApiKey?: string;
   openrouterApiKey?: string;
   grokApiKey?: string;
+  deepseekApiKey?: string;
   ollamaUrl?: string;
 }
 
@@ -161,6 +162,7 @@ async function saveStep2(data: Step2Data): Promise<{ devflowApiToken: string }> 
     anthropicApiKey: data.anthropicApiKey?.trim() || '',
     openrouterApiKey: data.openrouterApiKey?.trim() || '',
     grokApiKey: data.grokApiKey?.trim() || '',
+    deepseekApiKey: data.deepseekApiKey?.trim() || '',
     ollamaUrl: data.ollamaUrl?.trim() || '',
     devflowApiToken,
     encryptionMasterKey,

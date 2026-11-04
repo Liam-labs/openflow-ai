@@ -18,6 +18,7 @@ import os from 'os';
 import { DataPaths } from '@/lib/data-paths';
 import { readJsonFile, writeJsonFile } from '@/lib/data-io';
 import { requireAuthOrLocal } from '@/lib/api-auth';
+import { saveConnectorKey } from '@/lib/connectors/secrets';
 import { tracked } from '@/lib/api-tracking';
 
 // ---------------------------------------------------------------------------
@@ -40,6 +41,7 @@ interface CredentialsData {
   anthropicApiKey?: string;
   openrouterApiKey?: string;
   grokApiKey?: string;
+  deepseekApiKey?: string;
   ollamaUrl?: string;
   devflowApiToken?: string;
   encryptionMasterKey?: string;
@@ -95,6 +97,14 @@ export const POST = tracked('/api/setup/complete', async (request: NextRequest) 
     // 3. Generate/update ~/.secrets with any new API keys
     await appendToSecretsFile(credentials, integrations);
 
+    // The DeepSeek key goes to the Connections store (.UserData/connectors.env), which is where the DeepSeek agent start-up reads it first
+    // and where the Connections page shows it as saved. It is never put in a chat or a log.
+    if (credentials.deepseekApiKey) {
+      await saveConnectorKey('DEEPSEEK_API_KEY', credentials.deepseekApiKey, new Set(['DEEPSEEK_API_KEY']));
+      // The store now holds the only copy, so removing the key on the Connections page really removes it.
+      await writeJsonFile(DataPaths.user.credentials, { ...credentials, deepseekApiKey: '' });
+    }
+
     // 4. Write completion marker
     const markerPath = path.join(
       path.dirname(DataPaths.user.profile),
@@ -110,6 +120,7 @@ export const POST = tracked('/api/setup/complete', async (request: NextRequest) 
     if (credentials.anthropicApiKey) providers.push('Anthropic');
     if (credentials.openrouterApiKey) providers.push('OpenRouter');
     if (credentials.grokApiKey) providers.push('Grok');
+    if (credentials.deepseekApiKey) providers.push('DeepSeek');
     if (credentials.ollamaUrl) providers.push('Ollama');
 
     const services: string[] = [];

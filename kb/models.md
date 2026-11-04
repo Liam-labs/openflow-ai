@@ -26,5 +26,6 @@ An account with at least one provider. A subscription or an API key both work. I
 
 The wizard reports the tool as logged in, and the first agents answer their hello message. If it fails, the agents do not start and the wizard says so.
 
+**DeepSeek is the suggested first model.** The credentials step puts a DeepSeek key field first, with a how-to and a rough cost. See [DeepSeek](deepseek.md).
 **Careful:** each provider has terms about using a subscription with other software. Read them first. They are yours to follow.
 **Last checked:** 4 Nov 2026, from the README. A real Codex sign-in on a VPS was tested on 2 Nov.

@@ -24,13 +24,14 @@ export interface SetupData {
     anthropicKey: string;
     openrouterKey: string;
     grokKey: string;
+    deepseekKey: string;
     ollamaUrl: string;
   };
 }
 
 const INITIAL_DATA: SetupData = {
   profile: { name: '', role: 'Solo Developer' },
-  credentials: { anthropicKey: '', openrouterKey: '', grokKey: '', ollamaUrl: '' },
+  credentials: { anthropicKey: '', openrouterKey: '', grokKey: '', deepseekKey: '', ollamaUrl: '' },
 };
 
 // Total wizard steps (not counting the completion screen)
@@ -150,7 +151,7 @@ export function SetupWizard({ showInstallAddress = false }: { showInstallAddress
       case 1:
         return { name: data.profile.name, role: data.profile.role };
       case 2:
-        return { anthropicApiKey: data.credentials.anthropicKey, openrouterApiKey: data.credentials.openrouterKey, grokApiKey: data.credentials.grokKey, ollamaUrl: data.credentials.ollamaUrl };
+        return { anthropicApiKey: data.credentials.anthropicKey, openrouterApiKey: data.credentials.openrouterKey, grokApiKey: data.credentials.grokKey, deepseekApiKey: data.credentials.deepseekKey, ollamaUrl: data.credentials.ollamaUrl };
       default:
         return {};
     }
@@ -236,7 +237,7 @@ export function SetupWizard({ showInstallAddress = false }: { showInstallAddress
       case 2:
         return <StepCredentials data={data.credentials} onChange={updateCredentials} />;
       case 3:
-        return <StepMeetTeam onFinish={finishSetup} />;
+        return <StepMeetTeam onFinish={finishSetup} useDeepSeek={!!data.credentials.deepseekKey.trim() && !data.credentials.anthropicKey.trim()} />;
     }
   };
 
