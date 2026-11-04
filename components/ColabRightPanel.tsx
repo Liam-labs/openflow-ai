@@ -536,7 +536,7 @@ export function ColabRightPanel({
   const workingCount = rowStates.filter(st => st === 'working').length;
   const onlineCount = rowStates.filter(st => st === 'working' || st === 'online' || st === 'frozen').length;
   // ── Cards ──────────────────────────────────────────────────────────────
-  const roleLabel = (agent: AgentRosterEntry | undefined) => (agent?.roleId ? roles.find(r => r.id === agent.roleId)?.name || 'Unknown' : '');
+  const roleLabel = (agent: AgentRosterEntry | undefined) => agent?.roleLabel || (agent?.roleId ? roles.find(r => r.id === agent.roleId)?.name || 'Unknown' : '');
   const reasoningBadge = (agent: AgentRosterEntry | undefined) => (agent?.model && isReasoningOnlyModel(agent.model, modelRegistry)
     ? <span className="mg-tag" title="Reasoning-only model — no tool use or streaming">reasoning-only</span> : null);
   const iconProps = { size: 16, strokeWidth: 1.5 } as const;

@@ -226,7 +226,7 @@ export const POST = tracked('/api/setup/first-team', async (request: NextRequest
         const roleId = await roleIdForSlug(agent.roleSlug);
         if (!roleId) return { started: false, error: `Role "${agent.roleSlug}" is not installed.` };
         const out = await provision(
-          { action: 'roster.provision', channelId: id, name: agent.name, workingDirectory: agent.workingDirectory, roleId, roleSlug: agent.roleSlug, personality: agent.personality, agentType, model } as AgentApiRequest,
+          { action: 'roster.provision', channelId: id, name: agent.name, workingDirectory: agent.workingDirectory, roleId, roleSlug: agent.roleSlug, personality: agent.personality, roleLabel: agent.roleLabel, agentType, model } as AgentApiRequest,
           AUTH,
         );
         return out.spawned ? { started: true } : { started: false, error: (out as { error?: string }).error || 'The agent did not start.' };

@@ -438,6 +438,7 @@ export async function handleRosterAdd(
     dangerouslySkipPermissions: body.dangerouslySkipPermissions !== false,
     claudeFlags: validateClaudeFlags(body.claudeFlags || []),
     roleId: body.roleId || undefined,
+    roleLabel: typeof body.roleLabel === 'string' && body.roleLabel.trim() ? body.roleLabel.trim().slice(0, 40) : undefined,
     model: body.model || undefined,
     agentType: body.agentType || undefined,
     personality: personality || undefined,

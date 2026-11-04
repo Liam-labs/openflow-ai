@@ -35,6 +35,7 @@ export interface PtyActionRequest {
   dangerouslySkipPermissions?: boolean;
   claudeFlags?: string[];
   roleId?: string;
+  roleLabel?: string;
   model?: string;
   agentType?: 'claude' | 'gemini' | 'grok' | 'codex' | 'antigravity';
   personality?: string;

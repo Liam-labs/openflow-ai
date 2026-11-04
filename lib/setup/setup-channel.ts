@@ -15,6 +15,8 @@ export interface GuideDefinition {
   channelDescription: string;
   roleSlug: string;
   personality: string;
+  /** What the Team panel shows for his role. */
+  roleLabel?: string;
   firstMessage: string;
 }
 
