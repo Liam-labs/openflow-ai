@@ -4,7 +4,7 @@
  * Only names the catalog declares may be written, values never reach a log or an API answer, and the
  * file is created 0600 from its first byte.
  */
-import { promises as fs, existsSync } from 'fs';
+import { promises as fs, existsSync, readFileSync } from 'fs';
 import path from 'path';
 import { withFileLock } from '@/lib/data-io';
 import { DataPaths } from '@/lib/data-paths';
@@ -45,6 +45,15 @@ export function parseConnectorEnv(text: string): Record<string, string> {
 
 export function serializeConnectorEnv(values: Record<string, string>): string {
   return Object.keys(values).sort().map((k) => `${k}=${shellQuote(values[k])}\n`).join('');
+}
+
+/** One saved key, read without waiting: for code that builds an agent's start-up environment and cannot be async. */
+export function readConnectorKeySync(name: string, file: string = connectorEnvPath()): string | undefined {
+  try {
+    return parseConnectorEnv(readFileSync(file, 'utf8'))[name]?.trim() || undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function readConnectorEnv(file: string = connectorEnvPath()): Promise<Record<string, string>> {
