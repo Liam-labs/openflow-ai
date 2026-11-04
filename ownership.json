@@ -549,6 +549,54 @@
     {
       "path": "tests/unit/ask-jack-link.test.ts",
       "kind": "openflow-only"
+    },
+    {
+      "path": "scripts/collab-claude.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "scripts/collab-claude-win.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "scripts/collab-codex.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "scripts/collab-codex-ws.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "scripts/collab-agent.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "scripts/collab-antigravity.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "scripts/collab-gemini.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "scripts/collab-grok.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "scripts/collab-grok-acp.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "scripts/devflow_http.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/wrappers-use-api-token.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/collab-claude-token.test.ts",
+      "kind": "openflow-only"
     }
   ]
 }

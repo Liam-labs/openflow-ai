@@ -31,6 +31,8 @@ import argparse
 import subprocess
 import urllib.request
 import urllib.error
+# Calls to this installation carry its API token, but never to another address or across a redirect (scripts/devflow_http.py).
+from devflow_http import urlopen as devflow_urlopen
 from agent_stream_writer import safe_append_stream_message
 from design_reference_harness import ensure_antigravity_design_gate_hook
 
@@ -135,7 +137,7 @@ def api_get(endpoint: str) -> dict:
         url = f"{API_BASE}{endpoint}"
         req = urllib.request.Request(url, method="GET")
         req.add_header("Content-Type", "application/json")
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with devflow_urlopen(req, timeout=10) as resp:
             return json.loads(resp.read())
     except Exception as e:
         debug(f"api_get({endpoint}) error: {e}")
@@ -149,7 +151,7 @@ def api_post(endpoint: str, data: dict) -> dict:
         body = json.dumps(data).encode("utf-8")
         req = urllib.request.Request(url, data=body, method="POST")
         req.add_header("Content-Type", "application/json")
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with devflow_urlopen(req, timeout=10) as resp:
             return json.loads(resp.read())
     except Exception as e:
         debug(f"api_post({endpoint}) error: {e}")

@@ -31,6 +31,8 @@ import traceback
 import subprocess
 import urllib.request
 import urllib.error
+# Calls to this installation carry its API token, but never to another address or across a redirect (scripts/devflow_http.py).
+from devflow_http import urlopen as devflow_urlopen
 import concurrent.futures
 from agent_stream_writer import safe_append_stream_message
 
@@ -320,7 +322,7 @@ class CollabGrokWrapper:
                     headers={"Content-Type": "application/json"},
                     method=method,
                 )
-            with urllib.request.urlopen(req, timeout=10) as resp:
+            with devflow_urlopen(req, timeout=10) as resp:
                 return json.loads(resp.read().decode("utf-8"))
         except Exception as e:
             debug(f"API error [{method} {endpoint}]: {e}")
@@ -1040,7 +1042,7 @@ class CollabGrokWrapper:
 
             try:
                 req = urllib.request.Request(url, headers=headers)
-                resp = urllib.request.urlopen(req, timeout=90)
+                resp = devflow_urlopen(req, timeout=90)
                 self.sse_connected = True
                 self.sse_reconnect_failures = 0
                 backoff = 1
@@ -1242,7 +1244,7 @@ class CollabGrokWrapper:
                             f"&limit=200&oldestFirst=1"
                             + (f"&since={catchup_since}" if catchup_since else "")
                         )
-                        cu_resp = urllib.request.urlopen(
+                        cu_resp = devflow_urlopen(
                             urllib.request.Request(catchup_url), timeout=5
                         )
                         cu_data = json.loads(cu_resp.read().decode('utf-8'))
