@@ -33,6 +33,16 @@ describe('middleware: who may see the pages', () => {
     expect(response.headers.get('cache-control')).toBe('no-store');
   });
 
+  it('asks the gate before sending a first-run caller to /setup, so a tailnet visit is recorded, and still redirects whatever it answers', async () => {
+    for (const gate of [{ allow: true }, { allow: false }]) {
+      const { response, calls } = await run({ setupComplete: false, gate, url: 'http://localhost:3000/', headers: { 'x-forwarded-for': '100.64.1.2' } });
+      expect(response.status).toBe(307);
+      expect(response.headers.get('location')).toBe('http://localhost:3000/setup');
+      const gateCall = calls.find((c) => c.url.endsWith('/api/auth/gate'));
+      expect(gateCall?.headers['x-forwarded-for']).toBe('100.64.1.2');
+    }
+  });
+
   it('keeps https when the proxy says so, and does not add ?next for the home page', async () => {
     const { response } = await run({ gate: { allow: false }, url: 'http://localhost:3000/', headers: { host: 'x.example.net', 'x-forwarded-proto': 'https' } });
     expect(response.headers.get('location')).toBe('https://x.example.net/login');
