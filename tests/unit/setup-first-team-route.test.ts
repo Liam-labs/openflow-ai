@@ -6,11 +6,13 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import fsSync from 'node:fs';
+import nodePath from 'node:path';
 
-const { root, createChannel, getChannel, provision } = vi.hoisted(() => {
-  const fs = require('node:fs') as typeof import('node:fs');
-  const path = require('node:path') as typeof import('node:path');
-  const os = require('node:os') as typeof import('node:os');
+const { root, createChannel, getChannel, provision } = await vi.hoisted(async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const os = await import('node:os');
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'first-team-'));
   fs.mkdirSync(path.join(root, 'data', 'examples'), { recursive: true });
   fs.mkdirSync(path.join(root, 'data', 'roles'), { recursive: true });
@@ -31,8 +33,8 @@ const { root, createChannel, getChannel, provision } = vi.hoisted(() => {
 
 vi.mock('@/lib/api-auth', () => ({ requireAuthOrLocal: vi.fn(async () => null) }));
 vi.mock('@/lib/api-tracking', () => ({ tracked: (_n: string, h: unknown) => h }));
-vi.mock('@/lib/app-paths', () => ({ appPath: (...s: string[]) => require('node:path').join(root, ...s) }));
-vi.mock('@/lib/data-paths', () => ({ DataPaths: { memoryWizard: require('node:path').join(root, '.AppData', 'memory-wizard.json') } }));
+vi.mock('@/lib/app-paths', () => ({ appPath: (...s: string[]) => nodePath.join(root, ...s) }));
+vi.mock('@/lib/data-paths', () => ({ DataPaths: { memoryWizard: nodePath.join(root, '.AppData', 'memory-wizard.json') } }));
 vi.mock('@/lib/home-dir', () => ({ getHomeDir: () => root }));
 vi.mock('@/app/api/agent/actions/collab', () => ({ createChannel, getChannel }));
 vi.mock('@/app/api/agent/actions/roster', () => ({ provision }));
@@ -43,10 +45,9 @@ import { requireAuthOrLocal } from '@/lib/api-auth';
 const post = (body: unknown) =>
   POST(new NextRequest('http://localhost/api/setup/first-team', { method: 'POST', body: JSON.stringify(body) }));
 
-const markerPath = require('node:path').join(root, '.AppData', 'setup-channel.json') as string;
-const fsSync = require('node:fs') as typeof import('node:fs');
+const markerPath = nodePath.join(root, '.AppData', 'setup-channel.json');
 /** Most tests are about the first team, so they start with the Setup channel already recorded as made. */
-const setupChannelDone = () => { fsSync.mkdirSync(require('node:path').dirname(markerPath), { recursive: true }); fsSync.writeFileSync(markerPath, JSON.stringify({ channelId: 'old' })); };
+const setupChannelDone = () => { fsSync.mkdirSync(nodePath.dirname(markerPath), { recursive: true }); fsSync.writeFileSync(markerPath, JSON.stringify({ channelId: 'old' })); };
 
 beforeEach(() => {
   vi.clearAllMocks();
