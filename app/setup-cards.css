@@ -189,3 +189,19 @@
 [data-theme="light"] .sc-dialog [class*="text-white/"][class*="text-white/1"],
 [data-theme="light"] .sc-dialog [class*="text-white/2"],
 [data-theme="light"] .sc-dialog [class*="text-white/3"]{color:rgba(255,255,255,.55) !important}
+
+/* Setup channel status strip. Explicit colours, not theme utilities: the strip is its own dark panel (light text on deep navy, every
+   pair checked for contrast) so it reads the same in Dark, Light and Dark Orange. */
+.setup-strip{margin:8px 12px;padding:12px 14px;border-radius:12px;background:#0a1330;color:#e8eefc;border:1px solid #243a6b}
+.setup-strip .ss-note{margin:0 0 8px;font-size:12px;line-height:18px;color:#b7c6e6}
+.setup-strip .ss-chips{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
+.setup-strip .ss-chip{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:12px;border:1px solid #4a5f93;background:#16244d;color:#e8eefc}
+.setup-strip .ss-chip--on{border-color:#3fae6a;background:#0f3b2a;color:#b9f6d0}
+.setup-strip .ss-chip-state{font-weight:600}
+.setup-strip .ss-ask{margin-top:12px}
+.setup-strip .ss-buttons{display:flex;flex-wrap:wrap;gap:8px}
+.setup-strip .ss-button{min-height:32px;padding:6px 12px;border-radius:999px;font-size:12px;border:1px solid #5b8def;background:#1d3a7a;color:#ffffff;cursor:pointer}
+.setup-strip .ss-button:hover{background:#2850a8}
+.setup-strip .ss-button:focus-visible{outline:2px solid #93c5fd;outline-offset:2px}
+.setup-strip .ss-error{margin:6px 0 0;font-size:12px;color:#ffb4b4}
+.setup-strip .ss-link{display:inline-block;margin-top:10px;font-size:12px;color:#9cc2ff;text-decoration:underline;text-underline-offset:2px}

@@ -62,43 +62,37 @@ export function SetupStatusStrip({ channelId, participantId }: { channelId: stri
   if (!summary || summary.setupChannelId !== channelId) return null;
 
   return (
-    <div className="px-4 py-3 border-b border-white/10" data-testid="setup-status-strip">
-      <p className="text-xs text-white/50 mb-2">What is set up. Ask Jack about anything marked Not set up.</p>
-      <ul className="flex flex-wrap gap-2" aria-label="What is set up">
+    <div className="setup-strip" data-testid="setup-status-strip">
+      <p className="ss-note">What is set up. Ask Jack about anything marked Not set up.</p>
+      <ul className="ss-chips" aria-label="What is set up">
         {summary.items.map((item) => {
           const Icon = item.state === 'on' ? CheckCircle2 : item.state === 'skipped' ? MinusCircle : Circle;
-          const tone = item.state === 'on' ? 'text-green-300 border-green-400/30 bg-green-400/10' : 'text-white/60 border-white/15 bg-white/[0.04]';
           return (
-            <li key={item.id} className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${tone}`}>
+            <li key={item.id} className={`ss-chip ss-chip--${item.state}`}>
               <Icon className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{item.label}</span>
               <span className="sr-only">: </span>
-              <span className="font-medium">{STATE_TEXT[item.state]}</span>
+              <span className="ss-chip-state">{STATE_TEXT[item.state]}</span>
             </li>
           );
         })}
       </ul>
- 
+
       {participantId && (
-        <div className="mt-3" data-testid="quick-starts">
-          <p className="text-xs text-white/50 mb-1.5">Ask Jack:</p>
-          <div className="flex flex-wrap gap-2">
+        <div className="ss-ask" data-testid="quick-starts">
+          <p className="ss-note">Ask Jack:</p>
+          <div className="ss-buttons">
             {QUICK_STARTS.map((q) => (
-              <button
-                key={q}
-                type="button"
-                onClick={() => void ask(q)}
-                className="rounded-full border border-[#60a5fa]/40 bg-[#60a5fa]/10 px-3 py-1.5 text-xs text-[#93c5fd] hover:bg-[#60a5fa]/20 min-h-8"
-              >
+              <button key={q} type="button" onClick={() => void ask(q)} className="ss-button">
                 {q}
               </button>
             ))}
           </div>
-          {sendError && <p role="alert" className="text-xs text-red-300 mt-1.5">That did not send. Try again, or type your question below.</p>}
-          {sent && !sendError && <p role="status" className="text-xs text-white/50 mt-1.5">Sent. Jack will answer in a moment.</p>}
+          {sendError && <p role="alert" className="ss-error">That did not send. Try again, or type your question below.</p>}
+          {sent && !sendError && <p role="status" className="ss-note">Sent. Jack will answer in a moment.</p>}
         </div>
       )}
-      <a href="/operations#systems/connections" className="inline-block mt-2 text-xs text-[#60a5fa] underline underline-offset-2">
+      <a href="/operations#systems/connections" className="ss-link">
         Open Systems &gt; Connections
       </a>
     </div>
