@@ -1161,6 +1161,7 @@ export interface AgentRosterEntry {
   dangerouslySkipPermissions: boolean;
   claudeFlags?: string[];
   roleId?: string;                   // Links to AgentRole — injects role .md at spawn
+  roleLabel?: string;                // Text shown for the role in the Team panel, instead of the role's own name. Display only: the role itself is unchanged.
   model?: string;                    // Claude model: 'opus', 'sonnet', 'haiku' (default: account default)
   agentType?: 'claude' | 'gemini' | 'grok' | 'codex' | 'antigravity';  // Agent runtime type (default: 'claude')
   deliveryProtocol?: 'ledger-v1'; // Persisted wrapper capability for stopped-agent delivery

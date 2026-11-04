@@ -23,7 +23,7 @@ const { root, createChannel, getChannel, provision } = await vi.hoisted(async ()
     ],
   }));
   fs.writeFileSync(path.join(root, 'data', 'examples', 'guide.json'), JSON.stringify({
-    name: 'Jack', channelName: 'Setup', channelDescription: 'd', roleSlug: 'researcher', personality: 'Guide', firstMessage: 'hi guide',
+    name: 'Jack', channelName: 'Setup', channelDescription: 'd', roleSlug: 'researcher', personality: 'Guide', roleLabel: 'Assistant', firstMessage: 'hi guide',
   }));
   fs.writeFileSync(path.join(root, 'data', 'roles', 'roles.json'), JSON.stringify({
     roles: [{ id: 'r-research', slug: 'researcher' }, { id: 'r-backend', slug: 'backend-dev' }],
@@ -128,7 +128,7 @@ describe('/api/setup/first-team', () => {
       createChannel.mockResolvedValueOnce({ channel: { id: 'team-chan' } }).mockResolvedValueOnce({ channel: { id: 'setup-chan' } });
       const json = await (await post({ agents: ['Scout'], agentType: 'claude' })).json();
       expect(createChannel.mock.calls.map((c) => c[0].name)).toEqual(['My first team', 'Setup']);
-      expect(provision.mock.calls.at(-1)?.[0]).toMatchObject({ channelId: 'setup-chan', name: 'Jack', roleSlug: 'researcher', roleId: 'r-research', personality: 'Guide', agentType: 'claude' });
+      expect(provision.mock.calls.at(-1)?.[0]).toMatchObject({ channelId: 'setup-chan', name: 'Jack', roleSlug: 'researcher', roleId: 'r-research', personality: 'Guide', roleLabel: 'Assistant', agentType: 'claude' });
       expect((provision.mock.calls.at(-1)?.[0] as { workingDirectory: string }).workingDirectory).toMatch(/setup-assistant$/);
       expect(json.setupChannel).toMatchObject({ status: 'created', channelId: 'setup-chan', guideStarted: true, firstMessage: 'hi guide' });
     });

@@ -233,6 +233,7 @@ export async function provision(body: AgentApiRequest, _auth: AgentAuthContext) 
     useCollabWrapper: true,
     dangerouslySkipPermissions: body.dangerouslySkipPermissions ?? true,
     roleId: body.roleId,
+    roleLabel: body.roleLabel,
     model: body.model,
     effort: body.effort,
     personality: body.personality,

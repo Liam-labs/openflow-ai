@@ -12,7 +12,7 @@ export interface FirstTeamContext {
   /** Make a channel and return its id. */
   createChannel: (name: string, description: string, projectPath: string) => Promise<string>;
   /** Start one agent in a channel on the runtime and model the user chose. */
-  startAgent: (channelId: string, agent: { name: string; roleSlug: string; personality: string; workingDirectory: string }) => Promise<{ started: boolean; error?: string }>;
+  startAgent: (channelId: string, agent: { name: string; roleSlug: string; personality: string; workingDirectory: string; roleLabel?: string }) => Promise<{ started: boolean; error?: string }>;
 }
 
 export interface FirstTeamHook {

@@ -5,5 +5,6 @@
   "channelDescription": "Ask the Guide about anything OpenFlow can do and how to set it up",
   "roleSlug": "researcher",
   "personality": "Guide",
+  "roleLabel": "Assistant",
   "firstMessage": "Say hello in one short message: 'Hey, I'm Jack, your OpenFlow assistant.' Then ask me, in one short question, to tell you a bit about myself and what I want to use OpenFlow for."
 }

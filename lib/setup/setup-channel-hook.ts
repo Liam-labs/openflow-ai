@@ -20,7 +20,7 @@ export const setupChannelHook: FirstTeamHook = {
         // Its own folder: the first team may also have an agent called Jack, and two agents with one name must not share an agent folder.
         const dir = path.join(getHomeDir(), 'devflow-projects', 'setup-assistant');
         await fs.mkdir(dir, { recursive: true });
-        return ctx.startAgent(channelId, { name: guide.name, roleSlug: guide.roleSlug, personality: guide.personality, workingDirectory: dir });
+        return ctx.startAgent(channelId, { name: guide.name, roleSlug: guide.roleSlug, personality: guide.personality, workingDirectory: dir, roleLabel: guide.roleLabel });
       },
       now: () => new Date().toISOString(),
     });

@@ -22,7 +22,7 @@ You do nothing. When the wizard finishes starting your first team, it also creat
 
 ## How to tell it is working
 
-The Setup channel exists, and Jack sends a short hello and asks about you. If he stays silent, check that the AI you chose is installed and signed in, the same as for your first team.
+The Setup channel exists, the Team panel shows Jack with the role **Assistant**, and Jack sends a short hello and asks about you. If he stays silent, check that the AI you chose is installed and signed in, the same as for your first team.
 
 **What leaves your machine:** what you type to Jack goes to the AI provider you chose, to be answered.
 **Not yet proved:** no real Jack has answered on a real key yet. The channel, the hello and the opening button are built and tested, but not seen in a live install. The "About you" profile, the status strip and the quick-start buttons are not built yet.
