@@ -505,6 +505,18 @@
     {
       "path": "instance/**",
       "kind": "openflow-only"
+    },
+    {
+      "path": "kb/**",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "scripts/check-kb.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/kb-check.test.ts",
+      "kind": "openflow-only"
     }
   ]
 }
