@@ -30,3 +30,17 @@ it('the credentials screen suggests DeepSeek first, with the how-to, a rough cos
   expect(JSON.parse((call[1] as { body: string }).body)).toEqual({ provider: 'deepseek', key: 'sk-test' });
   await act(async () => { root.unmount(); });
 });
+
+it('the Connections store accepts the key name the wizard saves it under, and the catalog declares that name', async () => {
+  const { promises: fs } = await import('fs');
+  const os = await import('os');
+  const path = await import('path');
+  const { saveConnectorKey, readConnectorEnv } = await import('@/lib/connectors/secrets');
+  const raw = JSON.parse(await fs.readFile('data/connectors-catalog.json', 'utf-8')) as { connectors: { id: string; keys?: { env?: string }[]; env?: string[] }[] };
+  expect(JSON.stringify(raw.connectors.find((c) => c.id === 'deepseek'))).toContain('DEEPSEEK_API_KEY');
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ds-key-'));
+  const file = path.join(dir, 'connectors.env');
+  await saveConnectorKey('DEEPSEEK_API_KEY', 'sk-test-123', new Set(['DEEPSEEK_API_KEY']), file);
+  expect((await readConnectorEnv(file)).DEEPSEEK_API_KEY).toBe('sk-test-123');
+  await fs.rm(dir, { recursive: true, force: true });
+});

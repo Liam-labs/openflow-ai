@@ -18,6 +18,7 @@ import os from 'os';
 import { DataPaths } from '@/lib/data-paths';
 import { readJsonFile, writeJsonFile } from '@/lib/data-io';
 import { requireAuthOrLocal } from '@/lib/api-auth';
+import { saveConnectorKey } from '@/lib/connectors/secrets';
 import { tracked } from '@/lib/api-tracking';
 
 // ---------------------------------------------------------------------------
@@ -95,6 +96,10 @@ export const POST = tracked('/api/setup/complete', async (request: NextRequest) 
 
     // 3. Generate/update ~/.secrets with any new API keys
     await appendToSecretsFile(credentials, integrations);
+
+    // The DeepSeek key goes to the Connections store (.UserData/connectors.env), which is where the DeepSeek agent start-up reads it first
+    // and where the Connections page shows it as saved. It is never put in a chat or a log.
+    if (credentials.deepseekApiKey) await saveConnectorKey('DEEPSEEK_API_KEY', credentials.deepseekApiKey, new Set(['DEEPSEEK_API_KEY']));
 
     // 4. Write completion marker
     const markerPath = path.join(
@@ -220,9 +225,6 @@ async function appendToSecretsFile(
   }
   if (credentials.grokApiKey) {
     newSecrets['GROK_API_KEY'] = credentials.grokApiKey;
-  }
-  if (credentials.deepseekApiKey) {
-    newSecrets['DEEPSEEK_API_KEY'] = credentials.deepseekApiKey;
   }
   if (credentials.ollamaUrl) {
     newSecrets['OLLAMA_URL'] = credentials.ollamaUrl;
