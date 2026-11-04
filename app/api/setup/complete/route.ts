@@ -40,6 +40,7 @@ interface CredentialsData {
   anthropicApiKey?: string;
   openrouterApiKey?: string;
   grokApiKey?: string;
+  deepseekApiKey?: string;
   ollamaUrl?: string;
   devflowApiToken?: string;
   encryptionMasterKey?: string;
@@ -110,6 +111,7 @@ export const POST = tracked('/api/setup/complete', async (request: NextRequest) 
     if (credentials.anthropicApiKey) providers.push('Anthropic');
     if (credentials.openrouterApiKey) providers.push('OpenRouter');
     if (credentials.grokApiKey) providers.push('Grok');
+    if (credentials.deepseekApiKey) providers.push('DeepSeek');
     if (credentials.ollamaUrl) providers.push('Ollama');
 
     const services: string[] = [];
@@ -218,6 +220,9 @@ async function appendToSecretsFile(
   }
   if (credentials.grokApiKey) {
     newSecrets['GROK_API_KEY'] = credentials.grokApiKey;
+  }
+  if (credentials.deepseekApiKey) {
+    newSecrets['DEEPSEEK_API_KEY'] = credentials.deepseekApiKey;
   }
   if (credentials.ollamaUrl) {
     newSecrets['OLLAMA_URL'] = credentials.ollamaUrl;
