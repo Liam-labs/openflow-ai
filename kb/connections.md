@@ -4,11 +4,11 @@ Connections is the page that lists every service OpenFlow can connect to, and sh
 
 ## What it does
 
-Each service has a card that says what it does and what it needs. Press **Connect** to open its setup wizard. The wizard tests the connection and returns you to the page you came from. A service that is not available says why, and an empty or failed status read never hides the list.
+The page has two tabs, **Connected** and **Set up more**. Each service has a card under **Set up more** that says what it does and what it needs. Opening a card shows a short step-by-step dialog with a test button. Slack, Teams and WhatsApp have a **Connect Slack, Teams or WhatsApp** button. A service that is not available says why, and an empty or failed status read never hides the list.
 
 ## Why you would want it
 
-**Example:** you are away from your desk and want to check on the team from your phone. Connections shows phone access as Off and takes you through it, one screen at a time.
+**Example:** you are away from your desk and want to check on the team from your phone. Connections lists phone access under Set up more and takes you through it, one step at a time.
 
 **The problem it fixes:** optional extras are hard to find and easy to half-set-up. Here each one has a plain card, and the status tells you what is really on.
 
@@ -18,9 +18,9 @@ Nothing for the page itself. Each service needs its own account or software, and
 
 ## How to set it up
 
-1. Open Systems, then Connections.
-2. Find the service and press **Connect**.
-3. Follow the wizard and press its test button.
+1. Open Systems, then Connections, then **Set up more**.
+2. Find the service and open its card.
+3. Follow the steps and press the test button.
 
 ## How to tell it is working
 
