@@ -2,6 +2,7 @@
  * Message action handlers: message, react, pin, edit, delete_message, recall.
  */
 
+import { PRODUCT_NAME } from '@/lib/brand';
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import { promises as fs } from 'fs';
@@ -187,7 +188,7 @@ export async function handleMessage(
           id: resolvedIdentity?.canonicalParticipantId || body.participantId,
           type: 'user',
           name: resolvedName || resolvedIdentity?.canonicalName || 'Browser User',
-          source: resolvedSource || 'DevFlow Browser',
+          source: resolvedSource || `${PRODUCT_NAME} Browser`,
           joinedAt: now,
           lastSeen: now,
           color: resolvedColor || '#8B5CF6',
@@ -638,7 +639,7 @@ export async function handleMessage(
                 id: agentParticipantId,
                 type: 'claude-browser',
                 name: agentName,
-                source: 'DevFlow Browser',
+                source: `${PRODUCT_NAME} Browser`,
                 joinedAt: new Date().toISOString(),
                 lastSeen: new Date().toISOString(),
                 color: agentColor,

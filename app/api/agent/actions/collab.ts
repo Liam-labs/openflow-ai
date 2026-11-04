@@ -130,7 +130,7 @@ function ensureBrowserUserInChannel(channel: CollabChannel, data: CollabChannels
         id: browserUser.id,
         type: 'user',
         name: browserUser.name,
-        source: browserUser.source || 'DevFlow Browser',
+        source: browserUser.source || `${PRODUCT_NAME} Browser`,
         joinedAt: now,
         lastSeen: now,
         color: browserUser.color || '#8B5CF6',

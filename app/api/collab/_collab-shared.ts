@@ -3,6 +3,7 @@
  * Extracted from route.ts to reduce per-file TypeScript compilation size.
  */
 
+import { PRODUCT_NAME } from '@/lib/brand';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { randomUUID, createHash } from 'crypto';
@@ -551,7 +552,7 @@ export function ensureBrowserUserInChannel(channel: CollabChannel, data: CollabC
         id: browserUser.id,
         type: 'user',
         name: browserUser.name,
-        source: browserUser.source || 'DevFlow Browser',
+        source: browserUser.source || `${PRODUCT_NAME} Browser`,
         joinedAt: now,
         lastSeen: now,
         color: browserUser.color || '#8B5CF6',

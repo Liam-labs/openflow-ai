@@ -621,6 +621,10 @@
     {
       "path": "tests/unit/test_scaffolding_edition.py",
       "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/browser-source-name.test.ts",
+      "kind": "openflow-only"
     }
   ]
 }
