@@ -35,6 +35,8 @@ type Phase = 'choose' | 'starting' | 'waiting' | 'done' | 'failed';
 interface StepMeetTeamProps {
   /** Called once the user is done: completes setup and leaves the wizard. */
   onFinish: (channelId: string | null) => void;
+  /** The user gave a DeepSeek key and nothing else to run Claude Code on, so the team (and the setup assistant) run on DeepSeek. */
+  useDeepSeek?: boolean;
 }
 
 const RUNTIMES: { value: string; label: string; hint: string }[] = [
@@ -74,7 +76,7 @@ async function postCollab(body: Record<string, unknown>): Promise<{ ok: boolean;
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function StepMeetTeam({ onFinish }: StepMeetTeamProps) {
+export function StepMeetTeam({ onFinish, useDeepSeek }: StepMeetTeamProps) {
   const [agents, setAgents] = useState<ExampleAgent[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loadError, setLoadError] = useState('');
@@ -164,6 +166,8 @@ export function StepMeetTeam({ onFinish }: StepMeetTeamProps) {
         body: JSON.stringify({
           agents: [...selected],
           agentType: runtime,
+          // DeepSeek runs through the Claude wrapper, so the runtime stays claude and the model names DeepSeek.
+          model: useDeepSeek && runtime === 'claude' ? 'deepseek-flash' : undefined,
           workingDirectory: folder.trim() || undefined,
           channelId: channelId || undefined,
         }),

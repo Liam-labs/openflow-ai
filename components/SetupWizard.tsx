@@ -237,7 +237,7 @@ export function SetupWizard({ showInstallAddress = false }: { showInstallAddress
       case 2:
         return <StepCredentials data={data.credentials} onChange={updateCredentials} />;
       case 3:
-        return <StepMeetTeam onFinish={finishSetup} />;
+        return <StepMeetTeam onFinish={finishSetup} useDeepSeek={!!data.credentials.deepseekKey.trim() && !data.credentials.anthropicKey.trim()} />;
     }
   };
 

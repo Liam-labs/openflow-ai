@@ -70,3 +70,32 @@ it('offers Gemini (Antigravity) and not the old Gemini entry in the AI list', as
   expect(options).toContain('Gemini (Antigravity)');
   expect(options).not.toContain('Gemini');
 });
+
+async function startTeamAndGetBody(props: { useDeepSeek?: boolean }) {
+  const calls: { url: string; body: Record<string, unknown> }[] = [];
+  const base = globalThis.fetch as unknown as (u: string, i?: { body?: string }) => Promise<unknown>;
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
+    if (init?.method === 'POST' && String(url).includes('/api/setup/first-team')) {
+      calls.push({ url: String(url), body: JSON.parse(init.body ?? '{}') });
+      return { ok: true, json: async () => ({ success: true, channelId: 'c1', agents: [], firstMessages: {} }) };
+    }
+    return base(String(url), init);
+  }));
+  await act(async () => root.render(createElement(StepMeetTeam, { onFinish: () => {}, ...props })));
+  await flush();
+  const start = Array.from(container.querySelectorAll('button')).find((b) => /start/i.test(b.textContent ?? ''));
+  await act(async () => { start?.click(); });
+  await flush();
+  return calls[0]?.body;
+}
+
+it('with only a DeepSeek key the team is started on the Claude wrapper with the deepseek-flash model', async () => {
+  const body = await startTeamAndGetBody({ useDeepSeek: true });
+  expect(body).toMatchObject({ agentType: 'claude', model: 'deepseek-flash' });
+});
+
+it('without it no model is forced', async () => {
+  const body = await startTeamAndGetBody({});
+  expect(body?.agentType).toBe('claude');
+  expect(body?.model).toBeUndefined();
+});
