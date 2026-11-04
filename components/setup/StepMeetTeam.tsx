@@ -50,6 +50,8 @@ const RUNTIMES: { value: string; label: string; hint: string }[] = [
 // How long to wait for a reply before explaining what to check (agents take a
 // while to sign in and read their rules the first time they start).
 const REPLY_TIMEOUT_MS = 240_000;
+/** After this long with no reply, say what is probably wrong instead of leaving the user on 'starting up'. */
+const SLOW_AFTER_MS = 45_000;
 const POLL_MS = 2_500;
 
 function browserParticipantId(): string {
@@ -91,6 +93,7 @@ export function StepMeetTeam({ onFinish, useDeepSeek }: StepMeetTeamProps) {
   const [messages, setMessages] = useState<ChannelMessage[]>([]);
   const [started, setStarted] = useState<string[]>([]);
   const [assistantChannelId, setAssistantChannelId] = useState<string | null>(null);
+  const [slow, setSlow] = useState(false);
   const stopRef = useRef(false);
   // Ids of the messages already in the channel when this run started. A reused channel (BUG-53) may hold replies from an
   // earlier run; only messages whose id is not in here count as an answer to this run's hello (BUG-54).
@@ -129,7 +132,9 @@ export function StepMeetTeam({ onFinish, useDeepSeek }: StepMeetTeamProps) {
 
   // Poll the channel until every started agent has answered, or time runs out.
   const watchForReplies = useCallback(async (id: string, names: string[]) => {
-    const deadline = Date.now() + REPLY_TIMEOUT_MS;
+    const began = Date.now();
+    const deadline = began + REPLY_TIMEOUT_MS;
+    setSlow(false);
     while (!stopRef.current && Date.now() < deadline) {
       try {
         const res = await fetch(`/api/collab?channelId=${encodeURIComponent(id)}&limit=50`);
@@ -144,6 +149,7 @@ export function StepMeetTeam({ onFinish, useDeepSeek }: StepMeetTeamProps) {
       } catch {
         /* keep polling; a single failed poll is not a failed start */
       }
+      if (Date.now() - began > SLOW_AFTER_MS) setSlow(true);
       await new Promise((r) => setTimeout(r, POLL_MS));
     }
     if (!stopRef.current) setPhase('failed');
@@ -227,7 +233,7 @@ export function StepMeetTeam({ onFinish, useDeepSeek }: StepMeetTeamProps) {
           });
           if (joinSetup.ok) {
             const setupParticipant = (joinSetup.data.participantId as string) || participantId;
-            const hello = await postCollab({ action: 'message', channelId: setup.channelId, participantId: setupParticipant, content: `@Jack ${setup.firstMessage}` });
+            const hello = await postCollab({ action: 'message', channelId: setup.channelId, participantId: setupParticipant, content: `@Jack ${setup.firstMessage}`, isHidden: true });
             if (hello.ok) setAssistantChannelId(setup.channelId);
           }
         } catch { /* Jack's greeting is optional */ }
@@ -373,6 +379,13 @@ export function StepMeetTeam({ onFinish, useDeepSeek }: StepMeetTeamProps) {
               );
             })}
           </ul>
+
+          {phase === 'waiting' && slow && (
+            <p className="text-sm text-yellow-300" role="status" data-testid="slow-hint">
+              Nobody has answered yet. The usual cause is that no AI is connected. Press Back, then sign in or add a key on the AI access step,
+              and start the team again. If you have already done that, the first reply can still take a minute.
+            </p>
+          )}
 
           {failedAgents.length > 0 && (
             <ul className="text-xs text-yellow-300 list-disc pl-5">

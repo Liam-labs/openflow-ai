@@ -118,7 +118,7 @@ it('when Jack was started in the Setup channel, he is greeted there and the wiza
   await flush();
   await act(async () => { Array.from(container.querySelectorAll('button')).find((b) => /start/i.test(b.textContent ?? ''))?.click(); });
   await flush();
-  expect(posts.some((p) => p.action === 'message' && p.channelId === 'setup-1' && p.content === '@Jack Say hello as Jack.')).toBe(true);
+  expect(posts.some((p) => p.action === 'message' && p.channelId === 'setup-1' && p.content === '@Jack Say hello as Jack.' && p.isHidden === true)).toBe(true);
   await act(async () => { Array.from(container.querySelectorAll('button')).find((b) => /finish|continue/i.test(b.textContent ?? ''))?.click(); });
   expect(onFinish).toHaveBeenCalledWith('team-1', 'setup-1');
 });
@@ -141,4 +141,28 @@ it('without a Setup channel nothing is sent to one and no assistant channel is p
   expect(posts.every((p) => p.channelId === 'team-1')).toBe(true);
   await act(async () => { Array.from(container.querySelectorAll('button')).find((b) => /finish|continue/i.test(b.textContent ?? ''))?.click(); });
   expect(onFinish).toHaveBeenCalledWith('team-1', null);
+});
+
+it('after 45 seconds with no reply it says no AI is probably connected, instead of staying on "starting up"', async () => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'Date'] });
+  try {
+    const base = globalThis.fetch as unknown as (u: string, i?: unknown) => Promise<unknown>;
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
+      if (init?.method === 'POST' && String(url).includes('/api/setup/first-team')) {
+        return { ok: true, json: async () => ({ success: true, channelId: 'team-1', agents: [{ name: 'Lead', started: true }], firstMessages: { Lead: 'hi lead' } }) };
+      }
+      if (String(url).startsWith('/api/collab?channelId=')) return { ok: true, json: async () => ({ channels: [{ messages: [] }] }) };
+      if (init?.method === 'POST' && String(url) === '/api/collab') return { ok: true, json: async () => ({ success: true }) };
+      return base(String(url), init);
+    }));
+    await act(async () => root.render(createElement(StepMeetTeam, { onFinish: () => {} })));
+    await act(async () => { await vi.advanceTimersByTimeAsync(10); });
+    await act(async () => { Array.from(container.querySelectorAll('button')).find((b) => /start/i.test(b.textContent ?? ''))?.click(); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(5_000); });
+    expect(container.querySelector('[data-testid="slow-hint"]')).toBeNull();
+    await act(async () => { await vi.advanceTimersByTimeAsync(50_000); });
+    expect(container.querySelector('[data-testid="slow-hint"]')?.textContent).toContain('no AI is connected');
+  } finally {
+    vi.useRealTimers();
+  }
 });

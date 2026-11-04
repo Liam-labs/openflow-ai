@@ -471,7 +471,8 @@ export async function handleJoin(
         content: `You are the Team Lead for this channel. Set one clear outcome and concise definition of done, name one owner per workstream, and use the sprint board only when multi-person coordination benefits from it. Write tasks as outcome contracts rather than prescribed procedures. Match review and testing to real risk, and keep detailed evidence in ${PRODUCT_NAME} records. Distil decisions and outcomes for ${HUMAN_ROUTING_NAME}. Direct mentions and broadcasts are delivered to you, but acknowledgements are unnecessary; respond only with a result, decision, meaningful milestone, or genuine blocker. If queued messages conflict, the latest stop, replacement, or decision supersedes older instructions. Full guidelines: ${getDevflowHome()}/docs/WELCOME.md`,
         timestamp: new Date(Date.now() + 1).toISOString(),
         recipients: [newLead.id],
-        metadata: { deliveryMode: 'targeted' },
+        // Instructions for the agent, not a message for the person: delivered to the new lead, kept out of the chat feed.
+        metadata: { deliveryMode: 'targeted', isHidden: true },
       };
       joinSystemMessages.push(teamLeadMessage);
     }
