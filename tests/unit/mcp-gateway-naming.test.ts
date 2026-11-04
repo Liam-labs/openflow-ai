@@ -4,14 +4,14 @@ import { describe, expect, it } from 'vitest';
 
 const root = process.cwd();
 
-describe('model-neutral DevFlow MCP Gateway naming', () => {
+describe('model-neutral MCP Gateway naming', () => {
   it('uses the canonical product name and model-neutral contract in the panel', () => {
     const source = readFileSync(
       join(root, 'components/systems/MCPServersSection.tsx'),
       'utf8',
     );
 
-    expect(source).toContain('Model-neutral DevFlow MCP Gateway');
+    expect(source).toContain('Model-neutral {PRODUCT_NAME} MCP Gateway');
     expect(source).toContain('One shared capability contract for every AgentChat runtime');
   });
 

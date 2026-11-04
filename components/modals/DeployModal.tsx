@@ -1,5 +1,6 @@
 'use client';
 
+import { PRODUCT_NAME } from '@/lib/brand';
 import React, { useState, useMemo } from 'react';
 import { X, Rocket, ChevronDown, Loader2 } from 'lucide-react';
 import type { CollabChannel } from '@/lib/types';
@@ -57,7 +58,7 @@ export function DeployModal({ activeChannel, participantId, onClose }: DeployMod
       const assigneeName = selectedAssignee?.name ?? fallbackHandle.trim();
       const senderName = activeChannel.participants.find(p => p.id === participantId)?.name ?? 'User';
 
-      const content = `@${assigneeName} — Deploy request from ${senderName}\n\nType: ${deploymentType}\nName: ${name.trim()}\n\n**How to register a Service/Server in DevFlow (2-step process):**\n\n1. Start in PM2: \`pm2 start "your-command" --name "service-name" && pm2 save\`\n\n2. Create project entry:\n\`\`\`\ncurl -s -X POST http://localhost:3000/api/agent -H "Authorization: Bearer $DEVFLOW_API_TOKEN" -H "Content-Type: application/json" -d '{"action":"projects.create","name":"Service Name","path":"/path/to/service","category":"service"}'\n\`\`\`\n\n3. Add server config (REQUIRED for Services panel visibility):\n\`\`\`\ncurl -s -X POST http://localhost:3000/api/agent -H "Authorization: Bearer $DEVFLOW_API_TOKEN" -H "Content-Type: application/json" -d '{"action":"projects.update","projectId":"<id-from-step-2>","server":{"pm2Name":"service-name","port":YOUR_PORT,"startCommand":"your-command"}}'\n\`\`\`\n\n4. Verify: Check Systems > Services in DevFlow.\n\nFull guide: ~/DevFlow/data/central-knowledge-base/platform/devflow-systems-tab.md`;
+      const content = `@${assigneeName} — Deploy request from ${senderName}\n\nType: ${deploymentType}\nName: ${name.trim()}\n\n**How to register a Service/Server in ${PRODUCT_NAME}:**\n\n1. Start in PM2: \`pm2 start "your-command" --name "service-name" && pm2 save\`\n\n2. Create project entry:\n\`\`\`\ncurl -s -X POST http://localhost:3000/api/agent -H "Authorization: Bearer $DEVFLOW_API_TOKEN" -H "Content-Type: application/json" -d '{"action":"projects.create","name":"Service Name","path":"/path/to/service","category":"service"}'\n\`\`\`\n\n3. Add server config (REQUIRED for Services panel visibility):\n\`\`\`\ncurl -s -X POST http://localhost:3000/api/agent -H "Authorization: Bearer $DEVFLOW_API_TOKEN" -H "Content-Type: application/json" -d '{"action":"projects.update","projectId":"<id-from-step-2>","server":{"pm2Name":"service-name","port":YOUR_PORT,"startCommand":"your-command"}}'\n\`\`\`\n\n4. Verify: Check Systems > Services in ${PRODUCT_NAME}.`;
 
       const body: Record<string, unknown> = {
         action: 'message',
