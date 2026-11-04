@@ -32,6 +32,8 @@ import subprocess
 import re
 import uuid
 import proc_info
+# Calls to this installation carry its API token, but never to another address or across a redirect (scripts/devflow_http.py).
+from devflow_http import urlopen as devflow_urlopen
 from jsonl_state_reader import check_jsonl_state, resolve_transcript_path, JsonlState, tool_to_label, verify_message_ingested, final_response_disposition, TURN_EMPTY, NO_REPLY_MARKER
 
 
@@ -1139,7 +1141,7 @@ class CollabClaudeWrapper:
                     headers={'Content-Type': 'application/json'},
                     method=method
                 )
-            with urllib.request.urlopen(req, timeout=5) as resp:
+            with devflow_urlopen(req, timeout=5) as resp:
                 return json.loads(resp.read().decode('utf-8'))
         except Exception as e:
             debug(f"API error: {e}")
@@ -1651,7 +1653,7 @@ class CollabClaudeWrapper:
             role_id = my_entry["roleId"]
             try:
                 req = urllib.request.Request(f"{DEVFLOW_URL}/api/roles")
-                with urllib.request.urlopen(req, timeout=5) as resp:
+                with devflow_urlopen(req, timeout=5) as resp:
                     roles_result = json.loads(resp.read().decode('utf-8'))
                 if roles_result.get("success"):
                     for role in roles_result.get("roles", []):
@@ -2093,7 +2095,7 @@ class CollabClaudeWrapper:
                     },
                     method="POST"
                 )
-                urllib.request.urlopen(req, timeout=3)
+                devflow_urlopen(req, timeout=3)
             except Exception:
                 pass  # Best-effort — never block message recovery
         return queued
@@ -2131,7 +2133,7 @@ class CollabClaudeWrapper:
             inject_iso = self.last_inject_time_iso
             for channel_id in channel_ids:
                 query = urllib.parse.urlencode({'channelId': channel_id, 'since': inject_iso, 'limit': 200})
-                with urllib.request.urlopen(f"{API_BASE}?{query}", timeout=5) as resp:
+                with devflow_urlopen(f"{API_BASE}?{query}", timeout=5) as resp:
                     data = json.loads(resp.read().decode('utf-8'))
                 messages = data.get('messages') if isinstance(data, dict) else None
                 if not isinstance(messages, list):
@@ -2764,7 +2766,7 @@ class CollabClaudeWrapper:
 
             try:
                 req = urllib.request.Request(url, headers=headers)
-                resp = urllib.request.urlopen(req, timeout=90)
+                resp = devflow_urlopen(req, timeout=90)
                 self._sse_resp = resp
                 self.sse_connected = True
                 self.sse_last_data_time = time.time()  # Connection itself counts as data
@@ -2803,7 +2805,7 @@ class CollabClaudeWrapper:
                                 if self.last_poll_time:
                                     poll_url += f"&since={self.last_poll_time}"
                         poll_req = urllib.request.Request(poll_url)
-                        poll_resp = urllib.request.urlopen(poll_req, timeout=5)
+                        poll_resp = devflow_urlopen(poll_req, timeout=5)
                         poll_data = json.loads(poll_resp.read().decode('utf-8'))
                         catchup_msgs = poll_data.get('messages', [])
                         queued_count = 0
@@ -3340,7 +3342,7 @@ class CollabClaudeWrapper:
                             )
                             if catchup_since:
                                 catchup_url += f"&since={catchup_since}"
-                            cu_resp = urllib.request.urlopen(
+                            cu_resp = devflow_urlopen(
                                 urllib.request.Request(catchup_url), timeout=5
                             )
                             cu_data = json.loads(cu_resp.read().decode('utf-8'))
@@ -3769,7 +3771,7 @@ class CollabClaudeWrapper:
 def list_channels():
     try:
         req = urllib.request.Request(f"{API_BASE}?action=list")
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with devflow_urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read().decode('utf-8'))
             channels = data.get("channels", [])
             if not channels:
