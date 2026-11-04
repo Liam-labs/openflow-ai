@@ -16,7 +16,9 @@
       "components/modals/RosterConfigModal.tsx",
       "data/examples/agents.json",
       "components/collab/SilentAgentNotice.tsx",
-      "lib/silent-agents.ts"
+      "lib/silent-agents.ts",
+      "lib/attach-command.ts",
+      "app/api/collab/attach-command/"
     ]
   },
   {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { findSilentAgents, attachCommandFor, SILENT_AFTER_MS } from '@/lib/silent-agents';
+import { findSilentAgents, plainSession, SILENT_AFTER_MS } from '@/lib/silent-agents';
 
 const T0 = Date.parse('2026-11-04T10:00:00Z');
 const at = (ms: number) => new Date(T0 + ms).toISOString();
@@ -13,7 +13,7 @@ describe('findSilentAgents', () => {
     expect(run([ask()], SILENT_AFTER_MS - 1)).toMatchObject({ silent: [], pending: [{ name: 'Lead', dueAt: T0 + SILENT_AFTER_MS }] });
     const r = run([ask()], SILENT_AFTER_MS);
     expect(r.pending).toEqual([]);
-    expect(r.silent[0]).toMatchObject({ name: 'Lead', attachCommand: 'tmux attach -t collab-lead-1' });
+    expect(r.silent[0]).toMatchObject({ name: 'Lead', tmuxSession: 'collab-lead-1' });
   });
 
   it('is not silent once the agent has said anything after the question', () => {
@@ -44,11 +44,11 @@ describe('findSilentAgents', () => {
   });
 });
 
-describe('attachCommandFor', () => {
-  it('only offers a command for a plain tmux session name', () => {
-    expect(attachCommandFor('collab-lead-1')).toBe('tmux attach -t collab-lead-1');
-    expect(attachCommandFor(undefined)).toBeUndefined();
-    expect(attachCommandFor('x; rm -rf ~')).toBeUndefined();
-    expect(attachCommandFor('a b')).toBeUndefined();
+describe('plainSession', () => {
+  it('only passes a plain tmux session name on', () => {
+    expect(plainSession('collab-lead-1')).toBe('collab-lead-1');
+    expect(plainSession(undefined)).toBeUndefined();
+    expect(plainSession('x; rm -rf ~')).toBeUndefined();
+    expect(plainSession('a b')).toBeUndefined();
   });
 });

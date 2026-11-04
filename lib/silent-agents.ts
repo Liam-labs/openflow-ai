@@ -34,8 +34,8 @@ export interface SilentParticipant {
 export interface SilentAgent {
   name: string;
   participantId: string;
-  /** What the person can run to look at the agent's own screen. Absent when the agent has no tmux session. */
-  attachCommand?: string;
+  /** The agent's tmux session, when it has a plain one. The command to attach comes from the server (it depends on where the app runs). */
+  tmuxSession?: string;
   askedAt: number;
   /** Time at which this agent becomes "silent", for scheduling one timer. */
   dueAt: number;
@@ -43,9 +43,9 @@ export interface SilentAgent {
 
 const SAFE_SESSION = /^[A-Za-z0-9._:-]{1,120}$/;
 
-/** The exact command, or nothing when the name is not a plain tmux session name (it is shown to be typed into a terminal). */
-export function attachCommandFor(tmuxSessionName: string | undefined): string | undefined {
-  return tmuxSessionName && SAFE_SESSION.test(tmuxSessionName) ? `tmux attach -t ${tmuxSessionName}` : undefined;
+/** The session name when it is a plain tmux name, otherwise nothing. */
+export function plainSession(tmuxSessionName: string | undefined): string | undefined {
+  return tmuxSessionName && SAFE_SESSION.test(tmuxSessionName) ? tmuxSessionName : undefined;
 }
 
 function isAddressedTo(msg: SilentMessage, agent: SilentRosterAgent): boolean {
@@ -84,7 +84,7 @@ export function findSilentAgents(input: {
     const entry: SilentAgent = {
       name: agent.name,
       participantId: agent.participantId,
-      attachCommand: attachCommandFor(agent.tmuxSessionName),
+      tmuxSession: plainSession(agent.tmuxSessionName),
       askedAt: asked.t,
       dueAt: asked.t + afterMs,
     };
