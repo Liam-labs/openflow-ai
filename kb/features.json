@@ -92,7 +92,10 @@
       "lib/setup/setup-channel-hook.ts",
       "lib/setup/setup-channel.ts",
       "data/examples/guide.json",
-      "data/roles/personalities/Guide.md"
+      "data/roles/personalities/Guide.md",
+      "components/setup/SetupStatusStrip.tsx",
+      "app/api/setup/summary/",
+      "instance/ui.ts"
     ]
   }
 ]

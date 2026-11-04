@@ -529,6 +529,10 @@
     {
       "path": "tests/unit/setup-channel.test.ts",
       "kind": "openflow-only"
+    },
+    {
+      "path": "components/setup/SetupStatusStrip.tsx",
+      "kind": "openflow-only"
     }
   ]
 }
