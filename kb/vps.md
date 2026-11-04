@@ -14,7 +14,7 @@ On a public Linux VPS, one install script sets up OpenFlow behind secure HTTPS. 
 
 ## What it needs
 
-A Linux VPS with Docker, and its login details. A basic one costs a few pounds a month. You also need an AI tool account, as on any install.
+A Linux VPS with Docker, and its login details. Prices vary, so check your provider. You also need an AI tool account, as on any install.
 
 ## How to set it up
 
