@@ -1,13 +1,13 @@
 {
-  "_comment": "The starter team offered by the first-run wizard. Plain data: name, role (a slug from data/roles/roles.json), personality (a file in data/roles/personalities/), whether it is ticked by default, and a first message that proves the agent answers. The names, roles and personalities are only a starting point: change any of them later from the roster in the app. Nothing here is specific to any runtime; the wizard fills in the runtime and model the user chose.",
+  "_comment": "The starter team offered by the first-run wizard. Plain data: name, role (a slug from data/roles/roles.json), personality (a file in data/roles/personalities/), whether it is ticked by default, and a first message that proves the agent answers. The team lead is called Lead because the setup assistant is called Jack. The names, roles and personalities are only a starting point: change any of them later from the roster in the app. Nothing here is specific to any runtime; the wizard fills in the runtime and model the user chose.",
   "agents": [
     {
-      "name": "Jack",
+      "name": "Lead",
       "roleSlug": "team-lead",
       "personality": "Jack",
       "default": true,
       "summary": "Team lead. Sets the goal, splits the work and keeps everyone on it.",
-      "firstMessage": "Hello Jack. In two sentences, what is your job on this team and what would you do first for me?"
+      "firstMessage": "Hello Lead. In two sentences, what is your job on this team and what would you do first for me?"
     },
     {
       "name": "McKay",

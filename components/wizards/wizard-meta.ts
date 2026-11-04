@@ -48,7 +48,7 @@ export const WIZARD_META: Record<'signIn' | 'tailscale' | 'cloudflare' | 'browse
   },
   memory: {
     headline: 'Shared memory for your team',
-    summary: 'Agents store what they learn and search it later, so the team stops solving the same problem twice.',
+    summary: 'Agents store what they learn and search it later, so the team stops solving the same problem twice. It keeps notes your agents write, never your files, and stays on this computer.',
     why: [
       'Runs on this computer, so nothing is sent away',
       'Every agent can store and search the same notes',
