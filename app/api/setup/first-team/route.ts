@@ -103,11 +103,14 @@ async function ensureSetupChannelOnce(opts: { agentType: string; model?: string;
       return channel.id;
     },
     startGuide: async (channelId, guide) => {
+      // Its own folder: the first team may also have an agent called Jack, and two agents with one name must not share an agent folder.
+      const guideDir = path.join(getHomeDir(), 'devflow-projects', 'setup-assistant');
+      await fs.mkdir(guideDir, { recursive: true });
       const roleId = await roleIdForSlug(guide.roleSlug);
       if (!roleId) return { started: false, error: `Role "${guide.roleSlug}" is not installed.` };
       const out = await provision(
         {
-          action: 'roster.provision', channelId, name: guide.name, workingDirectory: opts.workingDirectory, roleId, roleSlug: guide.roleSlug,
+          action: 'roster.provision', channelId, name: guide.name, workingDirectory: guideDir, roleId, roleSlug: guide.roleSlug,
           personality: guide.personality, agentType: opts.agentType, model: opts.model,
         } as AgentApiRequest,
         AUTH,
