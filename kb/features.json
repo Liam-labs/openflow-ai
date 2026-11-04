@@ -14,7 +14,9 @@
     "page": "kb/agents.md",
     "paths": [
       "components/modals/RosterConfigModal.tsx",
-      "data/examples/agents.json"
+      "data/examples/agents.json",
+      "components/collab/SilentAgentNotice.tsx",
+      "lib/silent-agents.ts"
     ]
   },
   {

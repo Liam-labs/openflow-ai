@@ -26,5 +26,8 @@ At least one AI tool installed and signed in, or an API key. See the models page
 
 The agent shows as running in the roster and answers when you mention it. A stopped agent never answers.
 
+The roster can show an agent as ready while it is stuck. If you ask an agent something and it has not answered after 45 seconds, the chat says so and shows the command that opens the agent's own screen (`tmux attach -t` followed by its session name, with a Copy button). The usual cause is a sign-in or a trust question waiting in that terminal, or no AI signed in on the computer. Answer it there, then press Ctrl+B and then D to leave the agent running.
+
 **Careful:** agents run commands with your permissions on your machine. Treat each one as a colleague with a shell there. Read SECURITY.md before you give an agent a folder.
+**Not yet proved:** the 45-second note is built and tested, but has not been seen with a real stuck agent on a Mac.
 **Last checked:** 4 Nov 2026, from the README and the live VPS tests of 2 Nov.
