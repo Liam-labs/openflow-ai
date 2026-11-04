@@ -11,6 +11,8 @@ import { hasPassword } from '@/lib/dashboard-auth';
 import { DataPaths } from '@/lib/data-paths';
 import { readJsonFileStrict } from '@/lib/data-io';
 import { buildSetupSummary } from '@/lib/setup/setup-summary';
+import { markerFile, readMarkerFile } from '@/lib/setup/setup-channel';
+import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,5 +28,6 @@ export const GET = tracked('/api/setup/summary', async (request: NextRequest) =>
     browser: record(DataPaths.browserUse),
     memory: record(DataPaths.memoryWizard),
   });
-  return NextResponse.json({ success: true, items }, { headers: { 'Cache-Control': 'no-store' } });
+  const marker = await readMarkerFile(markerFile(path.dirname(DataPaths.memoryWizard)));
+  return NextResponse.json({ success: true, items, setupChannelId: marker?.channelId ?? null }, { headers: { 'Cache-Control': 'no-store' } });
 });

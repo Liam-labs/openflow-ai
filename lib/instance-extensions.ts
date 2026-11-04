@@ -5,6 +5,8 @@
  * OpenFlow has (for example the Setup channel). This file holds only the types, so it is the same in both trees.
  */
 
+import type { ComponentType } from 'react';
+
 export interface FirstTeamContext {
   agentType: string;
   model?: string;
@@ -24,4 +26,10 @@ export interface FirstTeamHook {
 
 export interface InstanceExtensions {
   afterFirstTeam: FirstTeamHook[];
+}
+
+/** The browser side. A separate file in each tree (instance/ui.ts) because server code such as `fs` must never be bundled into pages. */
+export interface InstanceUiExtensions {
+  /** Small panels drawn above a channel's messages. Each decides for itself whether the channel is one it cares about. */
+  channelBanners: ComponentType<{ channelId: string }>[];
 }
