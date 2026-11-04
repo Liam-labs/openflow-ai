@@ -4,7 +4,7 @@ Jack is a helper built into OpenFlow. He lives in a channel called **Setup**, wh
 
 ## What it does
 
-Jack greets you, asks a little about you and what you want to use OpenFlow for, then helps with the rest of setup. He keeps his messages short and takes one small point at a time. In this version he only guides: he explains, recommends and points you to the right screen. He does not change settings for you, and he does not read your other channels or see any password or key.
+Jack greets you, asks a little about you and what you want to use OpenFlow for, then helps with the rest of setup. He keeps his messages short and takes one small point at a time. In this version he only guides: he explains, recommends and points you to the right screen. He is told never to ask for, show or store a password or key, and never to read your other channels. He cannot change settings or edit files.
 
 ## Why you would want it
 
