@@ -26,6 +26,8 @@ import { ensureClaudeFirstRun } from '@/lib/claude-first-run';
 import { resolveSecretStore } from '@/lib/secret-store';
 import { createChannel, getChannel } from '@/app/api/agent/actions/collab';
 import { provision } from '@/app/api/agent/actions/roster';
+import { DataPaths } from '@/lib/data-paths';
+import { ensureSetupChannel, markerFile, readMarkerFile, writeMarkerFile, type GuideDefinition } from '@/lib/setup/setup-channel';
 import type { AgentApiRequest, AgentAuthContext } from '@/lib/types';
 
 interface ExampleAgent {
@@ -84,6 +86,36 @@ async function roleIdForSlug(slug: string): Promise<string | undefined> {
   const parsed = JSON.parse(raw) as { roles?: Array<{ id: string; slug: string }> } | Array<{ id: string; slug: string }>;
   const roles = Array.isArray(parsed) ? parsed : parsed.roles ?? [];
   return roles.find(r => r.slug === slug)?.id;
+}
+
+
+async function ensureSetupChannelOnce(opts: { agentType: string; model?: string; workingDirectory: string }) {
+  const marker = markerFile(path.dirname(DataPaths.memoryWizard));
+  return ensureSetupChannel({
+    readMarker: () => readMarkerFile(marker),
+    writeMarker: (m) => writeMarkerFile(marker, m),
+    loadGuide: async () => JSON.parse(await fs.readFile(appPath('data', 'examples', 'guide.json'), 'utf-8')) as GuideDefinition,
+    createChannel: async (name, description) => {
+      const { channel } = await createChannel(
+        { action: 'collab.channels.create', name, description, projectPath: opts.workingDirectory } as AgentApiRequest,
+        AUTH,
+      );
+      return channel.id;
+    },
+    startGuide: async (channelId, guide) => {
+      const roleId = await roleIdForSlug(guide.roleSlug);
+      if (!roleId) return { started: false, error: `Role "${guide.roleSlug}" is not installed.` };
+      const out = await provision(
+        {
+          action: 'roster.provision', channelId, name: guide.name, workingDirectory: opts.workingDirectory, roleId, roleSlug: guide.roleSlug,
+          personality: guide.personality, agentType: opts.agentType, model: opts.model,
+        } as AgentApiRequest,
+        AUTH,
+      );
+      return out.spawned ? { started: true } : { started: false, error: (out as { error?: string }).error || 'The Guide did not start.' };
+    },
+    now: () => new Date().toISOString(),
+  });
 }
 
 export const GET = tracked('/api/setup/first-team', async (request: NextRequest) => {
@@ -209,9 +241,14 @@ export const POST = tracked('/api/setup/first-team', async (request: NextRequest
     }
   }
 
+  // The Setup channel and its Guide, once per install. The wizard goes on whatever happens here.
+  const started = results.some(r => r.started);
+  const setup = started ? await ensureSetupChannelOnce({ agentType, model, workingDirectory }) : undefined;
+
   return NextResponse.json({
-    success: results.some(r => r.started),
+    success: started,
     channelId,
+    setupChannel: setup,
     agents: results,
     firstMessages: Object.fromEntries(chosen.map(a => [a.name, a.firstMessage])),
   });

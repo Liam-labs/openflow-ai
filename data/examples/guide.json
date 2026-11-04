@@ -1,0 +1,9 @@
+{
+  "_comment": "The setup assistant that the first-run wizard starts in the Setup channel. Plain data. The agent reads its brief from data/roles/personalities/Guide.md. It uses the read-only researcher role, so it cannot edit files.",
+  "name": "Guide",
+  "channelName": "Setup",
+  "channelDescription": "Ask the Guide about anything OpenFlow can do and how to set it up",
+  "roleSlug": "researcher",
+  "personality": "Guide",
+  "firstMessage": "Hello Guide. In two sentences, what can you help me set up, and what is already set up?"
+}
