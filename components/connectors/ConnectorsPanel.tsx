@@ -158,6 +158,7 @@ function ConnectorCard({ c, status, onChanged, variant }: { c: Connector; status
 
   const saveKey = (env?: string, value?: string) =>
     run('save', { action: 'save-key', env, value: value ?? key }, (r) => ({ ok: r.success === true, text: r.success === true ? 'Saved. Agents started from now on can use it.' : String(r.error) }));
+  // With the box empty the server checks the key already saved (or set on this machine), so a saved key can be verified without retyping it.
   const checkKey = () =>
     run('check', { action: 'test-key', value: key }, (r) => ({ ok: r.success === true && r.ok === true, text: String(r.message ?? r.error ?? 'No answer.') }));
 
@@ -206,7 +207,7 @@ function ConnectorCard({ c, status, onChanged, variant }: { c: Connector; status
       <SecretBox label={`${c.setup.key.label}, or type it here`} placeholder={c.setup.key.placeholder} value={key} onChange={setKey} />
       <div className="flex gap-2">
         {c.setup.key.test && (
-          <button type="button" disabled={!key.trim() || !!busy} onClick={checkKey} className="glass-button px-3 py-1.5 text-xs text-[#60a5fa] disabled:opacity-40">
+          <button type="button" disabled={(!key.trim() && !status.keyFrom) || !!busy} onClick={checkKey} className="glass-button px-3 py-1.5 text-xs text-[#60a5fa] disabled:opacity-40">
             {busy === 'check' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Check'}
           </button>
         )}
