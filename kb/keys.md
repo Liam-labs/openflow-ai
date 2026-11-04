@@ -18,6 +18,8 @@ Nothing extra. It works on every install. The Vault page is optional.
 
 ## How to set it up
 
+The wizard's **AI access** step starts with a short note, "Where OpenFlow keeps your keys". It says your keys are kept on this computer in an encrypted private file, and it saves that choice by itself. **See the choices** lists the options. A password manager (1Password) is shown as an optional later choice and cannot be picked yet. If OpenFlow was started with its own key source (the environment), the note says it reads keys from there and never writes them.
+
 1. Open Systems, then Connections, and find the service.
 2. Paste the key and press the test button.
 3. Remove a key the same way when you no longer want it.
@@ -31,4 +33,5 @@ The Connections card shows **On** after the test passes, and an agent for that s
 **Agents use a key without seeing it:** when Jack or another agent needs a saved key to do something, such as checking that your DeepSeek key works, it asks OpenFlow to do the step for it. OpenFlow runs the step with the key and returns only the result, with the key replaced by `[hidden]`. You approve each step first, and an approval works once, for that exact step, for ten minutes. You can read what was run on the broker log in the dashboard. In this first version the only step is checking a key. Starting an agent with its key follows later. A provider key an agent runs on is in that agent's own process, so the agent's own tools can read it.
 
 **Encrypted on disk:** every key in the store is encrypted with a key this server holds, so agents keep working after a restart and nobody types a password. That protects a copy of the key file on its own: a backup of the data folder, a support bundle, a synced folder. The encryption key is kept in a separate file outside the data folder (`~/.config/devflow/secrets.key`, which in the container is `/data/home/.config/devflow/secrets.key` in a different volume), or in `DEVFLOW_SECRETS_KEY` if your launcher sets it. It does not protect against someone who controls the running server or has the whole machine, because the app has to be able to read the encryption key. Back that key file up separately: if it is lost, the saved keys cannot be recovered. Older provider keys saved by the wizard in `credentials.json` are still a separate copy until a follow-up fixes it.
+**Not yet proved:** the wizard note and the saved choice have been seen on a development copy, not on a live install. A password manager store is not built.
 **Last checked:** 4 Nov 2026, from the code and the merged key-store change.
