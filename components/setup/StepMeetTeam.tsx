@@ -5,6 +5,7 @@ import { Users, Loader2, CheckCircle, AlertTriangle, Send } from 'lucide-react';
 import { HUMAN_ROUTING_NAME } from '@/lib/human-identity';
 import { PRODUCT_NAME } from '@/lib/brand';
 import { SetupSelect } from '@/components/setup/SetupSelect';
+import { everyAgentAnswered, freshReplies } from '@/lib/setup-first-reply';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -87,6 +88,9 @@ export function StepMeetTeam({ onFinish }: StepMeetTeamProps) {
   const [messages, setMessages] = useState<ChannelMessage[]>([]);
   const [started, setStarted] = useState<string[]>([]);
   const stopRef = useRef(false);
+  // Ids of the messages already in the channel when this run started. A reused channel (BUG-53) may hold replies from an
+  // earlier run; only messages whose id is not in here count as an answer to this run's hello (BUG-54).
+  const priorMessageIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -128,7 +132,7 @@ export function StepMeetTeam({ onFinish }: StepMeetTeamProps) {
         const json = await res.json();
         const msgs: ChannelMessage[] = json?.channels?.[0]?.messages ?? [];
         setMessages(msgs);
-        const answered = names.every((n) => msgs.some((m) => m.from?.name === n && m.from?.type !== 'user'));
+        const answered = everyAgentAnswered(msgs, names, priorMessageIdsRef.current);
         if (answered) {
           setPhase('done');
           return;
@@ -184,6 +188,16 @@ export function StepMeetTeam({ onFinish }: StepMeetTeamProps) {
       });
       if (!join.ok) throw new Error(String(join.data.error || 'Could not join the channel'));
       const joinedId = (join.data.participantId as string) || participantId;
+      // Record the messages already in the channel before sending the hellos. In a reused channel these include replies
+      // from an earlier run, which must not be mistaken for an answer to this run's hello (BUG-54).
+      try {
+        const existing = await fetch(`/api/collab?channelId=${encodeURIComponent(json.channelId)}&limit=50`);
+        const existingJson = await existing.json();
+        const prior: ChannelMessage[] = existingJson?.channels?.[0]?.messages ?? [];
+        priorMessageIdsRef.current = new Set(prior.map((m) => m.id));
+      } catch {
+        priorMessageIdsRef.current = new Set();
+      }
       for (const name of up) {
         const text = json.firstMessages?.[name] as string | undefined;
         if (!text) continue;
@@ -204,7 +218,7 @@ export function StepMeetTeam({ onFinish }: StepMeetTeamProps) {
   };
 
   const failedAgents = results.filter((a) => !a.started);
-  const replies = messages.filter((m) => m.from?.type !== 'user' && started.includes(m.from?.name));
+  const replies = freshReplies(messages, started, priorMessageIdsRef.current);
 
   return (
     <div className="glass-card p-8 relative z-10">
