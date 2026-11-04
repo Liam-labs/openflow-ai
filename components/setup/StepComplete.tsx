@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle, ChevronRight, ArrowRight } from 'lucide-react';
+import { CheckCircle, ChevronRight, ArrowRight, Brain } from 'lucide-react';
 import { PRODUCT_NAME } from '@/lib/brand';
 
 interface StepCompleteProps {
@@ -17,7 +17,7 @@ const NEXT_STEPS = [
   'Talk to your agents in the channel',
   'Point them at your own project folder',
   'Add more agents from the roster',
-  'Connect more: Systems > Connections > Set up more (password, phone access, your own domain, browser, memory)',
+  'Connect more: Systems > Connections > Set up more (password, phone access, your own domain, browser)',
 ] as const;
 
 // ─── Animated Gradient Border ─────────────────────────────────────────────────
@@ -139,6 +139,26 @@ export function StepComplete({ onGoToDashboard, hasChannel, opensAssistant }: St
           Scripts and other programs that call the API need the access token. Setup saved it as DEVFLOW_API_TOKEN in the
           .env file in the app folder, which only your user account can read. This computer does not need it.
         </p>
+
+
+        {/* Optional extra: shared memory. Opens the existing memory card; nothing is installed from here. */}
+        <div
+          className="w-full text-left rounded-xl p-4 mb-6 flex gap-3"
+          style={{ background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.2)' }}
+          data-testid="memory-offer"
+        >
+          <Brain className="w-5 h-5 flex-shrink-0 mt-0.5 text-[#60a5fa]" aria-hidden="true" />
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-white">Give your team a memory</h3>
+            <p className="text-xs mt-1" style={{ color: 'rgba(var(--ink-ch), 0.6)' }}>
+              Your agents save what they learn and search it later, so they stop solving the same problem twice.
+              It keeps notes your agents write, never your files. It stays on this computer.
+            </p>
+            <a href="/operations#systems/connections" className="inline-block mt-3 text-xs font-semibold text-[#60a5fa] underline underline-offset-2">
+              Set up memory (Systems &gt; Connections)
+            </a>
+          </div>
+        </div>
 
         {/* CTA */}
         <button
