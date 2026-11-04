@@ -1,3 +1,4 @@
+import { runsInContainer } from '@/lib/runs-in-container';
 import { isolatedTailscaleNode, tailscaleSocketArgs } from './tailscale-runtime';
 /**
  * Remote-access wizard, Tailscale route (stage 1 of the setup wizards).
@@ -115,7 +116,7 @@ export function parseServe(json: string): ServeEntry[] {
   }
 }
 
-export const runsInContainer = (): boolean => existsSync('/.dockerenv') || existsSync('/run/.containerenv');
+export { runsInContainer };
 
 export async function gatherFacts(run: RunTs = defaultRunTs, inContainer: boolean = runsInContainer()): Promise<TailscaleFacts> {
   const isolatedNode = inContainer && isolatedTailscaleNode();

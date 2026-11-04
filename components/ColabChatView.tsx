@@ -1,5 +1,6 @@
 'use client';
 
+import { SilentAgentNotice } from '@/components/collab/SilentAgentNotice';
 import { uiExtensions } from '@/instance/ui';
 import { isHumanParticipant, mentionsHuman } from '@/lib/human-identity';
 import type { LightboxImage } from './modals/ImageLightboxModal';
@@ -937,6 +938,7 @@ export function ColabChatView({
       </span>
     </div>
   )}
+  {activeChannel && <SilentAgentNotice messages={messages} roster={activeChannel.roster?.agents ?? []} participants={activeChannel.participants} />}
   <div ref={messagesEndRef} />
 
   {/* Jump to bottom button */}
