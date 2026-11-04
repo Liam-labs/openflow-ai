@@ -99,3 +99,46 @@ it('without it no model is forced', async () => {
   expect(body?.agentType).toBe('claude');
   expect(body?.model).toBeUndefined();
 });
+
+it('when Jack was started in the Setup channel, he is greeted there and the wizard finishes into that channel', async () => {
+  const posts: Record<string, unknown>[] = [];
+  const base = globalThis.fetch as unknown as (u: string, i?: unknown) => Promise<unknown>;
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
+    if (init?.method === 'POST' && String(url).includes('/api/setup/first-team')) {
+      return { ok: true, json: async () => ({
+        success: true, channelId: 'team-1', agents: [{ name: 'Lead', started: true }], firstMessages: { Lead: 'hi lead' },
+        setupChannel: { status: 'created', channelId: 'setup-1', guideStarted: true, firstMessage: 'Say hello as Jack.' },
+      }) };
+    }
+    if (init?.method === 'POST' && String(url) === '/api/collab') { posts.push(JSON.parse(init.body ?? '{}')); return { ok: true, json: async () => ({ success: true }) }; }
+    return base(String(url), init);
+  }));
+  const onFinish = vi.fn();
+  await act(async () => root.render(createElement(StepMeetTeam, { onFinish })));
+  await flush();
+  await act(async () => { Array.from(container.querySelectorAll('button')).find((b) => /start/i.test(b.textContent ?? ''))?.click(); });
+  await flush();
+  expect(posts.some((p) => p.action === 'message' && p.channelId === 'setup-1' && p.content === '@Jack Say hello as Jack.')).toBe(true);
+  await act(async () => { Array.from(container.querySelectorAll('button')).find((b) => /finish|continue/i.test(b.textContent ?? ''))?.click(); });
+  expect(onFinish).toHaveBeenCalledWith('team-1', 'setup-1');
+});
+
+it('without a Setup channel nothing is sent to one and no assistant channel is passed on', async () => {
+  const posts: Record<string, unknown>[] = [];
+  const base = globalThis.fetch as unknown as (u: string, i?: unknown) => Promise<unknown>;
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
+    if (init?.method === 'POST' && String(url).includes('/api/setup/first-team')) {
+      return { ok: true, json: async () => ({ success: true, channelId: 'team-1', agents: [{ name: 'Lead', started: true }], firstMessages: { Lead: 'hi lead' }, setupChannel: { status: 'exists' } }) };
+    }
+    if (init?.method === 'POST' && String(url) === '/api/collab') { posts.push(JSON.parse(init.body ?? '{}')); return { ok: true, json: async () => ({ success: true }) }; }
+    return base(String(url), init);
+  }));
+  const onFinish = vi.fn();
+  await act(async () => root.render(createElement(StepMeetTeam, { onFinish })));
+  await flush();
+  await act(async () => { Array.from(container.querySelectorAll('button')).find((b) => /start/i.test(b.textContent ?? ''))?.click(); });
+  await flush();
+  expect(posts.every((p) => p.channelId === 'team-1')).toBe(true);
+  await act(async () => { Array.from(container.querySelectorAll('button')).find((b) => /finish|continue/i.test(b.textContent ?? ''))?.click(); });
+  expect(onFinish).toHaveBeenCalledWith('team-1', null);
+});

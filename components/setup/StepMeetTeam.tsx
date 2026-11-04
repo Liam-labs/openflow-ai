@@ -34,7 +34,8 @@ type Phase = 'choose' | 'starting' | 'waiting' | 'done' | 'failed';
 
 interface StepMeetTeamProps {
   /** Called once the user is done: completes setup and leaves the wizard. */
-  onFinish: (channelId: string | null) => void;
+  /** `assistantChannelId` is the Setup channel when Jack was started there: the dashboard opens it first. */
+  onFinish: (channelId: string | null, assistantChannelId?: string | null) => void;
   /** The user gave a DeepSeek key and nothing else to run Claude Code on, so the team (and the setup assistant) run on DeepSeek. */
   useDeepSeek?: boolean;
 }
@@ -89,6 +90,7 @@ export function StepMeetTeam({ onFinish, useDeepSeek }: StepMeetTeamProps) {
   const [channelId, setChannelId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChannelMessage[]>([]);
   const [started, setStarted] = useState<string[]>([]);
+  const [assistantChannelId, setAssistantChannelId] = useState<string | null>(null);
   const stopRef = useRef(false);
   // Ids of the messages already in the channel when this run started. A reused channel (BUG-53) may hold replies from an
   // earlier run; only messages whose id is not in here count as an answer to this run's hello (BUG-54).
@@ -212,6 +214,23 @@ export function StepMeetTeam({ onFinish, useDeepSeek }: StepMeetTeamProps) {
           content: `@${name} ${text}`,
         });
         if (!sent.ok) throw new Error(String(sent.data.error || `Could not message ${name}`));
+      }
+      // The Setup channel's assistant (Jack) opens the conversation: one short greeting and a question about the user. Never fatal: the team
+      // above is what this step proves, and Jack's channel stays there if his hello cannot be sent.
+      const setup = json.setupChannel as { status?: string; channelId?: string; guideStarted?: boolean; firstMessage?: string } | undefined;
+      if (setup?.status === 'created' && setup.channelId && setup.guideStarted && setup.firstMessage) {
+        try {
+          const joinSetup = await postCollab({
+            action: 'join',
+            channelId: setup.channelId,
+            participant: { id: participantId, type: 'user', name: HUMAN_ROUTING_NAME, source: 'DevFlow Browser' },
+          });
+          if (joinSetup.ok) {
+            const setupParticipant = (joinSetup.data.participantId as string) || participantId;
+            const hello = await postCollab({ action: 'message', channelId: setup.channelId, participantId: setupParticipant, content: `@Jack ${setup.firstMessage}` });
+            if (hello.ok) setAssistantChannelId(setup.channelId);
+          }
+        } catch { /* Jack's greeting is optional */ }
       }
       setPhase('waiting');
       void watchForReplies(json.channelId, up);
@@ -371,7 +390,7 @@ export function StepMeetTeam({ onFinish, useDeepSeek }: StepMeetTeamProps) {
           )}
 
           <button
-            onClick={() => onFinish(channelId)}
+            onClick={() => onFinish(channelId, assistantChannelId)}
             className="glass-button primary flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium text-white"
           >
             {phase === 'done' ? 'Finish setup' : 'Continue to the dashboard'}
