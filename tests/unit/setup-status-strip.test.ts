@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -82,4 +83,13 @@ it('says so when a quick question did not send, and shows no buttons without a p
   await act(async () => root.render(createElement(SetupStatusStrip, { channelId: 'setup-1', participantId: null })));
   await flush();
   expect(container.querySelector('[data-testid="quick-starts"]')).toBeNull();
+});
+
+it('uses its own explicit colours, not theme utilities, so it reads in Dark, Light and Dark Orange', () => {
+  const component = readFileSync('components/setup/SetupStatusStrip.tsx', 'utf-8');
+  expect(component).not.toMatch(/text-white|text-green-|text-\[#|bg-white|border-white|bg-\[#/);
+  const css = readFileSync('app/setup-cards.css', 'utf-8');
+  expect(css).toMatch(/\.setup-strip\{[^}]*background:#0a1330;color:#e8eefc/);
+  expect(css).toContain('.setup-strip .ss-button{');
+  expect(css).toContain('.setup-strip .ss-chip--on{');
 });
