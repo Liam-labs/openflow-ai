@@ -1,0 +1,32 @@
+# Where your keys are kept
+
+OpenFlow keeps the API keys and tokens you give it in one private file on your own machine, so every part of the product finds them in the same place.
+
+## What it does
+
+When you save a key on the Connections page or in the wizard, OpenFlow writes it to its server secret store, a private file only the account running OpenFlow can read. OpenFlow then hands the key to the agents it starts on the same machine. If you use the Vault page, the Vault is encrypted in your browser, and when you unlock it the browser copies your keys into that same store. Keys are never shown back to you in chat and never written to a log.
+
+## Why you would want it
+
+**Example:** you save a DeepSeek key once during setup. Later your agents restart overnight, and they still start on that key without you pasting it again.
+
+**The problem it fixes:** keys scattered across files get lost, go stale, or stay behind after you remove them. One store means one place to check and one place to clean up.
+
+## What it needs
+
+Nothing extra. It works on every install. The Vault page is optional.
+
+## How to set it up
+
+1. Open Systems, then Connections, and find the service.
+2. Paste the key and press the test button.
+3. Remove a key the same way when you no longer want it.
+
+## How to tell it is working
+
+The Connections card shows **On** after the test passes, and an agent for that service starts and answers. When you remove the key, the card goes back to off.
+
+**What it stores:** the keys you save, in a private file on your machine. They never leave it, except to the provider the key belongs to.
+**Careful:** every agent OpenFlow starts on the same machine can read the key it is given, and an agent that can run commands could print its own environment. Only save keys you are happy for your own agents to use.
+**Not yet built:** the file is protected by who may read it, and it is not encrypted on disk yet. The plan is to encrypt it with a key the server holds, so agents keep working after a restart. That protects against a stolen disk or backup. It does not protect against someone who controls the running server, because that machine holds the key. Older provider keys saved by the wizard in `credentials.json` are still a separate copy until a follow-up fixes it.
+**Last checked:** 4 Nov 2026, from the code and the merged key-store change.

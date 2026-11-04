@@ -98,5 +98,14 @@
       "instance/ui.ts",
       "components/setup/AskJackLink.tsx"
     ]
+  },
+  {
+    "id": "keys",
+    "title": "Where your keys are kept",
+    "page": "kb/keys.md",
+    "paths": [
+      "lib/secret-store.ts",
+      "lib/connectors/secrets.ts"
+    ]
   }
 ]
