@@ -33,6 +33,7 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha }}
         run: |
           node scripts/check-ownership.mjs --all
+          node scripts/check-ownership.mjs --imports
           if [ "$EVENT" = "pull_request" ]; then node scripts/check-ownership.mjs --changed "$BASE" HEAD --branch "$BRANCH"; fi
       - name: Typecheck
         run: npm run typecheck

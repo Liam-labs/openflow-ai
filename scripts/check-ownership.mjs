@@ -7,11 +7,15 @@
  *   node scripts/check-ownership.mjs --changed <base> <head> [--branch <name>]
  *       every changed file must be labelled; an export/* branch may not touch an openflow-only path;
  *       nothing may touch a devflow-only path (those never leave DevFlow)
+ *   node scripts/check-ownership.mjs --imports
+ *       a core file may not import an openflow-only file, because DevFlow would get the core file without the file beside it.
+ *       The edges that already exist are listed in ownership-import-baseline.json; only a new edge fails.
+ *       --imports --write-baseline  rewrites that file from the current tree
  *
  * The most specific matching rule wins: an exact path beats `dir/**`, and a longer `dir/**` beats a shorter one.
  * Runs from the pull-request and push events in .github/workflows/checks.yml. No polling.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -62,6 +66,44 @@ export function checkFiles(manifest, files, branch = '') {
   return problems;
 }
 
+const IMPORT_RE = /(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*|^\s*import\s+)['"]([^'"]+)['"]/gm;
+const EXTENSIONS = ['', '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json', '/index.ts', '/index.tsx', '/index.js'];
+const SOURCE_FILE = /\.(?:ts|tsx|js|jsx|mjs|cjs)$/;
+
+/** Repo-relative file an import points at, or null when it is a package or outside the repo. `has` says whether a path is tracked. */
+export function resolveImport(fromFile, spec, has) {
+  let base;
+  if (spec.startsWith('@/')) base = spec.slice(2);
+  else if (spec.startsWith('./') || spec.startsWith('../')) base = path.posix.normalize(path.posix.join(path.posix.dirname(fromFile), spec));
+  else return null;
+  for (const ext of EXTENSIONS) if (has(base + ext)) return base + ext;
+  return null;
+}
+
+/** Edges "importer -> imported" where a core file imports an openflow-only file. */
+export function coreToOpenflowImports(manifest, files, read) {
+  const set = new Set(files);
+  const edges = [];
+  for (const file of files) {
+    if (!SOURCE_FILE.test(file) || classify(manifest, file) !== 'core') continue;
+    const text = read(file);
+    if (!text) continue;
+    for (const m of text.matchAll(IMPORT_RE)) {
+      const target = resolveImport(file, m[1], (p) => set.has(p));
+      // instance/** holds each instance's own copy of the same file, so core code may import it.
+      if (target && !target.startsWith('instance/') && classify(manifest, target) === 'openflow-only') edges.push(`${file} -> ${target}`);
+    }
+  }
+  return [...new Set(edges)].sort();
+}
+
+/** New edges (fail) and baseline edges that no longer exist (prune). */
+export function compareToBaseline(edges, baseline) {
+  const known = new Set(baseline);
+  const current = new Set(edges);
+  return { added: edges.filter((e) => !known.has(e)), gone: baseline.filter((e) => !current.has(e)) };
+}
+
 function git(args) {
   return execFileSync('git', args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 }
@@ -70,6 +112,7 @@ function main(argv) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const manifest = JSON.parse(readFileSync(path.join(root, 'ownership.json'), 'utf8'));
   const problems = validateManifest(manifest);
+  if (argv.includes('--imports')) return importsMain(root, manifest, argv, problems);
   let files = [];
   let branch = '';
   const bi = argv.indexOf('--branch');
@@ -94,6 +137,27 @@ function main(argv) {
     return 1;
   }
   console.log(`Ownership check passed (${files.length} file${files.length === 1 ? '' : 's'} checked).`);
+  return 0;
+}
+
+function importsMain(root, manifest, argv, problems) {
+  const files = git(['ls-files', '-z']).split('\0').filter(Boolean);
+  const edges = coreToOpenflowImports(manifest, files, (f) => { try { return readFileSync(path.join(root, f), 'utf8'); } catch { return ''; } });
+  const baselinePath = path.join(root, 'ownership-import-baseline.json');
+  if (argv.includes('--write-baseline')) {
+    writeFileSync(baselinePath, JSON.stringify({ description: 'Core files that import an openflow-only file, as of when this list was written. The import check fails only on an edge that is not here. Remove a line when its import is resolved (move the imported file to core, or make the importing file openflow-only).', edges }, null, 2) + '\n');
+    console.log(`Wrote ${edges.length} edges to ownership-import-baseline.json`);
+    return 0;
+  }
+  const baseline = JSON.parse(readFileSync(baselinePath, 'utf8')).edges || [];
+  const { added, gone } = compareToBaseline(edges, baseline);
+  for (const g of gone) console.log(`note: resolved, remove from ownership-import-baseline.json: ${g}`);
+  if (problems.length || added.length) {
+    for (const p of problems) console.error(`  - ${p}`);
+    for (const a of added) console.error(`  - new: a core file imports an openflow-only file (${a}). Move the imported file to core and port it to DevFlow, or make the importing file openflow-only.`);
+    return 1;
+  }
+  console.log(`Import check passed (${edges.length} known edges, none new).`);
   return 0;
 }
 

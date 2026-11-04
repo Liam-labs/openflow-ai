@@ -497,6 +497,14 @@
     {
       "path": "tests/unit/ownership.test.ts",
       "kind": "openflow-only"
+    },
+    {
+      "path": "ownership-import-baseline.json",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "instance/**",
+      "kind": "openflow-only"
     }
   ]
 }
