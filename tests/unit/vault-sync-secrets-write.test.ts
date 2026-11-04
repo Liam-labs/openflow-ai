@@ -4,6 +4,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { NextRequest } from 'next/server';
+import { FileSecretStore } from '@/lib/secret-store';
 
 vi.mock('@/lib/api-auth', () => ({ requireAuthOrLocal: vi.fn().mockResolvedValue(null) }));
 vi.mock('@/lib/api-tracking', () => ({ tracked: (_p: string, h: unknown) => h }));
@@ -29,7 +30,11 @@ async function post(body: unknown) {
   const res = await (POST as (r: NextRequest) => Promise<Response>)(new NextRequest('http://localhost:3000/api/vault/sync-secrets', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }));
   return { status: res.status, json: await res.json() };
 }
-const store = () => JSON.parse(fs.readFileSync(path.join(home, '.AppData', 'secrets.json'), 'utf8')) as Record<string, string>;
+// Every value in the store file is encrypted at rest, so read it back through the store, as the app does.
+const store = () => {
+  const s = new FileSecretStore(path.join(home, '.AppData', 'secrets.json'));
+  return Object.fromEntries(s.names().map((n) => [n, s.get(n)])) as Record<string, string>;
+};
 const HOSTILE = { name: 'Evil\ntouch "$HOME/RAN"\n# x', category: 'cat\ntouch "$HOME/RAN2"', payloadUrl: 'http://x\ntouch "$HOME/RAN3"', score: '1\rtouch "$HOME/RAN4"' };
 
 describe('vault sync, default mode (private store)', () => {
