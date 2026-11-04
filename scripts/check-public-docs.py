@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Check the public Markdown files: README, CONTRIBUTING, SECURITY, ARCHITECTURE and docs/.
+"""Check the public Markdown files: README, CONTRIBUTING, SECURITY, ARCHITECTURE, docs/ and kb/.
 
-Checks every Markdown file in the repo root and under docs/ for:
+Checks every Markdown file in the repo root and under docs/ and kb/ (the knowledge base the setup assistant reads) for:
   1. links      relative links and #anchors that do not resolve
   2. private    secrets, private hosts/IPs, home paths, personal emails
 
@@ -19,6 +19,7 @@ from pathlib import Path
 import os
 ROOT = Path(os.environ.get("DOCS_CHECK_ROOT") or Path(__file__).resolve().parent.parent).resolve()
 DOCS = ROOT / "docs"
+KB = ROOT / "kb"
 
 PUBLIC_RESOLVERS = {"1.1.1.1", "1.0.0.1", "8.8.8.8", "8.8.4.4", "9.9.9.9"}  # well-known, not private
 
@@ -139,7 +140,7 @@ def main(argv):
             if not f.exists():
                 print(f"not found: {f}", file=sys.stderr); return 2
     else:
-        files = sorted(ROOT.glob("*.md")) + (sorted(DOCS.rglob("*.md")) if DOCS.exists() else [])
+        files = sorted(ROOT.glob("*.md")) + (sorted(DOCS.rglob("*.md")) if DOCS.exists() else []) + (sorted(KB.rglob("*.md")) if KB.exists() else [])
     findings, externals = [], []
     for f in files:
         a, b = check_file(f)
