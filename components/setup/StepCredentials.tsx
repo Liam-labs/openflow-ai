@@ -1,5 +1,6 @@
 'use client';
 
+import { KeyStorePanel } from '@/components/setup/KeyStorePanel';
 import { useState } from 'react';
 import { KeyRound, Eye, EyeOff, Zap, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
 import type { SetupData } from '@/components/SetupWizard';
@@ -179,6 +180,9 @@ export function StepCredentials({ data, onChange }: StepCredentialsProps) {
           <p className="text-sm text-white/40 mt-0.5">Sign in with a subscription, or use an API key. Either one is enough. A DeepSeek key is the quickest start.</p>
         </div>
       </div>
+
+      {/* Where the keys below are kept. Saved by itself; nothing to do unless the person wants to look. */}
+      <KeyStorePanel />
 
       {/* Subscription sign-in (Claude Code, Codex) */}
       <SubscriptionSignIn />

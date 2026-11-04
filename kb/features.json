@@ -110,7 +110,10 @@
     "page": "kb/keys.md",
     "paths": [
       "lib/secret-store.ts",
-      "lib/connectors/secrets.ts"
+      "lib/connectors/secrets.ts",
+      "lib/key-store-choice.ts",
+      "app/api/setup/key-store/",
+      "components/setup/KeyStorePanel.tsx"
     ]
   }
 ]
