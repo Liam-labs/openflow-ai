@@ -176,3 +176,16 @@
   .sc-card,.sc-why,.sc-more svg,.sc-scrim,.sc-dialog,.sc-dot{animation:none;transition:none}
   .sc-card:hover{transform:none}
 }
+
+/* Light theme: Midnight Glass is a dark design (its tokens are light text on dark cards), so on a light page the Set up more area keeps
+   its own dark panel. Without it the group headings would be white text straight onto the light page. */
+[data-theme="light"] .sc.mg-scope{background:var(--bg);border-radius:var(--radius-xl);padding:22px 16px 32px;box-shadow:0 1px 3px rgba(15,23,42,.18)}
+[data-theme="light"] .sc-return{color:#1d4ed8}
+
+/* Light theme: the setup dialog is a dark panel (Midnight Glass), but the light theme turns every white text utility dark for light pages.
+   Inside the dark dialog that made body text dark grey on near-black. Put white text back there. */
+[data-theme="light"] .sc-dialog .text-white{color:#fff !important}
+[data-theme="light"] .sc-dialog [class*="text-white/"]{color:rgba(255,255,255,.78) !important}
+[data-theme="light"] .sc-dialog [class*="text-white/"][class*="text-white/1"],
+[data-theme="light"] .sc-dialog [class*="text-white/2"],
+[data-theme="light"] .sc-dialog [class*="text-white/3"]{color:rgba(255,255,255,.55) !important}
