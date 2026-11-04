@@ -1,5 +1,6 @@
 'use client';
 
+import { MCP_PAGE_NAME } from '@/lib/brand';
 import React, { useRef, useCallback } from 'react';
 import {
   ChevronLeft, ChevronRight,
@@ -59,7 +60,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'AI Infrastructure',
     items: [
       { id: 'models', label: 'Models',      icon: <Cpu size={16} /> },
-      { id: 'mcp',    label: 'MCP Gateway', icon: <Puzzle size={16} /> },
+      { id: 'mcp',    label: MCP_PAGE_NAME, icon: <Puzzle size={16} /> },
     ],
   },
   {

@@ -20,4 +20,17 @@ describe('the browser participant source name', () => {
     expect(offenders).toEqual([]);
     expect(`${PRODUCT_NAME} Browser`).toBe('OpenFlow Browser');
   });
+
+  it('the MCP servers page heading and the deploy request text name this product, and send nobody to a DevFlow-only guide', () => {
+    const wanted: Record<string, string> = {
+      'components/systems/MCPServersSection.tsx': 'MCP_PAGE_HEADING',
+      'components/modals/DeployModal.tsx': 'PRODUCT_NAME',
+    };
+    for (const [file, constant] of Object.entries(wanted)) {
+      const text = readFileSync(file, 'utf-8');
+      expect(text, file).not.toMatch(/DevFlow/);
+      expect(text, file).toContain(constant);
+    }
+    expect(readFileSync('components/modals/DeployModal.tsx', 'utf-8')).not.toContain('central-knowledge-base');
+  });
 });

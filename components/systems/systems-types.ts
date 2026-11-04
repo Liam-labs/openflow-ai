@@ -1,5 +1,7 @@
 // Shared types for the Systems Tab rebuild
 
+import { MCP_PAGE_NAME } from '@/lib/brand';
+
 // ─── Chart / Metrics types ────────────────────────────────────────────────────
 
 /** One sample from useMetricsBuffer — cpu is aggregate % across non-dev services, memory is bytes */
@@ -112,7 +114,7 @@ export const SECTION_LABELS: Record<SystemsSection, string> = {
   firewall: 'Firewall',
   connections: 'Connections',
   bridges: 'Bridges',
-  mcp: 'MCP Gateway',
+  mcp: MCP_PAGE_NAME,
   models: 'Models',
   errors: 'Error Monitor',
   'process-health': 'Process Health',
