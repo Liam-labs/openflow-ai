@@ -533,6 +533,14 @@
     {
       "path": "components/setup/SetupStatusStrip.tsx",
       "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/setup-status-strip.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/setup-summary-route.test.ts",
+      "kind": "openflow-only"
     }
   ]
 }
