@@ -61,6 +61,8 @@ import { appPath } from '@/lib/app-paths';
 const execFileAsync = promisify(execFile);
 import { tmuxRun, pasteRun, hostCall, filesHostFor } from '@/lib/host-executor';
 import { openTerminalRoute } from '@/lib/open-terminal-route';
+import { noWindowReply, runsOnWsl } from '@/lib/terminal-attach';
+import { attachCommand } from '@/lib/attach-command';
 import { WINDOWS_SPAWN_UNAVAILABLE, windowsSpawnAvailable } from '@/lib/windows-spawn-availability';
 import { getDevflowHome } from '@/lib/home-dir';
 import { HUMAN_ROUTING_NAME } from '@/lib/human-identity';
@@ -807,6 +809,11 @@ export async function handleRosterOpenTerminal(
       // The agent's tmux session is on THIS machine. The window opens on the desktop and ssh-es back here (key-only, desktop to server).
       await hostCall(route.host, 'open-terminal', { session: tmuxSession, title: tabTitle, via: 'server' }, 25_000);
       return NextResponse.json<PtyActionResponse>({ success: true, command: `ssh <server> tmux attach -t ${tmuxSession}` });
+    }
+    // A window can be opened from here only on Windows (WSL). Anywhere else (a Mac, a Linux server, the container) the person opens a terminal
+    // themselves, so say that plainly and give the exact command.
+    if (!(await runsOnWsl())) {
+      return NextResponse.json<PtyActionResponse>(noWindowReply(attachCommand(tmuxSession)), { status: 409 });
     }
     const launch = buildWindowsTerminalAttachLaunch({ title: tabTitle, tmuxSession });
     // PM2 can inherit a WSL_INTEROP socket from a prior WSL lifetime. Resolve
