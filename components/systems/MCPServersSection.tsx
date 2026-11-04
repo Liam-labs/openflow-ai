@@ -1,6 +1,6 @@
 'use client';
 
-import { PRODUCT_NAME } from '@/lib/brand';
+import { MCP_PAGE_HEADING, MCP_PAGE_NAME, MCP_PAGE_SUB } from '@/lib/brand';
 import { useEffect, useState, useCallback } from 'react';
 import { Plug, RefreshCw, CheckCircle2, XCircle, Circle, Cloud, Terminal, Radio, ExternalLink, Cpu, Power, RotateCw } from 'lucide-react';
 
@@ -164,12 +164,9 @@ export function MCPServersSection() {
     <div className="mcp-section">
       <header className="mcp-header">
         <div>
-          <div className="mcp-eyebrow">Systems · MCP Gateway</div>
-          <h1 className="mcp-title"><Plug size={18} /> Model-neutral {PRODUCT_NAME} MCP Gateway</h1>
-          <p className="mcp-sub">
-            One shared capability contract for every AgentChat runtime, with provider-specific servers,
-            credentials, and workers kept behind {PRODUCT_NAME}. Manage the gateway&apos;s current MCP connections here.
-          </p>
+          <div className="mcp-eyebrow">Systems · {MCP_PAGE_NAME}</div>
+          <h1 className="mcp-title"><Plug size={18} /> {MCP_PAGE_HEADING}</h1>
+          <p className="mcp-sub">{MCP_PAGE_SUB}</p>
         </div>
         <button className="mcp-btn-ghost" onClick={refresh} disabled={loading}>
           <RefreshCw size={14} className={loading ? 'mcp-spin' : ''} /> Refresh

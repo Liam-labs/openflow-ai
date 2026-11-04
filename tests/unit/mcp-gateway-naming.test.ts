@@ -5,17 +5,17 @@ import { describe, expect, it } from 'vitest';
 const root = process.cwd();
 
 describe('model-neutral MCP Gateway naming', () => {
-  it('uses the canonical product name and model-neutral contract in the panel', () => {
+  it('takes its heading and sentence from the brand file', () => {
     const source = readFileSync(
       join(root, 'components/systems/MCPServersSection.tsx'),
       'utf8',
     );
 
-    expect(source).toContain('Model-neutral {PRODUCT_NAME} MCP Gateway');
-    expect(source).toContain('One shared capability contract for every AgentChat runtime');
+    expect(source).toContain('{MCP_PAGE_HEADING}');
+    expect(source).toContain('{MCP_PAGE_SUB}');
   });
 
-  it('labels Systems navigation as MCP Gateway', () => {
+  it('takes the Systems navigation label from the brand file', () => {
     const sidebar = readFileSync(
       join(root, 'components/systems/SystemsSidebar.tsx'),
       'utf8',
@@ -25,8 +25,8 @@ describe('model-neutral MCP Gateway naming', () => {
       'utf8',
     );
 
-    expect(sidebar).toContain("label: 'MCP Gateway'");
-    expect(labels).toContain("mcp: 'MCP Gateway'");
+    expect(sidebar).toContain('label: MCP_PAGE_NAME');
+    expect(labels).toContain('mcp: MCP_PAGE_NAME');
   });
 
   it('backs the panel name with a real shared service and capability contract', () => {
