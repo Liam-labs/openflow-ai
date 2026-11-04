@@ -42,6 +42,8 @@ import threading
 import time
 import urllib.error
 import urllib.request
+# Calls to this installation carry its API token, but never to another address or across a redirect (scripts/devflow_http.py).
+from devflow_http import urlopen as devflow_urlopen
 
 from design_reference_harness import (
     codex_managed_gate_required,
@@ -388,7 +390,7 @@ def _api_call(endpoint: str, method: str = "GET", data: dict | None = None) -> d
                 headers={"Content-Type": "application/json"},
                 method=method,
             )
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with devflow_urlopen(req, timeout=5) as resp:
             return json.loads(resp.read().decode("utf-8"))
     except Exception as e:
         debug(f"API error {method} {endpoint}: {e}")

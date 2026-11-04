@@ -46,6 +46,8 @@ import traceback
 import subprocess
 import urllib.request
 import urllib.error
+# Calls to this installation carry its API token, but never to another address or across a redirect (scripts/devflow_http.py).
+from devflow_http import urlopen as devflow_urlopen
 import shutil
 from pathlib import Path
 from agent_stream_writer import safe_append_stream_message
@@ -660,7 +662,7 @@ class CollabGrokACPWrapper:
                 data = json.dumps(body).encode("utf-8")
             req = urllib.request.Request(url, data=data, method=method)
             req.add_header("Content-Type", "application/json")
-            with urllib.request.urlopen(req, timeout=10) as resp:
+            with devflow_urlopen(req, timeout=10) as resp:
                 return json.loads(resp.read().decode("utf-8"))
         except urllib.error.HTTPError as e:
             try:
@@ -833,7 +835,7 @@ class CollabGrokACPWrapper:
                    f"&since={urllib.request.quote(self.last_poll_time)}"
                    f"&limit=10")
             req = urllib.request.Request(url)
-            with urllib.request.urlopen(req, timeout=10) as resp:
+            with devflow_urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 messages = data.get("messages", [])
                 if messages:
@@ -1005,7 +1007,7 @@ class CollabGrokACPWrapper:
                        f"&participantId={self.participant_id}")
                 req = urllib.request.Request(url)
                 req.add_header("Accept", "text/event-stream")
-                with urllib.request.urlopen(req, timeout=90) as resp:
+                with devflow_urlopen(req, timeout=90) as resp:
                     buffer = ""
                     for line_bytes in resp:
                         if not self.running:

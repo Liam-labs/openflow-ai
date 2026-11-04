@@ -28,6 +28,8 @@ import subprocess
 import threading
 import urllib.request
 import urllib.error
+# Calls to this installation carry its API token, but never to another address or across a redirect (scripts/devflow_http.py).
+from devflow_http import urlopen as devflow_urlopen
 import shutil
 
 try:
@@ -148,7 +150,7 @@ class CollabGeminiWrapper:
                     headers={'Content-Type': 'application/json'},
                     method=method
                 )
-            with urllib.request.urlopen(req, timeout=5) as resp:
+            with devflow_urlopen(req, timeout=5) as resp:
                 return json.loads(resp.read().decode('utf-8'))
         except Exception as e:
             debug(f"API error: {e}")
@@ -785,7 +787,7 @@ A mention alone does not require an acknowledgement. Follow channel-communicatio
 def list_channels():
     try:
         req = urllib.request.Request(f"{API_BASE}?action=list")
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with devflow_urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read().decode('utf-8'))
             channels = data.get("channels", [])
             if not channels:

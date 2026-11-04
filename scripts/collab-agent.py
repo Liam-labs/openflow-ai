@@ -32,6 +32,8 @@ import argparse
 import threading
 import urllib.request
 import urllib.error
+# Calls to this installation carry its API token, but never to another address or across a redirect (scripts/devflow_http.py).
+from devflow_http import urlopen as devflow_urlopen
 
 try:
     import pexpect
@@ -275,7 +277,7 @@ def get_auto_join_channel(force=False):
     # Query API for available channels
     try:
         req = urllib.request.Request(f"{API_BASE}?action=list")
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with devflow_urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read().decode('utf-8'))
             channels = data.get("channels", [])
 
@@ -402,7 +404,7 @@ class CollabAgentWrapper:
                         headers={'Content-Type': 'application/json'},
                         method=method
                     )
-                with urllib.request.urlopen(req, timeout=5) as resp:
+                with devflow_urlopen(req, timeout=5) as resp:
                     return json.loads(resp.read().decode('utf-8'))
             except urllib.error.URLError as e:
                 last_error = e
@@ -423,7 +425,7 @@ class CollabAgentWrapper:
         """Check if API is reachable, update api_available status"""
         try:
             req = urllib.request.Request(f"{API_BASE}?health=1")
-            with urllib.request.urlopen(req, timeout=3) as resp:
+            with devflow_urlopen(req, timeout=3) as resp:
                 if not self.api_available:
                     print(f"\033[32m[Collab] API connection restored!\033[0m", file=sys.stderr)
                     debug("API connection restored")
@@ -1021,7 +1023,7 @@ class CollabAgentWrapper:
                             f"&limit=10"
                             + (f"&since={catchup_since}" if catchup_since else "")
                         )
-                        cu_resp = urllib.request.urlopen(
+                        cu_resp = devflow_urlopen(
                             urllib.request.Request(catchup_url), timeout=5
                         )
                         cu_data = json.loads(cu_resp.read().decode('utf-8'))
@@ -1318,7 +1320,7 @@ class CollabAgentWrapper:
 def list_channels():
     try:
         req = urllib.request.Request(f"{API_BASE}?action=list")
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with devflow_urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read().decode('utf-8'))
             channels = data.get("channels", [])
             if not channels:
