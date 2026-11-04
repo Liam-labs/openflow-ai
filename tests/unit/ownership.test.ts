@@ -50,6 +50,12 @@ describe('ownership manifest: validity', () => {
     expect(validateManifest({ rules: [{ path: 'a*b', kind: 'core' }] })).toHaveLength(1);
     expect(validateManifest({ rules: [{ path: 'a', kind: 'core' }, { path: 'a', kind: 'core' }] })).toHaveLength(1);
   });
+  it('the real ownership.json protects the README and the check itself from an export', () => {
+    const real = JSON.parse(readFileSync(path.join(root, 'ownership.json'), 'utf8'));
+    for (const f of ['README.md', 'ownership.json', 'scripts/check-ownership.mjs', 'tests/unit/ownership.test.ts', '.github/workflows/checks.yml']) {
+      expect(classify(real, f), f).toBe('openflow-only');
+    }
+  });
   it('the real ownership.json is valid and labels every tracked file', () => {
     const real = JSON.parse(readFileSync(path.join(root, 'ownership.json'), 'utf8'));
     expect(validateManifest(real)).toEqual([]);

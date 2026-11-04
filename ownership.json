@@ -60,7 +60,7 @@
     },
     {
       "path": "README.md",
-      "kind": "core"
+      "kind": "openflow-only"
     },
     {
       "path": "docker-compose.yml",
@@ -488,6 +488,14 @@
     },
     {
       "path": "ownership.json",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "scripts/check-ownership.mjs",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/ownership.test.ts",
       "kind": "openflow-only"
     }
   ]
