@@ -476,12 +476,32 @@ def apply_adapter_postprocess(entry: dict, rendered: str, agent: dict | None = N
     if not entry_id:
         return rendered
     adapter = adapter_for_entry_template(entry_id)
-    if adapter is None:
+    if adapter is not None:
+        rendered = adapter.inject_imports(rendered)
+        channel_names = (agent or {}).get("_channelNames", set())
+        if {"SG-1", "Commander"} & set(channel_names):
+            rendered = ensure_imports(rendered, ["@./.claude/rules/Mission.md"])
+    return apply_edition_rewrites(entry, rendered)
+
+
+def apply_edition_rewrites(entry: dict, rendered: str) -> str:
+    """Entry-point files (CLAUDE.md, GEMINI.md, ...) name rule files the OpenFlow edition does not ship.
+
+    manifest.<edition>.json may list `rewrite` pairs and `removeLines` for them. Only entry-point templates are touched,
+    and the devflow edition returns the text untouched.
+    """
+    edition = current_edition()
+    if edition == "devflow" or not str(entry.get("master", "")).startswith("per-model/"):
         return rendered
-    rendered = adapter.inject_imports(rendered)
-    channel_names = (agent or {}).get("_channelNames", set())
-    if {"SG-1", "Commander"} & set(channel_names):
-        rendered = ensure_imports(rendered, ["@./.claude/rules/Mission.md"])
+    try:
+        overlay = json.loads((SCAFFOLDING_DIR / f"manifest.{edition}.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return rendered
+    for old, new in overlay.get("rewrite") or []:
+        rendered = rendered.replace(old, new)
+    drop = set(overlay.get("removeLines") or [])
+    if drop:
+        rendered = "".join(line for line in rendered.splitlines(keepends=True) if line.strip() not in drop)
     return rendered
 
 

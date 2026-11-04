@@ -1,9 +1,61 @@
 {
   "_comment": "Read by sync.py only when data/scaffolding/EDITION says openflow. Ids in drop are skipped. Entries in add are used as written. manifest.json is unchanged and stays identical to DevFlow's.",
-  "drop": ["devflow-md", "rag-memory-rules", "skill-index", "computer-use", "mcp-outlook", "startup-md", "workspace-md"],
+  "drop": [
+    "devflow-md",
+    "rag-memory-rules",
+    "skill-index",
+    "computer-use",
+    "mcp-outlook",
+    "startup-md",
+    "workspace-md"
+  ],
   "add": [
-    {"id": "openflow-md", "category": "global", "master": "global/OPENFLOW.md", "targets": ["{agent_dir}/.claude/rules/OPENFLOW.md"], "condition": "always", "overwrite": true, "description": "OpenFlow orientation, in place of DEVFLOW.md"},
-    {"id": "startup-md-openflow", "category": "per-agent", "master": "per-agent/startup.openflow.md.tmpl", "targets": ["{agent_dir}/.claude/rules/startup.md"], "condition": "always", "overwrite": true, "description": "Startup context without DevFlow paths"},
-    {"id": "workspace-md-openflow", "category": "per-agent", "master": "per-agent/Workspace.openflow.md.tmpl", "targets": ["{agent_dir}/.claude/rules/Workspace.md"], "condition": "always", "overwrite": true, "description": "Workspace and channel tools without DevFlow paths"}
+    {
+      "id": "openflow-md",
+      "category": "global",
+      "master": "global/OPENFLOW.md",
+      "targets": [
+        "{agent_dir}/.claude/rules/OPENFLOW.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "OpenFlow orientation, in place of DEVFLOW.md"
+    },
+    {
+      "id": "startup-md-openflow",
+      "category": "per-agent",
+      "master": "per-agent/startup.openflow.md.tmpl",
+      "targets": [
+        "{agent_dir}/.claude/rules/startup.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "Startup context without DevFlow paths"
+    },
+    {
+      "id": "workspace-md-openflow",
+      "category": "per-agent",
+      "master": "per-agent/Workspace.openflow.md.tmpl",
+      "targets": [
+        "{agent_dir}/.claude/rules/Workspace.md"
+      ],
+      "condition": "always",
+      "overwrite": true,
+      "description": "Workspace and channel tools without DevFlow paths"
+    }
+  ],
+  "rewrite": [
+    [
+      "Use `.claude/rules/DEVFLOW.md` for project\ndocuments, knowledge/RAG, AgentChat, and documentation routes.",
+      "Use `.claude/rules/OPENFLOW.md` for what this product is\nand where its services and documents are."
+    ],
+    [
+      "@./.claude/rules/DEVFLOW.md",
+      "@./.claude/rules/OPENFLOW.md"
+    ]
+  ],
+  "removeLines": [
+    "@./.claude/rules/rag-memory.md",
+    "@./.claude/rules/skill-index.md"
   ]
 }

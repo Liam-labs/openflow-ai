@@ -112,3 +112,13 @@ def test_edition_file_word_is_validated(tmp_path, monkeypatch):
     assert sync.current_edition() == "devflow"
     marker.write_text("OpenFlow\n")
     assert sync.current_edition() == "openflow"
+
+
+def test_openflow_entry_points_do_not_name_files_the_edition_lacks(tmp_path):
+    teams, agent = _agent(tmp_path)
+    _deploy(sync.apply_edition(BASE, "openflow"), teams, agent)
+    text = (Path(agent["agentDir"]) / "CLAUDE.md").read_text()
+    assert "DEVFLOW.md" not in text and ".claude/rules/OPENFLOW.md" in text
+    entry = next(e for e in BASE["files"] if e["id"] == "gemini-md")
+    rendered = sync.apply_edition_rewrites(entry, "@./.claude/rules/DEVFLOW.md\n@./.claude/rules/rag-memory.md\n@./.claude/rules/skill-index.md\nx\n")
+    assert rendered == "@./.claude/rules/OPENFLOW.md\nx\n"
