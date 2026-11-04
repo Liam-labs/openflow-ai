@@ -11,6 +11,7 @@
  * - Persistent state across refresh
  */
 
+import { PRODUCT_NAME } from '@/lib/brand';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -177,7 +178,7 @@ export function GlobalChatPanel() {
               id: BROWSER_PARTICIPANT_ID,
               type: 'user',
               name: (typeof window !== 'undefined' && localStorage.getItem('devflow-collab-username')) || HUMAN_ROUTING_NAME,
-              source: 'DevFlow Browser',
+              source: `${PRODUCT_NAME} Browser`,
             },
           }),
         });

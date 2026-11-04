@@ -196,7 +196,7 @@ export function StepMeetTeam({ onFinish, useDeepSeek }: StepMeetTeamProps) {
       const join = await postCollab({
         action: 'join',
         channelId: json.channelId,
-        participant: { id: participantId, type: 'user', name: HUMAN_ROUTING_NAME, source: 'DevFlow Browser' },
+        participant: { id: participantId, type: 'user', name: HUMAN_ROUTING_NAME, source: `${PRODUCT_NAME} Browser` },
       });
       if (!join.ok) throw new Error(String(join.data.error || 'Could not join the channel'));
       const joinedId = (join.data.participantId as string) || participantId;
@@ -229,7 +229,7 @@ export function StepMeetTeam({ onFinish, useDeepSeek }: StepMeetTeamProps) {
           const joinSetup = await postCollab({
             action: 'join',
             channelId: setup.channelId,
-            participant: { id: participantId, type: 'user', name: HUMAN_ROUTING_NAME, source: 'DevFlow Browser' },
+            participant: { id: participantId, type: 'user', name: HUMAN_ROUTING_NAME, source: `${PRODUCT_NAME} Browser` },
           });
           if (joinSetup.ok) {
             const setupParticipant = (joinSetup.data.participantId as string) || participantId;

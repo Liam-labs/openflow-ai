@@ -10,6 +10,7 @@
  * - Agent spawning and invitation
  */
 
+import { PRODUCT_NAME } from '@/lib/brand';
 import { needsBroadcastWarning } from '@/lib/broadcast-warning';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useBreakpoint } from '@/lib/hooks/useBreakpoint';
@@ -1751,7 +1752,7 @@ export function ColabPanel({ isOpen, onClose, initialChannelId, mode = 'modal' }
             id: BROWSER_PARTICIPANT_ID,
             type: 'user',
             name: getBrowserUsername(),
-            source: 'DevFlow Browser',
+            source: `${PRODUCT_NAME} Browser`,
           },
         }),
       });
@@ -1813,7 +1814,7 @@ export function ColabPanel({ isOpen, onClose, initialChannelId, mode = 'modal' }
               id: BROWSER_PARTICIPANT_ID,
               type: 'user',
               name: getBrowserUsername(),
-              source: 'DevFlow Browser',
+              source: `${PRODUCT_NAME} Browser`,
             },
           }),
         });
