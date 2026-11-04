@@ -89,6 +89,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // The gate is where a visit from another tailnet device is recorded (the Tailscale wizard's second-device check), and a first-run
+  // server never reaches it otherwise. Ask it for that side effect only: its answer is ignored, so nobody gains access, and the redirect below
+  // is unchanged.
+  await mayViewPages(request);
+
   // Not configured → redirect to setup wizard, on the address the caller used. request.nextUrl names the server's own idea of its host
   // and port (inside a container that is localhost:3000), which sent anyone who published another port to the wrong service.
   return NextResponse.redirect(new URL('/setup', requestOrigin(request)));
