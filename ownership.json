@@ -1,0 +1,502 @@
+{
+  "version": 1,
+  "description": "Which side owns each path. core: identical code in DevFlow and OpenFlow, flows through the export. openflow-only: exists only here, a DevFlow export may never write it. devflow-only: never leaves DevFlow, so it must not appear in this repo. The most specific matching entry wins. A path with no match fails scripts/check-ownership.mjs. First draft generated 4 Nov 2026 from 'does this path exist in the DevFlow tree'; Siler and Thorne review it.",
+  "rules": [
+    {
+      "path": "app/**",
+      "kind": "core"
+    },
+    {
+      "path": "components/**",
+      "kind": "core"
+    },
+    {
+      "path": "data/**",
+      "kind": "core"
+    },
+    {
+      "path": "docs/**",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "hooks/**",
+      "kind": "core"
+    },
+    {
+      "path": "host-bridge/**",
+      "kind": "core"
+    },
+    {
+      "path": "lib/**",
+      "kind": "core"
+    },
+    {
+      "path": "public/**",
+      "kind": "core"
+    },
+    {
+      "path": "scripts/**",
+      "kind": "core"
+    },
+    {
+      "path": "slack-integration/**",
+      "kind": "core"
+    },
+    {
+      "path": "tests/**",
+      "kind": "core"
+    },
+    {
+      "path": ".dockerignore",
+      "kind": "core"
+    },
+    {
+      "path": ".gitignore",
+      "kind": "core"
+    },
+    {
+      "path": "Dockerfile",
+      "kind": "core"
+    },
+    {
+      "path": "README.md",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "docker-compose.yml",
+      "kind": "core"
+    },
+    {
+      "path": "ecosystem.config.template.js",
+      "kind": "core"
+    },
+    {
+      "path": "eslint.config.mjs",
+      "kind": "core"
+    },
+    {
+      "path": "instrumentation-node.ts",
+      "kind": "core"
+    },
+    {
+      "path": "instrumentation.ts",
+      "kind": "core"
+    },
+    {
+      "path": "middleware.ts",
+      "kind": "core"
+    },
+    {
+      "path": "next.config.ts",
+      "kind": "core"
+    },
+    {
+      "path": "package-lock.json",
+      "kind": "core"
+    },
+    {
+      "path": "package.json",
+      "kind": "core"
+    },
+    {
+      "path": "postcss.config.mjs",
+      "kind": "core"
+    },
+    {
+      "path": "tsconfig.json",
+      "kind": "core"
+    },
+    {
+      "path": "vitest.config.ts",
+      "kind": "core"
+    },
+    {
+      "path": "docker/**",
+      "kind": "openflow-only"
+    },
+    {
+      "path": ".github/**",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "lib/setup/**",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "app/api/proxy/**",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "data/examples/**",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "app/api/teams-bot/**",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "teams-integration/**",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "app/api/auth/setup/**",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "app/api/bridges/teams/**",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "app/api/setup/address/**",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "app/setup/connections/**",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "app/api/collab/teams-bridge/**",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "components/systems/connections/**",
+      "kind": "openflow-only"
+    },
+    {
+      "path": ".env.example",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "ARCHITECTURE.md",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "CODE_OF_CONDUCT.md",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "LICENSE",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "NOTICE",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "SECURITY.md",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "app/api/agent/actions/teams-bridge.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "app/midnight-glass-board.css",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "app/setup-cards.css",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "components/LocalProxyModal.tsx",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "components/RileyVoiceEnabled.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "components/TeamsBridgePanel.tsx",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "components/TeamsBridgePanelV2.tsx",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "components/TeamsSetupWizard.tsx",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "components/setup/CreateLogin.tsx",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "components/setup/InstallAddress.tsx",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "components/setup/SetupEntry.tsx",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "components/wizards/useWizardRefresh.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "data/roles/personalities/Scout.md",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "docker-compose.server.yml",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "lib/cf-access-jwt.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "lib/connectors/install-parse.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "lib/connectors/install.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "lib/docs-import-path.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "lib/peer-stamp.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "lib/skill-router-jev.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "lib/tailnet-owner.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "lib/wizards/auth.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "lib/wizards/browser-container-profile.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "lib/wizards/events.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "lib/wizards/memory-runtime.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "lib/wizards/tailscale-runtime.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "public/fonts/OFL.txt",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "scripts/check-outbound-assets.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "scripts/check-public-docs.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "scripts/generate-third-party-notices.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "scripts/release-check.sh",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/integration/sprint54-t3-safe-build-trap.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/known-failing.txt",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/test_setup_code.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/test_setup_server.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/api-auth-client-ip-peer.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/bridge-detail-routes.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/bridge-status-routes.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/bridges-refresh.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/browser-container-profile.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/cf-access-jwt.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/computer-use-wizard-platform.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/connections-export-entry.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/connections-provider-link.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/connectors-install.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/docs-import-path.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/event-stream-fallback.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/install-address.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/laptop-view-auto-share.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/memory-runtime.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/middleware-gate-peer.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/peer-stamp.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/security-route-guards.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/server-wizard-errors.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/setup-address.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/setup-code.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/setup-create-login.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/setup-entry.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/setup-first-team-route.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/setup-wizard-resume.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/tailscale-isolated-ui.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/tailscale-owner-visits.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/tailscale-runtime.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/tailscale-visit-event.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/teams-bot-jwt.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/teams-notification-secret.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/test_runtime_location_target.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/test_server_address.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/test_setup_name.py",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/vault-setup-flow.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/wizard-auth.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/wizard-events.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/wizard-refresh.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "ownership.json",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "scripts/check-ownership.mjs",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/ownership.test.ts",
+      "kind": "openflow-only"
+    }
+  ]
+}
