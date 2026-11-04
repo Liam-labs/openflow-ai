@@ -148,14 +148,28 @@ if not os.path.exists(CLAUDE_BINARY):
 
 
 def _stored_secret(name):
-    """One value from DevFlow's private secret store (.AppData/secrets.json), or ''. Never raises."""
+    """One value from the app's private secret store (.AppData/secrets.json), or ''. Never raises.
+
+    The file is encrypted at rest, and this script has no AES library, so a value is read through scripts/read-secret.mjs
+    (Node, which the app already needs). The value comes back on a pipe, never on a command line. An old plain file is still
+    read directly.
+    """
     try:
         path = os.environ.get("DEVFLOW_SECRETS_FILE") or os.path.join(
             os.environ.get("DEVFLOW_HOME") or os.path.join(os.path.expanduser("~"), "DevFlow"), ".AppData", "secrets.json")
         with open(path, encoding="utf-8") as handle:
-            value = json.load(handle).get(name, "")
+            data = json.load(handle)
+        if isinstance(data, dict) and data.get("v") == 1 and data.get("alg") == "aes-256-gcm":
+            node = __import__("shutil").which("node")
+            script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "read-secret.mjs")
+            if not node or not os.path.exists(script):
+                return ""
+            env = dict(os.environ, DEVFLOW_SECRETS_FILE=path)
+            done = subprocess.run([node, script, name], capture_output=True, text=True, timeout=10, env=env)
+            return done.stdout if done.returncode == 0 else ""
+        value = data.get(name, "") if isinstance(data, dict) else ""
         return value if isinstance(value, str) else ""
-    except (OSError, ValueError, AttributeError):
+    except (OSError, ValueError, AttributeError, subprocess.SubprocessError):
         return ""
 
 

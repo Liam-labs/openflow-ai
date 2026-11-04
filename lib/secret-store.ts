@@ -1,7 +1,8 @@
 /**
  * Where DevFlow keeps the keys and tokens you give it (provider API keys, bridge tokens ...).
  *
- * Default: one JSON file, mode 0600, in the app's data folder (.AppData/secrets.json). Nothing sources it: the app reads it
+ * Default: one file, mode 0600, in the app's data folder (.AppData/secrets.json), encrypted at rest with a key the server holds
+ * (lib/secret-box.ts; the old plain JSON is still read and upgraded once at start). Nothing sources it: the app reads it
  * itself at start (loadSecretsIntoEnv) and its child processes inherit the values. A shell never executes it, so a stranger's
  * first run does not create a file that every new terminal runs. Writing a shell-sourceable ~/.secrets as well is opt-in
  * (DEVFLOW_WRITE_SHELL_SECRETS=1, see app/api/setup/complete).
@@ -17,6 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { randomBytes } from 'crypto';
 import { secretNameAllowed, secretValueAllowed } from './secrets-file';
+import { SecretBoxError, decrypt, encrypt, isEnvelope, loadKey } from './secret-box';
 
 export interface SecretStore {
   readonly kind: string;
@@ -51,10 +53,22 @@ export class FileSecretStore implements SecretStore {
       throw error;
     }
     try {
-      const data = JSON.parse(text);
+      let data: unknown = JSON.parse(text);
+      if (isEnvelope(data)) {
+        // Encrypted at rest (lib/secret-box.ts). A missing or wrong key is an error that leaves the file alone, never "empty".
+        const key = loadKey({ create: false });
+        if (!key) throw new SecretStoreError(`${this.filePath} is encrypted and its key was not found (OPENFLOW_SECRETS_KEY, or the key file). The file was not changed`);
+        try {
+          data = JSON.parse(decrypt(data, key));
+        } catch (error) {
+          if (error instanceof SecretBoxError) throw new SecretStoreError(`${this.filePath}: ${error.message}. The file was not changed`);
+          throw error;
+        }
+      }
       if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('not a JSON object');
       return Object.fromEntries(Object.entries(data).filter(([, v]) => typeof v === 'string')) as Record<string, string>;
     } catch (error) {
+      if (error instanceof SecretStoreError) throw error;
       const copy = `${this.filePath}.corrupt-${new Date().toISOString().replace(/[:.]/g, '-')}`;
       try {
         fs.writeFileSync(copy, text, { mode: 0o600, flag: 'wx' });
@@ -65,10 +79,34 @@ export class FileSecretStore implements SecretStore {
     }
   }
 
+  /** True when the file is still the old plain JSON with something in it (so the app can upgrade it once). */
+  isPlain(): boolean {
+    try {
+      const data = JSON.parse(fs.readFileSync(this.filePath, 'utf8'));
+      return !isEnvelope(data) && !!data && typeof data === 'object' && !Array.isArray(data) && Object.keys(data).length > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  /** Rewrites a plain file encrypted. Checks that the encrypted file reads back to the same values before it is kept. */
+  upgradeToEncrypted(): boolean {
+    if (!this.isPlain()) return false;
+    const before = this.read();
+    this.write(before);
+    const after = this.read();
+    if (Object.keys(before).length !== Object.keys(after).length || Object.entries(before).some(([k, v]) => after[k] !== v)) {
+      throw new SecretStoreError(`${this.filePath} did not read back the same after encryption`);
+    }
+    return true;
+  }
+
   private write(data: Record<string, string>): void {
+    const key = loadKey({ create: true });
+    if (!key) throw new SecretStoreError('no key to encrypt the secret store with');
     fs.mkdirSync(path.dirname(this.filePath), { recursive: true, mode: 0o700 });
     const tmp = `${this.filePath}.tmp.${process.pid}-${randomBytes(4).toString('hex')}`;
-    fs.writeFileSync(tmp, JSON.stringify(data, null, 2) + '\n', { mode: 0o600, flag: 'wx' });
+    fs.writeFileSync(tmp, JSON.stringify(encrypt(JSON.stringify(data), key)) + '\n', { mode: 0o600, flag: 'wx' });
     fs.renameSync(tmp, this.filePath);
   }
 
