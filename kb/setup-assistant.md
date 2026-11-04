@@ -4,7 +4,7 @@ Jack is a helper built into OpenFlow. He lives in a channel called **Setup**, wh
 
 ## What it does
 
-Jack greets you, asks a little about you and what you want to use OpenFlow for, then helps with the rest of setup. He keeps his messages short and takes one small point at a time. In this version he only guides: he explains, recommends and points you to the right screen. He is told never to ask for, show or store a password or key, and never to read your other channels. He cannot change settings or edit files.
+Jack greets you, asks a little about you and what you want to use OpenFlow for, then helps with the rest of setup. He keeps his messages short and takes one small point at a time. In this version he mostly guides: he explains, recommends and points you to the right screen. The one thing he can do for you is save a short bio of you to your About you box, and only after you have read the exact text and said yes. He adds to what is already there and never replaces it. He is told never to ask for, show or store a password or key, and never to read your other channels. He changes no settings and edits no files.
 
 ## Why you would want it
 
@@ -25,5 +25,5 @@ You do nothing. When the wizard finishes starting your first team, it also creat
 The Setup channel exists, the Team panel shows Jack with the role **Assistant**, and Jack sends a short hello and asks about you. If he stays silent, check that the AI you chose is installed and signed in, the same as for your first team.
 
 **What leaves your machine:** what you type to Jack goes to the AI provider you chose, to be answered.
-**Not yet proved:** no real Jack has answered on a real key yet. The channel, the hello and the opening button are built and tested, but not seen in a live install. The "About you" profile, the status strip and the quick-start buttons are not built yet.
+**Not yet proved:** no real Jack has answered on a real key yet. The channel, the hello and the opening button are built and tested, but not seen in a live install. Saving the bio to About you is written into his brief but has not been tried. The status strip and the quick-start buttons are not built yet.
 **Last checked:** 4 Nov 2026, from the code and its tests.
