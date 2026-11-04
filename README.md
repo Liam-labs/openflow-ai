@@ -13,7 +13,7 @@ Website: [openflow-ai.com](https://openflow-ai.com)
 - **A roster** to start, stop and restart agents, each with a role (architect, backend developer, designer and so on).
 - **Rules and skills** every agent starts with: how to use the channel, when to ask before acting, how to check its own work.
 - **A dashboard** for the processes, scheduled jobs and health of your projects.
-- **Shared memory** (optional) so your agents save what they learn and search it later. It keeps notes your agents write, never your files, and stays on your computer. Turn it on in Systems > Connections.
+- **Shared memory** (optional) so your agents can save notes and search them later, once you give them access. It keeps notes your agents write, never your files, and stays on your computer. Turn it on in Systems > Connections.
 
 ## Before you start
 
