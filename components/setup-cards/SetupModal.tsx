@@ -11,6 +11,8 @@ import { X } from 'lucide-react';
 interface Props {
   title: string;
   subtitle?: string;
+  /** Small extras under the subtitle (an instance may add links here). */
+  extras?: React.ReactNode;
   logo: ReactNode;
   status?: ReactNode;
   /** For a status that lives inside a wizard: the wizard portals its status into this element. */
@@ -23,10 +25,10 @@ interface Props {
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
-export function SetupModal({ title, subtitle, logo, status, statusSlotRef, bodyRef, onClose, children }: Props) {
+export function SetupModal({ title, subtitle, extras, logo, status, statusSlotRef, bodyRef, onClose, children }: Props) {
   const dialog = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  useEffect(() => { onCloseRef.current = onClose; });
 
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
@@ -55,6 +57,7 @@ export function SetupModal({ title, subtitle, logo, status, statusSlotRef, bodyR
           <div className="sc-dh-text">
             <h2 id="sc-dialog-title">{title}</h2>
             {subtitle && <p>{subtitle}</p>}
+            {extras}
             <span className="sc-status" ref={statusSlotRef}>{status}</span>
           </div>
           <button type="button" className="sc-x" onClick={onClose} aria-label="Close"><X /></button>

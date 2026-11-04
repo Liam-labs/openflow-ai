@@ -31,5 +31,7 @@ export interface InstanceExtensions {
 /** The browser side. A separate file in each tree (instance/ui.ts) because server code such as `fs` must never be bundled into pages. */
 export interface InstanceUiExtensions {
   /** Small panels drawn above a channel's messages. Each decides for itself whether the channel is one it cares about. */
-  channelBanners: ComponentType<{ channelId: string }>[];
+  channelBanners: ComponentType<{ channelId: string; participantId: string | null }>[];
+  /** Small links shown in a setup card's dialog header. `topic` is the card's headline. */
+  wizardCardLinks: ComponentType<{ topic: string }>[];
 }

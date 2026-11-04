@@ -314,7 +314,7 @@ export function ColabChatView({
       </div>
     </div>
   )}
-  {activeChannel && uiExtensions.channelBanners.map((Banner, i) => <Banner key={i} channelId={activeChannel.id} />)}
+  {activeChannel && uiExtensions.channelBanners.map((Banner, i) => <Banner key={i} channelId={activeChannel.id} participantId={participantId} />)}
   {!activeChannel ? (
     <div className="flex flex-col items-center justify-center h-full text-center px-6">
       <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-500/15 to-blue-500/10 flex items-center justify-center mb-5 border border-blue-500/10">

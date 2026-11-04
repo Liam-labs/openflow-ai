@@ -5,6 +5,7 @@
  * portals its status onto the card, and its five steps into the dialog when that is open. Outside a shell, WizardFrame
  * draws itself in place as before.
  */
+import { uiExtensions } from '@/instance/ui';
 import { createContext, useMemo, useState, type ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { SetupCard } from '@/components/setup-cards/SetupCard';
@@ -54,6 +55,7 @@ export function WizardCard({ meta, children }: { meta: WizardMeta; children: Rea
         <SetupModal
           title={meta.headline}
           subtitle={meta.summary}
+          extras={uiExtensions.wizardCardLinks.map((Link, i) => <Link key={i} topic={meta.headline} />)}
           logo={<Logo brand={meta.brand} Glyph={meta.Glyph} size="lg" />}
           statusSlotRef={setModalStatusEl}
           bodyRef={setBodyEl}

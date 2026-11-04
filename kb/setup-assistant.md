@@ -22,7 +22,7 @@ You do nothing. When the wizard finishes starting your first team, it also creat
 
 ## How to tell it is working
 
-The Setup channel exists, the Team panel shows Jack with the role **Assistant**, a strip of chips above his messages shows what is set up (owner password, phone access, your own domain, browser, shared memory) as On, Not set up or Skipped, and Jack sends a short hello and asks about you. If he stays silent, check that the AI you chose is installed and signed in, the same as for your first team.
+The Setup channel exists, the Team panel shows Jack with the role **Assistant**, a strip of chips above his messages shows what is set up (owner password, phone access, your own domain, browser, shared memory) as On, Not set up or Skipped, and Jack sends a short hello. Under the chips are three quick questions you can press to ask him (what OpenFlow can connect to, what is already set up, help with shared memory). Inside any setup card's dialog, **Ask Jack about this** opens the Setup channel with a question about that card ready to send and asks about you. If he stays silent, check that the AI you chose is installed and signed in, the same as for your first team.
 
 **What leaves your machine:** what you type to Jack goes to the AI provider you chose, to be answered.
 **Not yet proved:** no real Jack has answered on a real key yet. The channel, the hello and the opening button are built and tested, but not seen in a live install. The status strip is built and tested but has not been seen in a live install. Saving the bio to About you is written into his brief but has not been tried with a real model.
