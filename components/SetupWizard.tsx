@@ -97,6 +97,7 @@ export function SetupWizard({ showInstallAddress = false }: { showInstallAddress
   const [data, setData] = useState<SetupData>(INITIAL_DATA);
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [firstChannelId, setFirstChannelId] = useState<string | null>(null);
+  const [opensAssistant, setOpensAssistant] = useState(false);
   // Track direction for slide animation: 1 = forward, -1 = backward
   const [direction, setDirection] = useState<1 | -1>(1);
   const [restoring, setRestoring] = useState(true);
@@ -187,7 +188,7 @@ export function SetupWizard({ showInstallAddress = false }: { showInstallAddress
   };
 
   // The last step runs its own buttons; this finishes setup after the team has started.
-  const finishSetup = async (channelId: string | null) => {
+  const finishSetup = async (channelId: string | null, assistantChannelId?: string | null) => {
     setSaveError('');
     try {
       const completeRes = await fetch('/api/setup/complete', { method: 'POST' });
@@ -196,7 +197,8 @@ export function SetupWizard({ showInstallAddress = false }: { showInstallAddress
         setSaveError(completeResult.error || 'Failed to complete setup');
         return;
       }
-      setFirstChannelId(channelId);
+      setFirstChannelId(assistantChannelId || channelId);
+      setOpensAssistant(!!assistantChannelId);
       setDirection(1);
       setView('complete');
     } catch {
@@ -228,7 +230,7 @@ export function SetupWizard({ showInstallAddress = false }: { showInstallAddress
 
   const renderStep = () => {
     if (isComplete) {
-      return <StepComplete onGoToDashboard={handleGoToDashboard} hasChannel={!!firstChannelId} />;
+      return <StepComplete onGoToDashboard={handleGoToDashboard} hasChannel={!!firstChannelId} opensAssistant={opensAssistant} />;
     }
 
     switch (view as WizardStep) {

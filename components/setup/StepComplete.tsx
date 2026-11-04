@@ -7,6 +7,8 @@ interface StepCompleteProps {
   onGoToDashboard: () => void;
   /** True when the wizard started a first team; the button then opens its channel. */
   hasChannel?: boolean;
+  /** The channel it opens is the Setup channel, where Jack, the setup assistant, is waiting. */
+  opensAssistant?: boolean;
 }
 
 // ─── Next Steps Data ──────────────────────────────────────────────────────────
@@ -46,7 +48,7 @@ function injectKeyframes() {
 
 // ─── Step Complete ─────────────────────────────────────────────────────────────
 
-export function StepComplete({ onGoToDashboard, hasChannel }: StepCompleteProps) {
+export function StepComplete({ onGoToDashboard, hasChannel, opensAssistant }: StepCompleteProps) {
   // Inject once when component mounts (runs client-side only)
   if (typeof window !== 'undefined') injectKeyframes();
 
@@ -147,7 +149,7 @@ export function StepComplete({ onGoToDashboard, hasChannel }: StepCompleteProps)
             boxShadow: '0 0 24px rgba(59, 130, 246, 0.20)',
           }}
         >
-          {hasChannel ? 'Open my team' : 'Open Dashboard'}
+          {opensAssistant ? 'Meet Jack, your assistant' : hasChannel ? 'Open my team' : 'Open Dashboard'}
           <ArrowRight className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>

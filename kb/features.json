@@ -82,5 +82,17 @@
       "app/api/setup/complete/",
       "app/api/setup/save-step/"
     ]
+  },
+  {
+    "id": "setup-assistant",
+    "title": "Jack, your setup assistant",
+    "page": "kb/setup-assistant.md",
+    "paths": [
+      "instance/extensions.ts",
+      "lib/setup/setup-channel-hook.ts",
+      "lib/setup/setup-channel.ts",
+      "data/examples/guide.json",
+      "data/roles/personalities/Guide.md"
+    ]
   }
 ]
