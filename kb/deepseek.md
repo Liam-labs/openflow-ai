@@ -18,8 +18,8 @@ A DeepSeek account at https://platform.deepseek.com, some money on its balance, 
 
 1. Make an account on DeepSeek's platform site and add a small amount to your balance.
 2. Create an API key there and copy it.
-3. In the OpenFlow wizard, open the DeepSeek step and paste the key.
-4. Press the test button. Wait for the green tick.
+3. In the wizard's **AI access** step, paste the key into the **DeepSeek API Key** field at the top.
+4. Press **Test**. A green "Connection verified" line means DeepSeek accepted the key. A red line gives the reason, for example a wrong key.
 
 ## How to tell it is working
 
