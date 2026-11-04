@@ -531,7 +531,7 @@ describe('/api/wizards/memory', () => {
     expect(get.status).toBe(200); expect((await get.json()).record.skipped).toBe(true);
     expect((await post('nope')).status).toBe(400);
     expect((await post({ action: 'bogus' })).status).toBe(400);
-  });
+  }, 30_000); // The first import of the route loads its whole tree. On a busy CI machine that took just over the default 5 seconds twice on 4 Nov.
 
   it('passes only a real model name and only a real true for deleteData to the steps', async () => {
     vi.resetModules();
