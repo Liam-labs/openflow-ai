@@ -16,8 +16,9 @@
  * - Crash detection polling - Detects dead tmux sessions for roster agents
  */
 
-import { exec, execFile, spawn, ChildProcess } from 'child_process';
+import { exec, execFile, execFileSync, spawn, ChildProcess } from 'child_process';
 import { buildDeepSeekShellEnv, buildDeepSeekProcessEnv } from '@/lib/deepseek-env';
+import { handoffPrefix } from '@/lib/agent-key-handoff';
 import { scrubClaudeSpawnEnv, claudeSpawnUnsetPrefix } from '@/lib/claude-spawn-env';
 import { promisify } from 'util';
 import { EventEmitter } from 'events';
@@ -724,6 +725,7 @@ export interface SpawnPtyOptions {
   sessionId?: string;                 // Pre-generated session ID (used with alreadyCreatesSession)
   runLocation?: string;               // 'server' = run on this machine; otherwise on the agent host
   host?: string;                      // Explicit agent-host id (overrides DEVFLOW_AGENT_HOST)
+  handoffEnv?: Record<string, string>; // Keys from the credential broker (start-agent): reach the agent's environment through a one-shot file, never an argument
 }
 
 export interface SpawnPtyResult {
@@ -929,6 +931,10 @@ export async function spawnCollabPtySession(options: SpawnPtyOptions): Promise<S
       // Pass workingDirectory so the trust dialog is pre-approved for the correct path,
       // not the tmux launch dir (which is what $PWD would capture before the cd runs).
       envSetup = buildDeepSeekShellEnv(claudeFlags, workingDirectory) + envSetup;
+    }
+    if (options.handoffEnv && Object.keys(options.handoffEnv).length) {
+      if (remoteHost || laptopRun) throw new Error('A key cannot be handed to an agent that runs on another machine.');
+      envSetup = handoffPrefix(options.handoffEnv) + envSetup;   // the broker's keys, read and deleted by the launch shell
     }
     let effectiveCommand = claudeCommand;
     if (!options.customCommand && !useCollabWrapper && appendSystemPromptFile) {
@@ -2802,7 +2808,6 @@ export function isPtySessionActive(sessionId: string): boolean {
 
   // Also verify tmux session still exists (sync check is acceptable here — called from non-critical path)
   try {
-    const { execFileSync } = require('child_process');
     execFileSync('tmux', ['has-session', '-t', validateTmuxName(sessionData.tmuxSessionName)], { stdio: 'ignore' });
     return true;
   } catch {

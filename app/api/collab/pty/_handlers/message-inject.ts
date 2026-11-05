@@ -1291,7 +1291,8 @@ export async function handleRosterSpawn(
   skipResponse = false,
   rehydrate?: boolean,
   excludePid?: number,
-  replace = false
+  replace = false,
+  handoffEnv?: Record<string, string>
 ): Promise<NextResponse<PtyActionResponse>> {
   const channelsData = await readChannelsData();
   const channel = channelsData.channels.find(c => c.id === channelId);
@@ -1718,6 +1719,7 @@ export async function handleRosterSpawn(
       sessionId: preGeneratedSessionId,
       alreadyCreatesSession,
       replace,
+      handoffEnv,
       onData: async () => {},
       onEnd: async () => {},
       onError: async (error: Error) => { console.error(`[PTY API] Roster agent "${agent!.name}" error:`, error); },
