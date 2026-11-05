@@ -625,6 +625,30 @@
     {
       "path": "tests/unit/browser-source-name.test.ts",
       "kind": "openflow-only"
+    },
+    {
+      "path": "lib/credential-broker.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "lib/credential-broker-actions.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "app/api/broker/**",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/credential-broker.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/credential-broker-routes.test.ts",
+      "kind": "openflow-only"
+    },
+    {
+      "path": "tests/unit/broker-start-agent.test.ts",
+      "kind": "openflow-only"
     }
   ]
 }
