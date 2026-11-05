@@ -19,6 +19,7 @@ import { DataPaths } from '@/lib/data-paths';
 import { readJsonFile, writeJsonFile } from '@/lib/data-io';
 import { requireAuthOrLocal } from '@/lib/api-auth';
 import { saveConnectorKey } from '@/lib/connectors/secrets';
+import { migrateWizardKeys } from '@/lib/wizard-key-migration';
 import { tracked } from '@/lib/api-tracking';
 
 // ---------------------------------------------------------------------------
@@ -97,12 +98,17 @@ export const POST = tracked('/api/setup/complete', async (request: NextRequest) 
     // 3. Generate/update ~/.secrets with any new API keys
     await appendToSecretsFile(credentials, integrations);
 
+    // The Anthropic, OpenRouter and Grok keys are now in the encrypted store (appendToSecretsFile). Once each reads back, blank the plain copy.
+    try { migrateWizardKeys(DataPaths.user.credentials, resolveSecretStore()); } catch (error) { console.warn('[setup] wizard keys not moved:', error instanceof Error ? error.message : error); }
+
     // The DeepSeek key goes to the secret store (.AppData/secrets.json) through the Connections code, which also sets it in the running app's environment, where the DeepSeek agent start-up reads it
     // and where the Connections page shows it as saved. It is never put in a chat or a log.
     if (credentials.deepseekApiKey) {
       await saveConnectorKey('DEEPSEEK_API_KEY', credentials.deepseekApiKey, new Set(['DEEPSEEK_API_KEY']));
       // The store now holds the only copy, so removing the key on the Connections page really removes it.
-      await writeJsonFile(DataPaths.user.credentials, { ...credentials, deepseekApiKey: '' });
+      // Re-read: the wizard keys were just blanked on disk, and the copy read at the top still holds them.
+      const onDisk = await readJsonFile<CredentialsData>(DataPaths.user.credentials, {});
+      await writeJsonFile(DataPaths.user.credentials, { ...onDisk, deepseekApiKey: '' });
     }
 
     // 4. Write completion marker

@@ -12,6 +12,8 @@ import path from 'path';
 import { DataPaths } from '@/lib/data-paths';
 import { readJsonFile } from '@/lib/data-io';
 import { tracked } from '@/lib/api-tracking';
+import { resolveSecretStore } from '@/lib/secret-store';
+import { migrateWizardKeys } from '@/lib/wizard-key-migration';
 
 interface StepStatus {
   complete: boolean;
@@ -59,12 +61,19 @@ export const GET = tracked('/api/setup/status', async (request: NextRequest) => 
   }
 
   if (hasCredentials) {
+    // An older install still has its provider keys here: move them into the encrypted store (backup, read-back, then blank).
+    let savedNames: string[] = [];
+    try {
+      const store = resolveSecretStore();
+      migrateWizardKeys(DataPaths.user.credentials, store);
+      savedNames = store.names();
+    } catch { /* an unreadable store counts as no keys */ }
     const data = await readJsonFile<Record<string, unknown>>(DataPaths.user.credentials, {});
     // Strip actual key values, only return metadata
     const safe: Record<string, unknown> = {
-      hasAnthropic: !!data.anthropicApiKey,
-      hasOpenRouter: !!data.openrouterApiKey,
-      hasGrok: !!data.grokApiKey,
+      hasAnthropic: !!data.anthropicApiKey || savedNames.includes('ANTHROPIC_API_KEY'),
+      hasOpenRouter: !!data.openrouterApiKey || savedNames.includes('OPENROUTER_API_KEY'),
+      hasGrok: !!data.grokApiKey || savedNames.includes('GROK_API_KEY'),
       hasOllama: !!data.ollamaUrl,
       createdAt: data.createdAt,
     };
