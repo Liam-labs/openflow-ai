@@ -72,12 +72,13 @@ jobs:
       - name: Public docs (links and private strings)
         run: python3 -I scripts/check-public-docs.py
       - name: Knowledge base (a shipped feature needs its page)
-        # kb/features.json lists the shipped features. Warn-only until 11 Nov 2026, then remove --warn-only so a missing or stale page fails the merge.
+        # kb/features.json lists the shipped features. Warn-only until 11 Nov 2026 (UTC), then it fails the merge by itself: a missing or stale page is an error.
         env:
           EVENT: ${{ github.event_name }}
           BASE: ${{ github.event.pull_request.base.sha }}
         run: |
-          if [ "$EVENT" = "pull_request" ]; then python3 -I scripts/check-kb.py --warn-only --changed "$BASE" HEAD; else python3 -I scripts/check-kb.py --warn-only; fi
+          WARN=--warn-only; [ "$(date -u +%F)" \< "2026-11-11" ] || WARN=
+          if [ "$EVENT" = "pull_request" ]; then python3 -I scripts/check-kb.py $WARN --changed "$BASE" HEAD; else python3 -I scripts/check-kb.py $WARN; fi
       - name: Web addresses in style sheets, HTML and JSON
         run: python3 -I scripts/check-outbound-assets.py
       - name: Hosts the source can contact
