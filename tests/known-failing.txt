@@ -43,8 +43,6 @@ tests/unit/remote-usage.test.ts
 tests/unit/restart-grace-remote.test.ts
 tests/unit/restic-backup-metrics.test.ts
 tests/unit/roles-mcp-servers.test.ts
-tests/unit/roster-identity-switch-lifecycle.test.ts
-tests/unit/roster-project-directory-default.test.ts
 tests/unit/scratch-flush-counter.test.ts
 tests/unit/security-routes.test.ts
 tests/unit/sprint-reminder-hidden.test.ts

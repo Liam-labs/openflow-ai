@@ -24,7 +24,11 @@ vi.mock('@/lib/data-io', () => ({
   withFileLock: vi.fn().mockImplementation(
     (_path: string, operation: () => Promise<unknown>) => operation(),
   ),
+  // The channel store reads and writes the channels file through these: route them to the test's own mocks.
+  readJsonFile: vi.fn().mockImplementation(() => mocks.readChannelsData()),
+  writeJsonFile: vi.fn().mockImplementation((_path: string, data: unknown) => mocks.writeChannelsData(data)),
 }));
+vi.mock('@/lib/account-store', () => ({ getHumanDisplayName: vi.fn().mockResolvedValue(null) }));
 
 vi.mock('@/lib/collab-pty', () => ({
   forceKillByTmuxName: vi.fn(),
@@ -45,7 +49,7 @@ vi.mock('@/lib/system-ownership', () => ({
   writeSystemOwnership: vi.fn(),
 }));
 
-vi.mock('@/lib/log-writer', () => ({ logEvent: vi.fn() }));
+vi.mock('@/lib/log-writer', () => ({ logEvent: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@/lib/model-registry', () => ({
   inferAgentTypeForModel: vi.fn(),
   isAgentTypeCompatibleWith: vi.fn(),

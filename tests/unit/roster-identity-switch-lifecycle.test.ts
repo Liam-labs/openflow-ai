@@ -13,7 +13,14 @@ vi.mock('@/app/api/collab/pty/_pty-shared', async importOriginal => ({
   writeChannelsData: async (data: CollabChannelsData) => { mocks.state = structuredClone(data); },
   findPersonalityFile: async (name: string) => name === 'Jack' ? '/preset/Jack.md' : null,
 }));
-vi.mock('@/lib/data-io', async importOriginal => ({ ...await importOriginal<object>(), withFileLock: async (_: string, fn: () => Promise<unknown>) => fn() }));
+// The channel store now reads and writes the channels file itself: serve the test's in-memory state instead of the disk.
+vi.mock('@/lib/data-io', async importOriginal => ({
+  ...await importOriginal<object>(),
+  withFileLock: async (_: string, fn: () => Promise<unknown>) => fn(),
+  readJsonFile: async () => mocks.state,
+  writeJsonFile: async (_: string, data: CollabChannelsData) => { mocks.state = structuredClone(data); },
+}));
+vi.mock('@/lib/account-store', async importOriginal => ({ ...await importOriginal<object>(), getHumanDisplayName: async () => null }));
 vi.mock('@/lib/log-writer', () => ({ logEvent: vi.fn(async () => {}) }));
 vi.mock('@/lib/collab-pty', async importOriginal => ({
   ...await importOriginal<object>(),
