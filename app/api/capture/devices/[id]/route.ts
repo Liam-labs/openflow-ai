@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthOrLocal } from '@/lib/api-auth';
 import { tracked } from '@/lib/api-tracking';
 import { updateDevice, revokeDevice, appendLog } from '@/lib/capture/devices';
+import { dropDevice } from '@/lib/capture/jobs';
 
 export const dynamic = 'force-dynamic';
 type Ctx = { params: Promise<{ id: string }> };
@@ -31,6 +32,7 @@ export const DELETE = tracked('/api/capture/devices/[id]', async (request: NextR
   const { id } = await context.params;
   const device = await revokeDevice(id, 'owner');
   if (!device) return notFound();
+  dropDevice(id);
   appendLog({ op: 'revoke', requester: 'owner', deviceId: id, deviceName: device.name, state: 'revoked' });
   return NextResponse.json({ device });
 });
