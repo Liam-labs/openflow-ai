@@ -231,18 +231,6 @@
       "kind": "openflow-only"
     },
     {
-      "path": "components/setup/InstallAddress.tsx",
-      "kind": "openflow-only"
-    },
-    {
-      "path": "components/setup/SetupEntry.tsx",
-      "kind": "openflow-only"
-    },
-    {
-      "path": "components/wizards/useWizardRefresh.ts",
-      "kind": "openflow-only"
-    },
-    {
       "path": "data/roles/personalities/Scout.md",
       "kind": "openflow-only"
     },
@@ -276,26 +264,6 @@
     },
     {
       "path": "lib/tailnet-owner.ts",
-      "kind": "openflow-only"
-    },
-    {
-      "path": "lib/wizards/auth.ts",
-      "kind": "openflow-only"
-    },
-    {
-      "path": "lib/wizards/browser-container-profile.ts",
-      "kind": "openflow-only"
-    },
-    {
-      "path": "lib/wizards/events.ts",
-      "kind": "openflow-only"
-    },
-    {
-      "path": "lib/wizards/memory-runtime.ts",
-      "kind": "openflow-only"
-    },
-    {
-      "path": "lib/wizards/tailscale-runtime.ts",
       "kind": "openflow-only"
     },
     {
