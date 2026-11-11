@@ -10,6 +10,10 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    # A major version changes how the code must be written, so it is done by hand in its own pull request, not opened for us.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -18,3 +22,7 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    # Node moves to a new release line only by a decision (the image follows the long-term-support line).
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
